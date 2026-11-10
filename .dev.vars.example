@@ -1,0 +1,4 @@
+# Copy to .dev.vars. Overrides wrangler.jsonc vars for local dev (`pnpm dev`).
+# Secret key comes from `pnpm db:start` output.
+SUPABASE_URL=http://127.0.0.1:54321
+SUPABASE_SECRET_KEY=sb_secret_xxx

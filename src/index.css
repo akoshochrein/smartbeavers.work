@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* Timber & river palette */
+  --color-bark-50: #faf6f0;
+  --color-bark-100: #f1e7d6;
+  --color-bark-200: #e2cfae;
+  --color-bark-300: #cfb07f;
+  --color-bark-500: #8a6a45;
+  --color-bark-700: #5a3f22;
+  --color-bark-900: #2e1f10;
+  --color-river-500: #2f8f9d;
+  --color-river-700: #1f6470;
+  --color-moss-500: #5f9a3a;
+  --color-ember-500: #c2562b;
+}
+
+body {
+  @apply bg-bark-50 text-bark-900 antialiased;
+}
