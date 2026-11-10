@@ -61,7 +61,7 @@ export function Home() {
 
       <main className="mx-auto max-w-5xl px-5 sm:px-8">
         <section className="pt-10 pb-12 sm:pt-16">
-          <h1 className="max-w-3xl text-[2.5rem] leading-[0.95] font-extrabold sm:text-5xl">
+          <h1 className="max-w-3xl text-[2.25rem] leading-[1.1] font-bold tracking-tight sm:text-[2.75rem]">
             Use Timberborn's HTTP buildings without writing code
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-relaxed text-ink-soft">
@@ -79,7 +79,7 @@ export function Home() {
         </section>
 
         <section aria-labelledby="buildings" className="pb-20">
-          <h2 id="buildings" className="text-3xl font-bold sm:text-4xl">The two HTTP buildings</h2>
+          <h2 id="buildings" className="text-2xl font-bold tracking-tight sm:text-3xl">The two HTTP buildings</h2>
           <p className="mt-2 max-w-2xl text-ink-soft">
             One lets the outside world switch something in your colony. The other tells the outside world when something
             changed. Try them both.
@@ -91,12 +91,12 @@ export function Home() {
         </section>
 
         <section aria-labelledby="features" className="border-t border-ink/10 py-20">
-          <h2 id="features" className="text-3xl font-bold sm:text-4xl">What you can do</h2>
+          <h2 id="features" className="text-2xl font-bold tracking-tight sm:text-3xl">What you can do</h2>
           <ul className="mt-10 grid gap-10 md:grid-cols-3">
             {FEATURES.map(({ icon: Icon, title, body, where }) => (
               <li key={title}>
                 <Icon className="size-6 text-cobalt-deep" strokeWidth={1.75} />
-                <h3 className="mt-3 text-2xl font-bold">{title}</h3>
+                <h3 className="mt-3 text-xl font-semibold">{title}</h3>
                 <p className="mt-2 leading-relaxed text-ink-soft">{body}</p>
                 <p className="mt-3 text-sm text-ink">{where}</p>
               </li>
@@ -105,7 +105,7 @@ export function Home() {
         </section>
 
         <section id="how" aria-labelledby="setup" className="scroll-mt-8 border-t border-ink/10 py-20">
-          <h2 id="setup" className="text-3xl font-bold sm:text-4xl">How setup works</h2>
+          <h2 id="setup" className="text-2xl font-bold tracking-tight sm:text-3xl">How setup works</h2>
           <ol className="mt-10 grid gap-10 md:grid-cols-3">
             {[
               ["Create a colony", "Sign in with your email and add a colony for your save. You'll get two links that belong to it."],
@@ -113,11 +113,11 @@ export function Home() {
               ["Watch it arrive", "Signals show up in your dashboard as they happen. Add trackers or switch levers whenever you like."],
             ].map(([title, body], i) => (
               <li key={title} className="flex gap-4">
-                <span className="grid size-9 shrink-0 place-items-center rounded-full bg-pine font-display text-lg font-bold text-mist">
+                <span className="grid size-9 shrink-0 place-items-center rounded-full bg-pine font-display text-base font-bold text-mist">
                   {i + 1}
                 </span>
                 <div>
-                  <h3 className="text-2xl leading-tight font-bold">{title}</h3>
+                  <h3 className="text-xl font-semibold leading-snug">{title}</h3>
                   <p className="mt-2 leading-relaxed text-ink-soft">{body}</p>
                 </div>
               </li>
@@ -129,7 +129,7 @@ export function Home() {
         </section>
 
         <section aria-labelledby="questions" className="border-t border-ink/10 py-20">
-          <h2 id="questions" className="text-3xl font-bold sm:text-4xl">Questions</h2>
+          <h2 id="questions" className="text-2xl font-bold tracking-tight sm:text-3xl">Questions</h2>
           <dl className="mt-8 grid gap-x-12 gap-y-8 md:grid-cols-2">
             {QUESTIONS.map(({ q, a }) => (
               <div key={q}>

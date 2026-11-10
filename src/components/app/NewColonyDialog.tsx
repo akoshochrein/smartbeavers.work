@@ -42,7 +42,7 @@ export function NewColonyDialog({ children }: { children: ReactNode }) {
       <DialogContent className="sm:max-w-md">
         <form onSubmit={create} className="space-y-5">
           <DialogHeader>
-            <DialogTitle className="font-display text-3xl font-extrabold">New colony</DialogTitle>
+            <DialogTitle className="font-display text-2xl font-bold tracking-tight">New colony</DialogTitle>
             <DialogDescription>Use one colony per save. You'll get its links on the next screen.</DialogDescription>
           </DialogHeader>
           <div className="space-y-2">

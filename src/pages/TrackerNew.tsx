@@ -45,7 +45,7 @@ export function TrackerNew() {
     return (
       <div className="py-6">
         <BackLink colonyId={colony.id} name={colony.name} />
-        <h1 className="mt-4 text-5xl font-extrabold">Every metric is tracked</h1>
+        <h1 className="mt-4 text-3xl leading-tight font-bold tracking-tight sm:text-4xl">Every metric is tracked</h1>
         <p className="mt-3 text-ink-soft">This colony already has a tracker for everything a Population Counter can count.</p>
       </div>
     );
@@ -76,7 +76,7 @@ export function TrackerNew() {
   return (
     <div>
       <BackLink colonyId={colony.id} name={colony.name} />
-      <h1 className="mt-4 text-4xl leading-none font-extrabold sm:text-5xl">New tracker</h1>
+      <h1 className="mt-4 text-3xl leading-tight font-bold tracking-tight sm:text-4xl">New tracker</h1>
       <p className="mt-3 max-w-xl text-lg leading-relaxed text-ink-soft">
         Each Population Counter switches on at one number. With several of them, smartbeavers can tell which numbers
         your colony has passed. More counters give a more precise reading.
@@ -113,7 +113,7 @@ export function TrackerNew() {
                   )}
                 >
                   <RadioGroupItem id={`cmp-${c}`} value={c} className="sr-only" />
-                  <span className="font-display text-4xl leading-none font-black">{comparisonSymbol(c)}</span>
+                  <span className="font-display text-3xl leading-none font-bold">{comparisonSymbol(c)}</span>
                   <span className="text-sm leading-snug">{c === "gte" ? "Greater than or equal" : "Strictly greater than"}</span>
                 </Label>
               ))}
@@ -133,7 +133,7 @@ export function TrackerNew() {
 
           {valid && (
             <section className="space-y-3">
-              <h2 className="text-3xl font-bold">You'll build {thresholds.length} counters and {thresholds.length} adapters</h2>
+              <h2 className="text-2xl font-bold tracking-tight">You'll build {thresholds.length} counters and {thresholds.length} adapters</h2>
               <p className="text-sm text-ink-soft">Name the adapters exactly like this. Capital letters matter.</p>
               <ul className="flex flex-wrap gap-2">
                 {thresholds.map((t) => (
@@ -172,7 +172,7 @@ function Preview({ thresholds, comparison, unit }: { thresholds: number[]; compa
   return (
     <div className="mt-3">
       <div className="flex items-baseline gap-2">
-        <span className="font-display text-5xl leading-none font-black tabular-nums">{label}</span>
+        <span className="font-display text-4xl leading-none font-bold tracking-tight tabular-nums">{label}</span>
         <span className="text-sage">{unit}</span>
       </div>
       <SignalMeter steps={marks} tone="dark" className="mt-5" />

@@ -46,7 +46,7 @@ export function Dashboard() {
   return (
     <div>
       <div className="flex flex-wrap items-end gap-4">
-        <h1 className="text-4xl font-extrabold sm:text-5xl">Your colonies</h1>
+        <h1 className="text-3xl leading-tight font-bold tracking-tight sm:text-4xl">Your colonies</h1>
         <NewColonyDialog>
           <Button className="ml-auto">
             <Plus /> New colony
@@ -65,7 +65,7 @@ export function Dashboard() {
                 className="group flex items-center gap-6 py-6 outline-offset-4 transition-colors hover:bg-paper sm:px-4"
               >
                 <div className="min-w-0 flex-1">
-                  <div className="truncate font-display text-3xl leading-none font-extrabold group-hover:text-cobalt-deep">{c.name}</div>
+                  <div className="truncate font-display text-2xl leading-tight font-semibold group-hover:text-cobalt-deep">{c.name}</div>
                   <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-ink-soft">
                     <span>{s ? `${s.trackers} ${s.trackers === 1 ? "tracker" : "trackers"}` : " "}</span>
                     {s && (
@@ -90,7 +90,7 @@ function EmptyState() {
   return (
     <div className="py-6">
       <div className="max-w-md">
-        <h1 className="text-4xl leading-none font-extrabold sm:text-5xl">Start with your first colony</h1>
+        <h1 className="text-3xl leading-tight font-bold tracking-tight sm:text-4xl">Start with your first colony</h1>
         <p className="mt-4 text-lg leading-relaxed text-ink-soft">
           A colony matches one of your saves. Create one to get the links your HTTP Adapters will call.
         </p>

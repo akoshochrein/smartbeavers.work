@@ -37,7 +37,7 @@ export function TrackerCard({ ladder, feed }: { ladder: Ladder; feed: ColonyFeed
   return (
     <article className="rounded-2xl border bg-paper p-5 sm:p-6">
       <header className="flex items-center gap-3">
-        <h2 className="text-2xl leading-none font-bold">{metric.label}</h2>
+        <h2 className="text-xl font-semibold">{metric.label}</h2>
         <Button asChild variant="ghost" size="sm" className="ml-auto text-cobalt-deep hover:text-cobalt-deep">
           <Link to={`trackers/${ladder.id}`}>Setup guide</Link>
         </Button>
@@ -54,7 +54,7 @@ export function TrackerCard({ ladder, feed }: { ladder: Ladder; feed: ColonyFeed
             <div className="flex items-center gap-2.5 text-sm text-ink-soft">
               <StatusDot state={undefined} live className="size-2" /> Listening
             </div>
-            <p className="mt-2 font-display text-2xl leading-tight font-bold">Waiting for the first signal</p>
+            <p className="mt-2 font-display text-xl leading-tight font-semibold">Waiting for the first signal</p>
             <p className="mt-1 max-w-md text-sm leading-relaxed text-ink-soft">
               Counters report the next time they switch on or off. The setup guide shows how to make them report now.
             </p>
@@ -62,7 +62,7 @@ export function TrackerCard({ ladder, feed }: { ladder: Ladder; feed: ColonyFeed
         ) : (
           <>
             <div className="flex items-baseline gap-3">
-              <div className="relative h-[3.75rem] min-w-0 overflow-hidden">
+              <div className="relative h-12 min-w-0 overflow-hidden">
                 <AnimatePresence mode="popLayout" initial={false}>
                   <motion.div
                     key={formatReading(reading)}
@@ -72,8 +72,8 @@ export function TrackerCard({ ladder, feed }: { ladder: Ladder; feed: ColonyFeed
                     transition={{ type: "spring", stiffness: 220, damping: 24 }}
                     className={
                       reading.kind === "conflict"
-                        ? "font-display text-3xl leading-[3.75rem] font-extrabold whitespace-nowrap text-danger"
-                        : "font-display text-[3.75rem] leading-none font-black whitespace-nowrap tabular-nums"
+                        ? "font-display text-2xl leading-[3rem] font-bold whitespace-nowrap text-danger"
+                        : "font-display text-5xl leading-none font-bold tracking-tight whitespace-nowrap tabular-nums"
                     }
                   >
                     {reading.kind === "conflict" ? "Mixed signals" : formatReading(reading)}

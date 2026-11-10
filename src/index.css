@@ -26,7 +26,7 @@
   --color-danger: #b83a26;
   --color-chart: var(--color-cobalt);
 
-  --font-display: "Big Shoulders Display", "Arial Narrow", sans-serif;
+  --font-display: "Gabarito", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
 
   --animate-signal: signal 1.6s ease-out infinite;
@@ -120,7 +120,7 @@
   }
   h1, h2, h3 {
     font-family: var(--font-display);
-    letter-spacing: 0.005em;
+    line-height: 1.15;
     text-wrap: balance;
   }
   p {

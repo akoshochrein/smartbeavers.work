@@ -88,7 +88,7 @@ function End({ label, dark, children }: { label: string; dark?: boolean; childre
 function DemoCard({ title, summary, children, request }: { title: string; summary: string; children: ReactNode; request: ReactNode }) {
   return (
     <section className="flex flex-col rounded-2xl border bg-paper/60 p-4 sm:p-6">
-      <h3 className="text-2xl font-bold">{title}</h3>
+      <h3 className="text-xl font-semibold">{title}</h3>
       <p className="mt-1 text-ink-soft">{summary}</p>
       <div className="mt-6 flex items-center gap-2">{children}</div>
       <div className="mt-5 min-h-[3.25rem] rounded-lg bg-mist-2/70 px-3 py-2 text-[13px] leading-relaxed text-ink-soft">{request}</div>
@@ -136,14 +136,14 @@ export function LeverDemo() {
         ) : (
           <>
             Your browser sent{" "}
-            <Path text={`GET localhost:8080/api/switch-${last ? "on" : "off"}/Sawmill`} />
+            <Path text={`GET localhost:8080/api/switch-${last ? "on" : "off"}/LumberMill`} />
           </>
         )
       }
     >
       <End label="Your browser">
-        <Switch checked={browserOn} onCheckedChange={flip} aria-label="Sawmill lever" />
-        <span className="text-sm font-medium">Sawmill</span>
+        <Switch checked={browserOn} onCheckedChange={flip} aria-label="Lumber mill lever" />
+        <span className="text-sm font-medium">Lumber mill</span>
       </End>
       <Wire
         direction="right"
@@ -155,7 +155,10 @@ export function LeverDemo() {
       />
       <End label="In your colony" dark>
         <LeverGraphic on={leverOn} />
-        <span className="text-sm font-medium">{leverOn ? "Sawmill on" : "Sawmill off"}</span>
+        <span className="text-sm leading-tight font-medium">
+          Lumber mill
+          <span className="block text-xs font-normal text-sage">{leverOn ? "On" : "Off"}</span>
+        </span>
       </End>
     </DemoCard>
   );

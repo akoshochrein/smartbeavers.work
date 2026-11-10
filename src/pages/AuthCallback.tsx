@@ -16,14 +16,14 @@ export function AuthCallback() {
         <LogoMark className="mx-auto size-12" />
         {error ? (
           <>
-            <h1 className="mt-6 text-4xl font-extrabold">That link didn't work</h1>
+            <h1 className="mt-6 text-3xl font-bold tracking-tight">That link didn't work</h1>
             <p className="mt-3 text-sage">{error}. Sign-in links work once and expire after an hour.</p>
             <Link to="/login" className="mt-6 inline-block font-bold text-resin underline-offset-4 hover:underline">
               Send a new link
             </Link>
           </>
         ) : (
-          <h1 className="mt-6 text-4xl font-extrabold">Signing you in…</h1>
+          <h1 className="mt-6 text-3xl font-bold tracking-tight">Signing you in…</h1>
         )}
       </div>
     </div>

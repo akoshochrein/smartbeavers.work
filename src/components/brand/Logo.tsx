@@ -48,8 +48,8 @@ export function LogoMark({ className }: { className?: string }) {
 export function Logo({ to = "/", className }: { to?: string; className?: string }) {
   return (
     <Link to={to} className={cn("inline-flex items-center gap-2 rounded-md", className)} aria-label="smartbeavers home">
-      <LogoMark className="size-[1.85rem]" />
-      <span className="font-display text-[1.75rem] leading-none font-extrabold">smartbeavers</span>
+      <LogoMark className="size-[1.7rem]" />
+      <span className="font-display text-[1.45rem] leading-none font-extrabold tracking-tight">smartbeavers</span>
     </Link>
   );
 }

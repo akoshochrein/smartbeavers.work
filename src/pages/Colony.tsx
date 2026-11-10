@@ -50,7 +50,7 @@ export function ColonyPage() {
   if (colony === null) {
     return (
       <div className="py-10">
-        <h1 className="text-5xl font-extrabold">Colony not found</h1>
+        <h1 className="text-3xl leading-tight font-bold tracking-tight sm:text-4xl">Colony not found</h1>
         <p className="mt-3 text-ink-soft">It may have been deleted, or it belongs to another account.</p>
         <Button asChild variant="link" className="mt-2 px-0">
           <Link to="/dashboard">Back to your colonies</Link>
@@ -74,7 +74,7 @@ function ColonyDashboard({ colony, onChange }: { colony: Colony; onChange: (c: C
     <div>
       <header className="flex flex-wrap items-end gap-x-6 gap-y-4">
         <div className="min-w-0">
-          <h1 className="text-4xl leading-none font-extrabold break-words sm:text-5xl">{colony.name}</h1>
+          <h1 className="text-3xl leading-tight font-bold tracking-tight sm:text-4xl break-words">{colony.name}</h1>
           <p className="mt-3 flex items-center gap-2 text-sm text-ink-soft">
             {feed.loading ? (
               " "
@@ -138,7 +138,7 @@ function NoTrackers() {
   return (
     <div className="rounded-2xl border border-dashed border-ink/20 p-8">
       <div className="max-w-md">
-        <h2 className="text-3xl leading-none font-extrabold">Track a number</h2>
+        <h2 className="text-2xl font-bold tracking-tight">Track a number</h2>
         <p className="mt-3 leading-relaxed text-ink-soft">
           A tracker turns a row of Population Counters into a number you can check from anywhere, such as your
           population, free beds or open jobs.
@@ -166,7 +166,7 @@ function SignalsTab({ colony, feed }: { colony: Colony; feed: ColonyFeed }) {
     <div className="grid gap-10 lg:grid-cols-[1fr_1.1fr]">
       <section className="space-y-6">
         <div>
-          <h2 className="text-3xl font-bold">Adapter links</h2>
+          <h2 className="text-2xl font-bold tracking-tight">Adapter links</h2>
           <p className="mt-1 max-w-md text-sm leading-relaxed text-ink-soft">
             Paste these into every HTTP Adapter in this colony and tick both boxes. The game fills in{" "}
             <code className="font-mono text-[13px] text-ink">{"{name}"}</code> for you, and GET or POST both work.
@@ -176,7 +176,7 @@ function SignalsTab({ colony, feed }: { colony: Colony; feed: ColonyFeed }) {
         <CopyField label="Call when switched off" what="Off link" value={webhookUrl(origin, colony.webhook_token, "off")} />
 
         <div className="pt-4">
-          <h2 className="text-3xl font-bold">Adapters</h2>
+          <h2 className="text-2xl font-bold tracking-tight">Adapters</h2>
           {states.length === 0 ? (
             <p className="mt-2 text-sm text-ink-soft">Adapters appear here after their first signal.</p>
           ) : (
@@ -207,7 +207,7 @@ function SignalsTab({ colony, feed }: { colony: Colony; feed: ColonyFeed }) {
       </section>
 
       <section>
-        <h2 className="text-3xl font-bold">Recent signals</h2>
+        <h2 className="text-2xl font-bold tracking-tight">Recent signals</h2>
         {events.length === 0 ? (
           <p className="mt-2 text-sm text-ink-soft">Nothing yet. Signals show up here the moment an adapter calls.</p>
         ) : (
@@ -276,7 +276,7 @@ function LeversTab({ colony }: { colony: Colony }) {
 
   return (
     <div className="max-w-3xl">
-      <h2 className="text-3xl font-bold">Levers on this computer</h2>
+      <h2 className="text-2xl font-bold tracking-tight">Levers on this computer</h2>
       <p className="mt-1 max-w-xl text-sm leading-relaxed text-ink-soft">
         While Timberborn runs on this computer, you can switch its HTTP Levers from here. Your browser talks to{" "}
         <code className="font-mono text-[13px] text-ink">{game.baseUrl}</code> directly, so this only works on the
@@ -307,7 +307,7 @@ function LeversTab({ colony }: { colony: Colony }) {
         <div className="mt-6 grid gap-8 sm:grid-cols-2">
           <section>
             <div className="flex items-center">
-              <h3 className="text-2xl font-bold">HTTP Levers</h3>
+              <h3 className="text-xl font-semibold">HTTP Levers</h3>
               <Button size="icon-sm" variant="ghost" className="ml-auto" onClick={refresh} aria-label="Refresh">
                 <RefreshCw />
               </Button>
@@ -323,7 +323,7 @@ function LeversTab({ colony }: { colony: Colony }) {
             )}
           </section>
           <section>
-            <h3 className="text-2xl font-bold">HTTP Adapters</h3>
+            <h3 className="text-xl font-semibold">HTTP Adapters</h3>
             {adapters.length === 0 ? (
               <p className="mt-2 text-sm text-ink-soft">No HTTP Adapters in this colony yet.</p>
             ) : (
@@ -411,7 +411,7 @@ function SettingsTab({ colony, onChange }: { colony: Colony; onChange: (c: Colon
   return (
     <div className="max-w-2xl space-y-12">
       <form onSubmit={save} className="space-y-5">
-        <h2 className="text-3xl font-bold">Colony</h2>
+        <h2 className="text-2xl font-bold tracking-tight">Colony</h2>
         <div className="space-y-2">
           <Label htmlFor="colony-name">Name</Label>
           <Input id="colony-name" value={name} maxLength={80} required onChange={(e) => setName(e.target.value)} className="bg-paper" />
@@ -461,7 +461,7 @@ function SettingsAction(props: {
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
       <div className="max-w-md">
-        <h3 className="text-2xl font-bold">{props.title}</h3>
+        <h3 className="text-xl font-semibold">{props.title}</h3>
         <p className="mt-1 text-sm leading-relaxed text-ink-soft">{props.body}</p>
       </div>
       <AlertDialog>
@@ -472,7 +472,7 @@ function SettingsAction(props: {
         </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-display text-3xl font-extrabold">{props.confirmTitle}</AlertDialogTitle>
+            <AlertDialogTitle className="font-display text-2xl font-bold tracking-tight">{props.confirmTitle}</AlertDialogTitle>
             <AlertDialogDescription>{props.confirmBody}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -59,7 +59,7 @@ export function Login() {
             {status === "sent" ? (
               <motion.div key="sent" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
                 <MailCheck className="size-10 text-cobalt" strokeWidth={1.5} />
-                <h1 className="mt-4 text-4xl font-extrabold sm:text-5xl">Check your inbox</h1>
+                <h1 className="mt-4 text-3xl leading-tight font-bold tracking-tight sm:text-4xl">Check your inbox</h1>
                 <p className="mt-3 leading-relaxed text-ink-soft">
                   We sent a sign-in link to <strong className="text-ink">{email}</strong>. Open it on this device to continue.
                 </p>
@@ -69,7 +69,7 @@ export function Login() {
               </motion.div>
             ) : (
               <motion.form key="form" onSubmit={onSubmit} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <h1 className="text-4xl font-extrabold sm:text-5xl">Sign in</h1>
+                <h1 className="text-3xl leading-tight font-bold tracking-tight sm:text-4xl">Sign in</h1>
                 <p className="mt-3 leading-relaxed text-ink-soft">
                   We'll email you a link. No password to remember, and new players get an account automatically.
                 </p>

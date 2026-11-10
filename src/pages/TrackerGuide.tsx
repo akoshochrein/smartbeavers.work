@@ -64,7 +64,7 @@ function Guide({ colonyId, colonyName, token, ladder }: { colonyId: string; colo
   return (
     <div>
       <BackLink colonyId={colonyId} name={colonyName} />
-      <h1 className="mt-4 text-4xl leading-none font-extrabold sm:text-5xl">Set up your {metric.label.toLowerCase()} tracker</h1>
+      <h1 className="mt-4 text-3xl leading-tight font-bold tracking-tight sm:text-4xl">Set up your {metric.label.toLowerCase()} tracker</h1>
 
       <div className="mt-6 max-w-md">
         <div className="flex items-baseline justify-between text-sm">
@@ -79,13 +79,13 @@ function Guide({ colonyId, colonyName, token, ladder }: { colonyId: string; colo
       <div className="mt-12 grid gap-14 lg:grid-cols-[1fr_1.15fr]">
         <div className="space-y-12">
           <section className="space-y-5">
-            <h2 className="text-3xl font-bold">Links for every adapter</h2>
+            <h2 className="text-2xl font-bold tracking-tight">Links for every adapter</h2>
             <CopyField label="Call when switched on" what="On link" value={webhookUrl(origin, token, "on")} />
             <CopyField label="Call when switched off" what="Off link" value={webhookUrl(origin, token, "off")} />
           </section>
 
           <section>
-            <h2 className="text-3xl font-bold">For each counter in the list</h2>
+            <h2 className="text-2xl font-bold tracking-tight">For each counter in the list</h2>
             <ol className="mt-5 space-y-5">
               {[
                 <>
@@ -110,7 +110,7 @@ function Guide({ colonyId, colonyName, token, ladder }: { colonyId: string; colo
                 </>,
               ].map((body, i) => (
                 <li key={i} className="flex gap-4">
-                  <span className="grid size-8 shrink-0 place-items-center rounded-full bg-pine font-display text-lg font-bold text-mist">
+                  <span className="grid size-8 shrink-0 place-items-center rounded-full bg-pine font-display text-base font-bold text-mist">
                     {i + 1}
                   </span>
                   <p className="pt-1 leading-relaxed text-ink-soft [&_strong]:font-bold [&_strong]:text-ink">{body}</p>
@@ -121,7 +121,7 @@ function Guide({ colonyId, colonyName, token, ladder }: { colonyId: string; colo
         </div>
 
         <section>
-          <h2 className="text-3xl font-bold">Counters</h2>
+          <h2 className="text-2xl font-bold tracking-tight">Counters</h2>
           <div className="mt-4 overflow-hidden rounded-xl border bg-paper">
             <Table>
               <TableHeader>
@@ -176,7 +176,7 @@ function Guide({ colonyId, colonyName, token, ladder }: { colonyId: string; colo
 
           <div className="mt-10 flex flex-col gap-4 border-t pt-8 sm:flex-row sm:items-center">
             <div>
-              <h3 className="text-2xl font-bold">Delete this tracker</h3>
+              <h3 className="text-xl font-semibold">Delete this tracker</h3>
               <p className="mt-1 text-sm text-ink-soft">Signal history stays, so you can add the tracker back later.</p>
             </div>
             <AlertDialog>
@@ -187,7 +187,7 @@ function Guide({ colonyId, colonyName, token, ladder }: { colonyId: string; colo
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle className="font-display text-3xl font-extrabold">Delete the {metric.label.toLowerCase()} tracker?</AlertDialogTitle>
+                  <AlertDialogTitle className="font-display text-2xl font-bold tracking-tight">Delete the {metric.label.toLowerCase()} tracker?</AlertDialogTitle>
                   <AlertDialogDescription>
                     The tracker disappears from your dashboard. Signals from these adapters are still recorded.
                   </AlertDialogDescription>
