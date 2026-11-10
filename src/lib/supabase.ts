@@ -15,3 +15,4 @@ export const supabase = createClient<Database>(url, key, {
 export type Colony = Database["public"]["Tables"]["colonies"]["Row"];
 export type AdapterState = Database["public"]["Tables"]["adapter_states"]["Row"];
 export type AdapterEvent = Database["public"]["Tables"]["adapter_events"]["Row"];
+export type Ladder = Database["public"]["Tables"]["ladders"]["Row"];

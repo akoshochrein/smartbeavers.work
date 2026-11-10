@@ -2,6 +2,7 @@
   "name": "smartbeavers",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@11.26.0",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",

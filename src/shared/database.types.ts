@@ -77,6 +77,26 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"ladders": {
+                  Row: {
+                    "colony_id": string,"comparison": string,"created_at": string,"id": string,"metric": string,"thresholds": (number)[]
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "colony_id": string,"comparison"?: string,"created_at"?: string,"id"?: string,"metric": string,"thresholds": (number)[]
+                  }
+                  Update: {
+                    "colony_id"?: string,"comparison"?: string,"created_at"?: string,"id"?: string,"metric"?: string,"thresholds"?: (number)[]
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "ladders_colony_id_fkey"
+      columns: ["colony_id"]
+isOneToOne: false
+      referencedRelation: "colonies"
+      referencedColumns: ["id"]
+    }
+                  ]
                 }
           }
           Views: {

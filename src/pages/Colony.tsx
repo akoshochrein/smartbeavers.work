@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
+import { LadderCard } from "../components/LadderCard";
 import { Button, Card, CopyField, StateDot } from "../components/ui";
-import { supabase, type AdapterEvent, type AdapterState, type Colony } from "../lib/supabase";
+import { supabase, type Colony } from "../lib/supabase";
+import { useColony, useLadders } from "../lib/useColony";
+import { useColonyFeed, type ColonyFeed } from "../lib/useColonyFeed";
 import { createGameClient, type Adapter, type GameClient, type Lever } from "../lib/timberborn";
 import { webhookUrl } from "../shared/webhook";
 
@@ -9,23 +12,47 @@ const POLL_MS = 2000;
 
 export function ColonyPage() {
   const { id } = useParams<{ id: string }>();
-  const [colony, setColony] = useState<Colony | null>();
-
-  useEffect(() => {
-    supabase.from("colonies").select("*").eq("id", id!).maybeSingle().then(({ data }) => setColony(data));
-  }, [id]);
+  const [colony, setColony] = useColony(id);
 
   if (colony === undefined) return <p className="text-bark-500">Loading…</p>;
   if (colony === null) return <p className="text-bark-500">Colony not found.</p>;
 
+  return <ColonyDashboard colony={colony} onChange={setColony} />;
+}
+
+function ColonyDashboard({ colony, onChange }: { colony: Colony; onChange: (c: Colony) => void }) {
+  const feed = useColonyFeed(colony.id);
+  const ladders = useLadders(colony.id);
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">{colony.name}</h1>
-      <div className="grid gap-6 lg:grid-cols-2">
+
+      <section className="space-y-3">
+        <div className="flex items-center">
+          <h2 className="text-lg font-semibold">Trackers</h2>
+          <Link to="trackers/new" className="ml-auto rounded-md bg-bark-700 px-3 py-1.5 text-sm text-bark-50 hover:bg-bark-900">
+            Add tracker
+          </Link>
+        </div>
+        {ladders === undefined ? (
+          <p className="text-sm text-bark-500">Loading…</p>
+        ) : ladders.length === 0 ? (
+          <p className="rounded-xl border border-dashed border-bark-300 p-6 text-sm text-bark-500">
+            No trackers yet. Add a population tracker to see your colony's numbers from anywhere.
+          </p>
+        ) : (
+          <div className="grid items-start gap-6 lg:grid-cols-2">
+            {ladders.map((l) => <LadderCard key={l.id} ladder={l} feed={feed} />)}
+          </div>
+        )}
+      </section>
+
+      <div className="grid items-start gap-6 lg:grid-cols-2">
         <LiveGamePanel colony={colony} />
-        <WebhookPanel colony={colony} />
+        <WebhookPanel colony={colony} feed={feed} />
       </div>
-      <SettingsPanel colony={colony} onChange={setColony} />
+      <SettingsPanel colony={colony} onChange={onChange} />
     </div>
   );
 }
@@ -119,39 +146,9 @@ function LeverRow({ lever, game, onChanged }: { lever: Lever; game: GameClient; 
 }
 
 /** Adapter signals that the game pushed to our Worker, streamed via Supabase Realtime. */
-function WebhookPanel({ colony }: { colony: Colony }) {
-  const [states, setStates] = useState<AdapterState[]>([]);
-  const [events, setEvents] = useState<AdapterEvent[]>([]);
-
-  useEffect(() => {
-    const load = async () => {
-      const [s, e] = await Promise.all([
-        supabase.from("adapter_states").select("*").eq("colony_id", colony.id).order("name"),
-        supabase
-          .from("adapter_events")
-          .select("*")
-          .eq("colony_id", colony.id)
-          .order("received_at", { ascending: false })
-          .limit(20),
-      ]);
-      if (s.data) setStates(s.data);
-      if (e.data) setEvents(e.data);
-    };
-    load();
-
-    const channel = supabase
-      .channel(`colony:${colony.id}`)
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "adapter_events", filter: `colony_id=eq.${colony.id}` },
-        load,
-      )
-      .subscribe();
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [colony.id]);
-
+function WebhookPanel({ colony, feed }: { colony: Colony; feed: ColonyFeed }) {
+  const states = [...feed.states.values()].sort((a, b) => a.name.localeCompare(b.name));
+  const events = feed.events.slice(-20).reverse();
   const origin = window.location.origin;
 
   return (

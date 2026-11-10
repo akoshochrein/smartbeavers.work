@@ -9,6 +9,8 @@ import { ColonyPage } from "./pages/Colony";
 import { Dashboard } from "./pages/Dashboard";
 import { Home } from "./pages/Home";
 import { Login } from "./pages/Login";
+import { TrackerGuide } from "./pages/TrackerGuide";
+import { TrackerNew } from "./pages/TrackerNew";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -21,6 +23,8 @@ createRoot(document.getElementById("root")!).render(
             <Route path="auth/callback" element={<AuthCallback />} />
             <Route path="dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
             <Route path="colonies/:id" element={<RequireAuth><ColonyPage /></RequireAuth>} />
+            <Route path="colonies/:id/trackers/new" element={<RequireAuth><TrackerNew /></RequireAuth>} />
+            <Route path="colonies/:id/trackers/:ladderId" element={<RequireAuth><TrackerGuide /></RequireAuth>} />
           </Route>
         </Routes>
       </BrowserRouter>
