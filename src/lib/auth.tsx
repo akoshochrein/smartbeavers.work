@@ -26,7 +26,7 @@ export const useAuth = () => useContext(AuthContext);
 export function RequireAuth({ children }: { children: ReactNode }) {
   const { session, loading } = useAuth();
   const location = useLocation();
-  if (loading) return <p className="p-8 text-bark-500">Loading…</p>;
+  if (loading) return <div className="min-h-dvh bg-mist" aria-busy="true" />;
   if (!session) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   return children;
 }

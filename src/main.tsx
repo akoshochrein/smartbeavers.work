@@ -1,33 +1,45 @@
-import { StrictMode } from "react";
+import { MotionConfig } from "motion/react";
+import { lazy, StrictMode, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Route, Routes } from "react-router";
-import { Layout } from "./components/Layout";
+import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import "./index.css";
 import { AuthProvider, RequireAuth } from "./lib/auth";
 import { AuthCallback } from "./pages/AuthCallback";
-import { ColonyPage } from "./pages/Colony";
-import { Dashboard } from "./pages/Dashboard";
 import { Home } from "./pages/Home";
 import { Login } from "./pages/Login";
-import { TrackerGuide } from "./pages/TrackerGuide";
-import { TrackerNew } from "./pages/TrackerNew";
+
+// Signed-in pages load on demand so the public landing page stays light.
+const AppShell = lazy(() => import("@/components/app/AppShell").then((m) => ({ default: m.AppShell })));
+const Dashboard = lazy(() => import("./pages/Dashboard").then((m) => ({ default: m.Dashboard })));
+const ColonyPage = lazy(() => import("./pages/Colony").then((m) => ({ default: m.ColonyPage })));
+const TrackerNew = lazy(() => import("./pages/TrackerNew").then((m) => ({ default: m.TrackerNew })));
+const TrackerGuide = lazy(() => import("./pages/TrackerGuide").then((m) => ({ default: m.TrackerGuide })));
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route element={<Layout />}>
-            <Route index element={<Home />} />
-            <Route path="login" element={<Login />} />
-            <Route path="auth/callback" element={<AuthCallback />} />
-            <Route path="dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
-            <Route path="colonies/:id" element={<RequireAuth><ColonyPage /></RequireAuth>} />
-            <Route path="colonies/:id/trackers/new" element={<RequireAuth><TrackerNew /></RequireAuth>} />
-            <Route path="colonies/:id/trackers/:ladderId" element={<RequireAuth><TrackerGuide /></RequireAuth>} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+    <MotionConfig reducedMotion="user">
+      <TooltipProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <Suspense fallback={<div className="min-h-dvh bg-mist" aria-busy="true" />}>
+            <Routes>
+              <Route index element={<Home />} />
+              <Route path="login" element={<Login />} />
+              <Route path="auth/callback" element={<AuthCallback />} />
+              <Route element={<RequireAuth><AppShell /></RequireAuth>}>
+                <Route path="dashboard" element={<Dashboard />} />
+                <Route path="colonies/:id" element={<ColonyPage />} />
+                <Route path="colonies/:id/trackers/new" element={<TrackerNew />} />
+                <Route path="colonies/:id/trackers/:ladderId" element={<TrackerGuide />} />
+              </Route>
+            </Routes>
+            </Suspense>
+          </BrowserRouter>
+        </AuthProvider>
+      </TooltipProvider>
+      <Toaster position="bottom-right" richColors={false} />
+    </MotionConfig>
   </StrictMode>,
 );

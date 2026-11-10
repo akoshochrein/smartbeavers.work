@@ -1,4 +1,4 @@
-# Smart Beavers
+# smartbeavers
 
 A web companion for Timberborn's **HTTP Lever** and **HTTP Adapter** automation buildings.
 
