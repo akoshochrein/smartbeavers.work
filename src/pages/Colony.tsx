@@ -164,8 +164,8 @@ function NoTrackers() {
       <div className="max-w-md">
         <h2 className="text-2xl font-bold tracking-tight">Add your first tracker</h2>
         <p className="mt-3 leading-relaxed text-ink-soft">
-          Follow the weather with three Weather Stations, keep the game's date with a Chronometer, or turn a row of
-          Population Counters into a number such as your population, free beds or vacancies.
+          Follow the weather with three Weather Stations, keep the game's date with a Chronometer, or turn a few
+          counters into a number such as your population, free beds or how full your water storage is.
         </p>
         <SignalMeter steps={[10, 20, 30, 40, 50].map((bound) => ({ bound, state: undefined }))} labels={false} size="sm" className="mt-5 max-w-xs" />
         <Button asChild className="mt-5">

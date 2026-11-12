@@ -10,12 +10,14 @@ import { CHART_BUCKET_SECONDS, useAdapterHistory } from "@/lib/history";
 import type { Ladder } from "@/lib/supabase";
 import { timeAgo } from "@/lib/time";
 import { HISTORY_DAYS, type ColonyFeed } from "@/lib/useColonyFeed";
-import { describeValue, discoverSteps, formatValue, ladderHistory, latestValue, metricFor } from "@/shared/ladders";
+import { describeValue, discoverSteps, formatValue, ladderHistory, latestValue, metricFor, valueSuffix } from "@/shared/ladders";
+import { GoodIcon } from "@/components/app/GoodIcon";
 
 const LIVE_MS = 5 * 60_000;
 
 export function TrackerCard({ ladder, feed }: { ladder: Ladder; feed: ColonyFeed }) {
   const metric = metricFor(ladder.metric);
+  const suffix = valueSuffix(metric);
   const now = useNow(30_000);
 
   const steps = useMemo(() => discoverSteps(ladder, feed.states.values()), [ladder, feed.states]);
@@ -26,11 +28,12 @@ export function TrackerCard({ ladder, feed }: { ladder: Ladder; feed: ColonyFeed
 
   const live = value.kind !== "waiting" && now - value.at < LIVE_MS;
   const peak = Math.max(1, ...history.map((p) => p.value.value), ...steps.map((s) => s.bound));
-  const yTop = Math.ceil(peak * 1.15);
+  const yTop = metric.kind === "resource" ? 100 : Math.ceil(peak * 1.15);
 
   return (
     <article className="rounded-2xl border bg-paper p-5 sm:p-6">
       <header className="flex items-center gap-3">
+        {metric.kind === "resource" && <GoodIcon good={metric.prefix} className="size-7" />}
         <h2 className="text-xl font-semibold">{metric.label}</h2>
         <Button asChild variant="ghost" size="sm" className="ml-auto text-cobalt-deep hover:text-cobalt-deep">
           <Link to={`trackers/${ladder.id}`}>Setup guide</Link>
@@ -51,7 +54,7 @@ export function TrackerCard({ ladder, feed }: { ladder: Ladder; feed: ColonyFeed
             <p className="mt-2 font-display text-xl leading-tight font-semibold">Waiting for the first counter</p>
             <p className="mt-1 max-w-md text-sm leading-relaxed text-ink-soft">
               Name an adapter <span className="font-mono text-[13px]">{metric.prefix}</span> plus its counter's number, such as{" "}
-              <span className="font-mono text-[13px]">{metric.prefix}30</span>. It shows up here the next time it switches on or off.
+              <span className="font-mono text-[13px]">{metric.prefix}{metric.kind === "resource" ? 50 : 30}</span>. It shows up here the next time it switches on or off.
             </p>
           </div>
         ) : (
@@ -60,14 +63,14 @@ export function TrackerCard({ ladder, feed }: { ladder: Ladder; feed: ColonyFeed
               <div className="relative h-12 min-w-0 overflow-hidden">
                 <AnimatePresence mode="popLayout" initial={false}>
                   <motion.div
-                    key={formatValue(value)}
+                    key={formatValue(value, suffix)}
                     initial={{ y: 40, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     exit={{ y: -40, opacity: 0 }}
                     transition={{ type: "spring", stiffness: 220, damping: 24 }}
                     className="font-display text-5xl leading-none font-bold tracking-tight whitespace-nowrap tabular-nums"
                   >
-                    {formatValue(value)}
+                    {formatValue(value, suffix)}
                   </motion.div>
                 </AnimatePresence>
               </div>
@@ -75,7 +78,7 @@ export function TrackerCard({ ladder, feed }: { ladder: Ladder; feed: ColonyFeed
             </div>
             <p className="mt-2 flex items-center gap-2 text-sm text-ink-soft">
               <StatusDot state live={live} className="size-2" />
-              {describeValue(value)} {timeAgo(value.at, now)}
+              {describeValue(value, suffix)} {timeAgo(value.at, now)}
             </p>
           </>
         )}
@@ -86,7 +89,7 @@ export function TrackerCard({ ladder, feed }: { ladder: Ladder; feed: ColonyFeed
       {history.length > 0 && (
         <div className="mt-6 border-t pt-4">
           <div className="mb-2 text-sm text-ink-soft">Last {HISTORY_DAYS} days</div>
-          <ValueChart points={history} now={now} yTop={yTop} unit={metric.unit} />
+          <ValueChart points={history} now={now} yTop={yTop} unit={metric.unit} suffix={suffix} />
         </div>
       )}
     </article>

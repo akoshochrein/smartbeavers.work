@@ -12,7 +12,7 @@ type Segment = { t0: number; t1: number; point: HistoryPoint };
  * A tracker's value over time. Each point is a signal, where the value is known; the line
  * between two signals is the straight path from one to the next, then flat from the last to now.
  */
-export function ValueChart({ points, now, yTop, unit }: { points: HistoryPoint[]; now: number; yTop: number; unit: string }) {
+export function ValueChart({ points, now, yTop, unit, suffix = "" }: { points: HistoryPoint[]; now: number; yTop: number; unit: string; suffix?: string }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const width = useWidth(wrapRef);
   const [hover, setHover] = useState<Segment>();
@@ -48,7 +48,7 @@ export function ValueChart({ points, now, yTop, unit }: { points: HistoryPoint[]
           width={width}
           height={HEIGHT}
           role="img"
-          aria-label={`Last ${HISTORY_DAYS} days. Now ${formatValue(lastValue)} ${unit}.`}
+          aria-label={`Last ${HISTORY_DAYS} days. Now ${formatValue(lastValue, suffix)} ${unit}.`}
           onPointerMove={onMove}
           onPointerLeave={() => setHover(undefined)}
           className="block touch-none"
@@ -79,9 +79,9 @@ export function ValueChart({ points, now, yTop, unit }: { points: HistoryPoint[]
         >
           <div className="text-sage">{formatTime(hover.t0)}</div>
           <div className="font-bold tabular-nums">
-            {formatValue(hover.point.value)} {unit}
+            {formatValue(hover.point.value, suffix)} {unit}
           </div>
-          <div className="text-sage">{describeValue(hover.point.value)}</div>
+          <div className="text-sage">{describeValue(hover.point.value, suffix)}</div>
         </div>
       )}
     </div>

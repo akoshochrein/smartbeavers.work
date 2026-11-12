@@ -6,6 +6,11 @@
 //
 // A counter switching on or off is the value crossing its number, so the latest signal gives the
 // value at that moment: "Pop30 on" means 30, "Pop30 off" means 29.
+//
+// Two in-game buildings feed these trackers: Population Counters (a head count) and Resource
+// Counters set to storage fill rate (a percentage, so "Water50" is water storage at 50%).
+
+import { GOODS } from "./goods";
 
 export type Comparison = "gte" | "gt";
 
@@ -18,12 +23,14 @@ export type Metric = {
   unit: string;
   /** The option to pick in the Population Counter's dropdown in-game, spelled as the game spells it. */
   counterSetting: string;
-  group: MetricGroup;
+  group: string;
+  /** population = a head count from a Population Counter; resource = storage fill % from a Resource Counter. */
+  kind: "population" | "resource";
 };
 
 // Every option in the Population Counter's dropdown, in the game's order (checked against the
 // in-game panel, Nov 2026). Prefixes are kept short because they're typed in the game.
-export const METRICS: Metric[] = [
+const POPULATION: Omit<Metric, "kind">[] = [
   { prefix: "Pop", label: "Population", unit: "beavers and bots", counterSetting: "Total population", group: "Population" },
   { prefix: "Beavers", label: "Beavers", unit: "beavers", counterSetting: "Total beavers", group: "Population" },
   { prefix: "Adults", label: "Adults", unit: "adults", counterSetting: "Adults", group: "Population" },
@@ -44,16 +51,30 @@ export const METRICS: Metric[] = [
   { prefix: "ContamChildren", label: "Contaminated children", unit: "contaminated children", counterSetting: "Contaminated children", group: "Health" },
 ];
 
+export const METRICS: Metric[] = POPULATION.map((m) => ({ ...m, kind: "population" }));
 export const METRIC_GROUPS: MetricGroup[] = ["Population", "Housing", "Work", "Health"];
 
+/** One per good: how full its storage is, 0 to 100. */
+export const RESOURCE_METRICS: Metric[] = GOODS.map((g) => ({
+  prefix: g.prefix,
+  label: g.label,
+  unit: "full",
+  counterSetting: g.label,
+  group: g.group,
+  kind: "resource",
+}));
+
 // Trackers created before the list matched the game: "Beds" counted free beds.
-const LEGACY: Metric[] = [{ prefix: "Beds", label: "Free beds", unit: "free beds", counterSetting: "Free beds", group: "Housing" }];
+const LEGACY: Metric[] = [{ prefix: "Beds", label: "Free beds", unit: "free beds", counterSetting: "Free beds", group: "Housing", kind: "population" }];
+
+const BY_PREFIX = new Map([...LEGACY, ...RESOURCE_METRICS, ...METRICS].map((m) => [m.prefix, m]));
 
 export function metricFor(prefix: string): Metric {
-  return (
-    [...METRICS, ...LEGACY].find((m) => m.prefix === prefix) ?? { prefix, label: prefix, unit: "", counterSetting: prefix, group: "Population" }
-  );
+  return BY_PREFIX.get(prefix) ?? { prefix, label: prefix, unit: "", counterSetting: prefix, group: "Population", kind: "population" };
 }
+
+/** "%" for fill rates, nothing for head counts. Goes straight after the number. */
+export const valueSuffix = (m: Metric) => (m.kind === "resource" ? "%" : "");
 
 export const adapterName = (prefix: string, threshold: number) => `${prefix}${threshold}`;
 
@@ -125,16 +146,17 @@ export function latestValue(steps: Pick<Step, "bound" | "state" | "at">[]): Valu
   return { kind: "under", value: lowestOff!.bound - 1, bound: lowestOff!.bound, at: lowestOff!.at };
 }
 
-export function formatValue(v: Value): string {
+/** `suffix` goes straight after the number: "%" for fill rates. */
+export function formatValue(v: Value, suffix = ""): string {
   if (v.kind === "waiting") return "Waiting for data";
-  if (v.kind === "atLeast") return `${v.value.toLocaleString()}+`;
-  if (v.kind === "under") return `<${v.bound.toLocaleString()}`;
-  return v.value.toLocaleString();
+  if (v.kind === "atLeast") return `${v.value.toLocaleString()}${suffix}+`;
+  if (v.kind === "under") return `<${v.bound.toLocaleString()}${suffix}`;
+  return `${v.value.toLocaleString()}${suffix}`;
 }
 
 /** "Reached 30", "Dropped below 30", "At least 30", "Under 30". */
-export function describeValue(v: Exclude<Value, { kind: "waiting" }>): string {
-  const n = v.bound.toLocaleString();
+export function describeValue(v: Exclude<Value, { kind: "waiting" }>, suffix = ""): string {
+  const n = `${v.bound.toLocaleString()}${suffix}`;
   if (v.kind === "reached") return `Reached ${n}`;
   if (v.kind === "below") return `Dropped below ${n}`;
   if (v.kind === "atLeast") return `At least ${n}`;

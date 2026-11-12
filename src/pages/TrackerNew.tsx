@@ -13,14 +13,18 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/lib/supabase";
 import { useColony, useLadders, useWeatherTracker } from "@/lib/useColony";
 import { cn } from "@/lib/utils";
-import { METRICS, METRIC_GROUPS, adapterName, comparisonSymbol, metricFor, type Comparison } from "@/shared/ladders";
+import { METRICS, METRIC_GROUPS, RESOURCE_METRICS, adapterName, comparisonSymbol, metricFor, type Comparison, type Metric } from "@/shared/ladders";
+import { GOODS, GOOD_GROUPS } from "@/shared/goods";
+import { GoodIcon } from "@/components/app/GoodIcon";
+import { Input } from "@/components/ui/input";
 import { WEATHERS } from "@/shared/weather";
 
 export function TrackerNew() {
   const { id } = useParams<{ id: string }>();
   const [params] = useSearchParams();
   const kind = params.get("kind");
-  if (kind === "numbers") return <CounterTrackerForm />;
+  if (kind === "numbers") return <CounterTrackerForm kind="population" />;
+  if (kind === "resource") return <CounterTrackerForm kind="resource" />;
   if (kind === "weather") return <WeatherTrackerNew colonyId={id!} />;
   if (kind === "clock") return <GameClockNew colonyId={id!} />;
   return <TrackerChooser colonyId={id!} />;
@@ -49,6 +53,19 @@ function TrackerChooser({ colonyId }: { colonyId: string }) {
             <span className="block text-xl font-semibold">A number</span>
             <span className="mt-1 block text-sm leading-relaxed text-ink-soft">
               Anything a Population Counter can count: population, beds, jobs, workers or contamination. Uses a few counters, and you can add more any time.
+            </span>
+          </span>
+          <ChevronRight className="mt-2 size-5 shrink-0 text-ink-soft transition-transform group-hover:translate-x-0.5" />
+        </Link>
+
+        <Link to="?kind=resource" className={option}>
+          <span className="grid size-10 shrink-0 grid-cols-2 place-items-center gap-0.5 rounded-lg bg-mist-2 p-1">
+            {["Water", "Logs", "Berries", "Gears"].map((g) => <GoodIcon key={g} good={g} className="size-3.5" />)}
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-xl font-semibold">A resource</span>
+            <span className="mt-1 block text-sm leading-relaxed text-ink-soft">
+              How full the storage of any good is, in percent: water, logs, food and the rest. Uses a few Resource Counters.
             </span>
           </span>
           <ChevronRight className="mt-2 size-5 shrink-0 text-ink-soft transition-transform group-hover:translate-x-0.5" />
@@ -194,7 +211,7 @@ function WeatherTrackerNew({ colonyId }: { colonyId: string }) {
   );
 }
 
-function CounterTrackerForm() {
+function CounterTrackerForm({ kind }: { kind: Metric["kind"] }) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [colony] = useColony(id);
@@ -208,13 +225,15 @@ function CounterTrackerForm() {
   if (colony === null) return <p className="text-ink-soft">Colony not found.</p>;
 
   const taken = new Set(ladders.map((l) => l.metric));
-  const available = METRICS.filter((m) => !taken.has(m.prefix));
+  const resource = kind === "resource";
+  const example = resource ? 50 : 30;
+  const available = (resource ? RESOURCE_METRICS : METRICS).filter((m) => !taken.has(m.prefix));
   if (available.length === 0) {
     return (
       <div className="py-6">
         <BackLink colonyId={colony.id} name={colony.name} />
-        <h1 className="mt-4 text-3xl leading-tight font-bold tracking-tight sm:text-4xl">Every metric is tracked</h1>
-        <p className="mt-3 text-ink-soft">This colony already has a tracker for everything a Population Counter can count.</p>
+        <h1 className="mt-4 text-3xl leading-tight font-bold tracking-tight sm:text-4xl">Everything is tracked</h1>
+        <p className="mt-3 text-ink-soft">This colony already has a tracker for everything a {resource ? "Resource" : "Population"} Counter can count.</p>
       </div>
     );
   }
@@ -241,14 +260,18 @@ function CounterTrackerForm() {
   return (
     <div>
       <BackLink colonyId={colony.id} name={colony.name} />
-      <h1 className="mt-4 text-3xl leading-tight font-bold tracking-tight sm:text-4xl">Track a number</h1>
+      <h1 className="mt-4 text-3xl leading-tight font-bold tracking-tight sm:text-4xl">{resource ? "Track a resource" : "Track a number"}</h1>
       <p className="mt-3 max-w-xl text-lg leading-relaxed text-ink-soft">
-        Each Population Counter switches on at one number. Every time your colony passes one, smartbeavers knows the
-        number at that moment. Build as many or as few as you like, at any numbers, and add more later.
+        {resource
+          ? "Each Resource Counter switches on at one fill level, such as 50% full. Every time your storage passes one, smartbeavers knows the level at that moment. Build as many or as few as you like, and add more later."
+          : "Each Population Counter switches on at one number. Every time your colony passes one, smartbeavers knows the number at that moment. Build as many or as few as you like, at any numbers, and add more later."}
       </p>
 
       <form onSubmit={save} className="mt-10 grid gap-12 lg:grid-cols-[1fr_20rem]">
         <div className="space-y-10">
+          {resource ? (
+            <GoodPicker available={available} value={metric.prefix} onChange={setPrefix} />
+          ) : (
           <div className="space-y-2">
             <Label htmlFor="metric" className="text-base">What to count</Label>
             <Select value={metric.prefix} onValueChange={setPrefix}>
@@ -276,6 +299,7 @@ function CounterTrackerForm() {
               In the counter's list this is <strong className="font-medium text-ink">{metric.counterSetting}</strong>.
             </p>
           </div>
+          )}
 
           <fieldset className="space-y-3">
             <legend className="text-base font-medium">How your counters compare</legend>
@@ -308,17 +332,68 @@ function CounterTrackerForm() {
             <div className="text-sm text-sage">How adapters are named</div>
             <div className="mt-3 font-mono text-3xl leading-none font-bold">
               {metric.prefix}
-              <span className="text-resin">30</span>
+              <span className="text-resin">{example}</span>
             </div>
             <p className="mt-4 text-sm leading-relaxed text-sage">
               <span className="font-mono">{metric.prefix}</span> plus the counter's number. A counter set to{" "}
-              {comparisonSymbol(comparison)} 30 gets an adapter named <span className="font-mono">{adapterName(metric.prefix, 30)}</span>.
+              {comparisonSymbol(comparison)} {example}{resource ? "%" : ""} gets an adapter named{" "}
+              <span className="font-mono break-all">{adapterName(metric.prefix, example)}</span>.
               There's no list to fill in here: counters show up as they report.
             </p>
           </div>
         </aside>
       </form>
     </div>
+  );
+}
+
+function GoodPicker({ available, value, onChange }: { available: Metric[]; value: string; onChange: (prefix: string) => void }) {
+  const [query, setQuery] = useState("");
+  const q = query.trim().toLowerCase();
+  const open = new Set(available.map((m) => m.prefix));
+  const shown = GOODS.filter((g) => open.has(g.prefix) && (!q || g.label.toLowerCase().includes(q)));
+
+  return (
+    <fieldset className="space-y-4">
+      <legend className="text-base font-medium">Which good</legend>
+      <Input
+        type="search"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Search goods"
+        aria-label="Search goods"
+        className="h-11 max-w-xs bg-paper text-base"
+      />
+      {shown.length === 0 && <p className="text-sm text-ink-soft">No good matches "{query}".</p>}
+      <RadioGroup value={value} onValueChange={onChange} className="block space-y-5">
+        {GOOD_GROUPS.map((group) => {
+          const items = shown.filter((g) => g.group === group);
+          if (items.length === 0) return null;
+          return (
+            <div key={group}>
+              <div className="text-sm text-ink-soft">{group}</div>
+              <div className="mt-2 grid grid-cols-[repeat(auto-fill,minmax(10.5rem,1fr))] gap-2">
+                {items.map((g) => (
+                  <Label
+                    key={g.prefix}
+                    htmlFor={`good-${g.prefix}`}
+                    title={g.faction ? `${g.label} (${g.faction})` : g.label}
+                    className={cn(
+                      "flex min-h-11 cursor-pointer items-center gap-2.5 rounded-xl border bg-paper px-3 py-2 text-sm leading-tight font-normal transition-colors has-focus-visible:ring-2 has-focus-visible:ring-cobalt",
+                      value === g.prefix && "border-cobalt bg-cobalt-soft/50",
+                    )}
+                  >
+                    <RadioGroupItem id={`good-${g.prefix}`} value={g.prefix} className="sr-only" />
+                    <GoodIcon good={g.prefix} />
+                    <span className="min-w-0">{g.label}</span>
+                  </Label>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </RadioGroup>
+    </fieldset>
   );
 }
 

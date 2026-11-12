@@ -22,7 +22,8 @@ import { supabase, type Ladder } from "@/lib/supabase";
 import { timeAgo } from "@/lib/time";
 import { useColony, useLadders } from "@/lib/useColony";
 import { useColonyFeed } from "@/lib/useColonyFeed";
-import { comparisonSymbol, discoverSteps, metricFor, type Comparison } from "@/shared/ladders";
+import { comparisonSymbol, discoverSteps, metricFor, valueSuffix, type Comparison } from "@/shared/ladders";
+import { GoodIcon } from "@/components/app/GoodIcon";
 import { webhookUrl } from "@/shared/webhook";
 import { BackLink } from "./TrackerNew";
 
@@ -43,6 +44,9 @@ function Guide({ colonyId, colonyName, token, ladder }: { colonyId: string; colo
   const feed = useColonyFeed(colonyId);
   const metric = metricFor(ladder.metric);
   const symbol = comparisonSymbol(ladder.comparison as Comparison);
+  const resource = metric.kind === "resource";
+  const suffix = valueSuffix(metric);
+  const example = resource ? 50 : 30;
   const steps = useMemo(() => discoverSteps(ladder, feed.states.values()), [ladder, feed.states]);
   const origin = window.location.origin;
 
@@ -62,12 +66,15 @@ function Guide({ colonyId, colonyName, token, ladder }: { colonyId: string; colo
   return (
     <div>
       <BackLink colonyId={colonyId} name={colonyName} />
-      <h1 className="mt-4 text-3xl leading-tight font-bold tracking-tight sm:text-4xl">Set up your {metric.label.toLowerCase()} tracker</h1>
+      <h1 className="mt-4 flex items-center gap-3 text-3xl leading-tight font-bold tracking-tight sm:text-4xl">
+        {resource && <GoodIcon good={metric.prefix} className="size-9" />}
+        Set up your {metric.label.toLowerCase()} tracker
+      </h1>
 
       <p className="mt-3 max-w-xl text-lg leading-relaxed text-ink-soft">
-        Build a counter at any number you want to mark and name its adapter{" "}
-        <span className="font-mono text-base">{metric.prefix}</span> plus that number. Two or three around your current{" "}
-        {metric.label.toLowerCase()} is enough to start.
+        Build a counter at any {resource ? "fill level" : "number"} you want to mark and name its adapter{" "}
+        <span className="font-mono text-base">{metric.prefix}</span> plus that number.{" "}
+        {resource ? "Two or three, such as 25, 50 and 75, are enough to start." : `Two or three around your current ${metric.label.toLowerCase()} is enough to start.`}
       </p>
 
       <div className="mt-12 grid gap-14 lg:grid-cols-[1fr_1.15fr]">
@@ -82,15 +89,24 @@ function Guide({ colonyId, colonyName, token, ladder }: { colonyId: string; colo
             <h2 className="text-2xl font-bold tracking-tight">For each number you want to mark</h2>
             <ol className="mt-5 space-y-5">
               {[
-                <>
-                  Build a <strong>Population Counter</strong>. Pick <strong>{metric.counterSetting}</strong> from its list,
-                  pick <strong className="font-mono">{symbol}</strong>, and enter your number. <strong>District mode</strong> and{" "}
-                  <strong>Global mode</strong> both work, as long as every counter of this tracker uses the same one.
-                </>,
+                resource ? (
+                  <>
+                    Build a <strong>Resource Counter</strong>. Pick <strong>{metric.counterSetting}</strong> from its list,
+                    set it to measure <strong>storage fill rate</strong> (a percentage) rather than stock level, pick{" "}
+                    <strong className="font-mono">{symbol}</strong>, and enter your percentage. Set every counter of this
+                    tracker the same way.
+                  </>
+                ) : (
+                  <>
+                    Build a <strong>Population Counter</strong>. Pick <strong>{metric.counterSetting}</strong> from its list,
+                    pick <strong className="font-mono">{symbol}</strong>, and enter your number. <strong>District mode</strong> and{" "}
+                    <strong>Global mode</strong> both work, as long as every counter of this tracker uses the same one.
+                  </>
+                ),
                 <>
                   Build an <strong>HTTP Adapter</strong>. Click the pencil next to its name and rename it to{" "}
-                  <strong className="font-mono">{metric.prefix}</strong> plus the counter's number: a counter at 30 gets{" "}
-                  <strong className="font-mono">{metric.prefix}30</strong>. Capital letters matter.
+                  <strong className="font-mono">{metric.prefix}</strong> plus the counter's number: a counter at {example}{suffix} gets{" "}
+                  <strong className="font-mono">{metric.prefix}{example}</strong>. Capital letters matter.
                 </>,
                 <>
                   On the adapter, press <strong>Automate</strong> and choose that counter.
@@ -101,7 +117,7 @@ function Guide({ colonyId, colonyName, token, ladder }: { colonyId: string; colo
                 </>,
                 <>
                   To see it report straight away, set the counter's number to <span className="font-mono">0</span>, then{" "}
-                  <span className="font-mono">9999</span>, then back. It appears in the list here.
+                  <span className="font-mono">{resource ? 100 : 9999}</span>, then back. It appears in the list here.
                 </>,
               ].map((body, i) => (
                 <li key={i} className="flex gap-4">
@@ -141,7 +157,7 @@ function Guide({ colonyId, colonyName, token, ladder }: { colonyId: string; colo
                   return (
                     <TableRow key={s.name} className={fresh ? "animate-in bg-resin-soft/60 duration-700 fade-in" : undefined}>
                       <TableCell className="pl-4 whitespace-nowrap tabular-nums">
-                        <span className="font-mono">{symbol} {s.threshold}</span>
+                        <span className="font-mono">{symbol} {s.threshold}{suffix}</span>
                       </TableCell>
                       <TableCell>
                         <Button
