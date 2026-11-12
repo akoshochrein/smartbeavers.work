@@ -163,6 +163,21 @@ After adding a server variable or secret, also add it to `src/server/env.d.ts`.
 See [CONTRIBUTING.md](CONTRIBUTING.md). Report security problems privately as described in
 [SECURITY.md](SECURITY.md).
 
+## Built with AI
+
+Most of this project, including the code, the icons, the documentation and the first drafts of
+the privacy policy and terms, was written with [Claude Code](https://claude.com/claude-code),
+directed and reviewed by a human. Two things follow from that:
+
+- **Game details may be wrong.** Building options and goods were checked against the game and
+  its wiki where possible, but not all of them. If a label doesn't match what the game shows,
+  please open an issue.
+- **The legal pages are drafts, not legal advice.** If you host your own copy, have them
+  checked for your situation.
+
+AI-assisted contributions are welcome on the same terms as any other: you understand what you
+submit, and it builds.
+
 ## Licence
 
 [MIT](LICENSE). The icons in `src/components/app/GoodIcon.tsx` and the logo were drawn for this
