@@ -80,3 +80,28 @@ export function useGameDayWindowStart(colonyId: string, days: number, fallback: 
   });
   return fallback === undefined ? null : data;
 }
+
+/**
+ * When each of the last `days` game days began (the clock's day signals), oldest first.
+ * undefined while loading; empty if the clock hasn't counted a day yet.
+ */
+export function useGameDayStarts(colonyId: string, days: number, enabled: boolean, version: unknown): number[] | undefined {
+  return useQuery({
+    queryKey: ["game-day-starts", colonyId, days, String(version)],
+    enabled,
+    placeholderData: keepPreviousData,
+    queryFn: async () => {
+      const rows = unwrap(
+        await supabase
+          .from("adapter_events")
+          .select("received_at")
+          .eq("colony_id", colonyId)
+          .eq("adapter_name", CLOCK_ADAPTER)
+          .eq("state", true)
+          .order("received_at", { ascending: false })
+          .limit(days),
+      );
+      return (rows ?? []).map((r) => Date.parse(r.received_at)).reverse();
+    },
+  }).data;
+}

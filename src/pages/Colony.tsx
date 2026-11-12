@@ -154,7 +154,7 @@ function ColonyDashboard({ colony, onChange }: { colony: Colony; onChange: (c: C
                     />
                   ),
                 },
-                ...ladders.map((l) => ({ key: l.id, weight: 1.4, node: <TrackerCard ladder={l} feed={feed} /> })),
+                ...ladders.map((l) => ({ key: l.id, weight: 1.4, node: <TrackerCard ladder={l} feed={feed} clock={!!clock} dayVersion={dateVersion} /> })),
               ].filter((c) => !!c)}
             />
           )}

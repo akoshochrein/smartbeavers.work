@@ -3,19 +3,32 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { StatusDot } from "@/components/app/StatusDot";
 import { ValueChart } from "@/components/ValueChart";
-import { SignalMeter } from "@/components/SignalMeter";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useGameDayStarts } from "@/lib/clock";
 import { CHART_BUCKET_SECONDS, useAdapterHistory } from "@/lib/history";
 import type { Ladder } from "@/lib/supabase";
 import { timeAgo } from "@/lib/time";
 import { HISTORY_DAYS, type ColonyFeed } from "@/lib/useColonyFeed";
-import { describeValue, discoverSteps, formatValue, ladderHistory, latestValue, metricFor, valueSuffix } from "@/shared/ladders";
+import { describeValue, discoverSteps, formatValue, ladderHistory, latestValue, metricFor, valueSuffix, type Step } from "@/shared/ladders";
 import { GoodIcon } from "@/components/app/GoodIcon";
 
 const LIVE_MS = 5 * 60_000;
+/** With a game clock, the chart shows this many game days (the same window as the weather strip). */
+const GAME_DAY_WINDOW = 180;
 
-export function TrackerCard({ ladder, feed }: { ladder: Ladder; feed: ColonyFeed }) {
+export function TrackerCard({
+  ladder,
+  feed,
+  clock = false,
+  dayVersion,
+}: {
+  ladder: Ladder;
+  feed: ColonyFeed;
+  /** The colony has a game clock: chart in game days instead of real time. */
+  clock?: boolean;
+  dayVersion?: number;
+}) {
   const metric = metricFor(ladder.metric);
   const suffix = valueSuffix(metric);
   const now = useNow(30_000);
@@ -23,12 +36,18 @@ export function TrackerCard({ ladder, feed }: { ladder: Ladder; feed: ColonyFeed
   const steps = useMemo(() => discoverSteps(ladder, feed.states.values()), [ladder, feed.states]);
   const value = latestValue(steps);
   const names = useMemo(() => steps.map((s) => s.name), [steps]);
-  const events = useAdapterHistory(ladder.colony_id, names, CHART_BUCKET_SECONDS, feed.live, names.length > 0);
+  // Game days: the chart spans the clock's recent day signals. Real time: the last HISTORY_DAYS.
+  const dayStarts = useGameDayStarts(ladder.colony_id, GAME_DAY_WINDOW, clock, dayVersion);
+  const gameDays = clock && !!dayStarts?.length;
+  // Fixed once known, so a new game day doesn't reload the history; the chart trims to the window.
+  const [since, setSince] = useState<number>();
+  if (gameDays && since === undefined) setSince(dayStarts[0]);
+  const bucket = since === undefined ? CHART_BUCKET_SECONDS : Math.max(1, Math.round((Date.now() - since) / 1000 / 360));
+  const ready = names.length > 0 && (!clock || dayStarts !== undefined) && (!gameDays || since !== undefined);
+  const events = useAdapterHistory(ladder.colony_id, names, bucket, feed.live, ready, gameDays ? since : undefined);
   const history = useMemo(() => (events ? ladderHistory(ladder, events) : []), [ladder, events]);
 
   const live = value.kind !== "waiting" && now - value.at < LIVE_MS;
-  const peak = Math.max(1, ...history.map((p) => p.value.value), ...steps.map((s) => s.bound));
-  const yTop = metric.kind === "resource" ? 100 : Math.ceil(peak * 1.15);
 
   return (
     <article className="rounded-2xl border bg-paper p-5 sm:p-6">
@@ -84,15 +103,61 @@ export function TrackerCard({ ladder, feed }: { ladder: Ladder; feed: ColonyFeed
         )}
       </div>
 
-      {steps.length > 0 && <SignalMeter steps={steps} className="mt-5" />}
+      {steps.length > 0 && !feed.loading && <CounterNote steps={steps} prefix={metric.prefix} suffix={suffix} />}
 
       {history.length > 0 && (
         <div className="mt-6 border-t pt-4">
-          <div className="mb-2 text-sm text-ink-soft">Last {HISTORY_DAYS} days</div>
-          <ValueChart points={history} now={now} yTop={yTop} unit={metric.unit} suffix={suffix} />
+          <div className="mb-2 text-sm text-ink-soft">
+            {!gameDays ? `Last ${HISTORY_DAYS} days` : dayStarts.length >= GAME_DAY_WINDOW ? `Last ${GAME_DAY_WINDOW} game days` : "Since the game clock started"}
+          </div>
+          <ValueChart
+            points={history}
+            now={now}
+            unit={metric.unit}
+            suffix={suffix}
+            domain={metric.kind === "resource" ? [0, 100] : undefined}
+            dayStarts={gameDays ? dayStarts : undefined}
+          />
         </div>
       )}
     </article>
+  );
+}
+
+/**
+ * Which counters feed this tracker, and what that leaves unknown: with every counter on, the
+ * real number may be above the highest one; with every counter off, below the lowest.
+ */
+function CounterNote({ steps, prefix, suffix }: { steps: Step[]; prefix: string; suffix: string }) {
+  const n = (v: number) => `${v.toLocaleString()}${suffix}`;
+  const bounds = steps.map((s) => s.bound);
+  const lowest = bounds[0];
+  const highest = bounds[bounds.length - 1];
+  const list =
+    bounds.length === 1
+      ? `One counter, at ${n(lowest)}`
+      : bounds.length <= 4
+        ? `Counters at ${bounds.slice(0, -1).map(n).join(", ")} and ${n(highest)}`
+        : `${bounds.length} counters from ${n(lowest)} to ${n(highest)}`;
+  const allOn = steps.every((s) => s.state);
+  const allOff = steps.every((s) => !s.state);
+  return (
+    <p className="mt-4 max-w-md text-sm leading-relaxed text-ink-soft">
+      {list}.
+      {allOn && (
+        <>
+          {" "}
+          All of them are on, so the real number may be higher than {n(highest)}. To follow it further, add a counter above {n(highest)} with
+          an adapter named <span className="font-mono text-[13px]">{prefix}</span> plus its number.
+        </>
+      )}
+      {allOff && bounds.length > 0 && !allOn && (
+        <>
+          {" "}
+          All of them are off, so the real number is somewhere below {n(lowest)}. To follow it further, add a counter below {n(lowest)}.
+        </>
+      )}
+    </p>
   );
 }
 

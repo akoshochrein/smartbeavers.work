@@ -18,14 +18,22 @@ const historySince = () => new Date(Date.now() - HISTORY_DAYS * 86_400_000).toIS
  * database function: their states when the window opened, then the last signal per adapter per
  * `bucketSeconds` (0 = every signal). Live signals for these adapters are appended as they arrive.
  */
-export function useAdapterHistory(colonyId: string, adapters: string[], bucketSeconds: number, live: AdapterEvent[], enabled = true) {
+export function useAdapterHistory(
+  colonyId: string,
+  adapters: string[],
+  bucketSeconds: number,
+  live: AdapterEvent[],
+  enabled = true,
+  /** Start of the window, if shorter than HISTORY_DAYS (ms since epoch). */
+  sinceMs?: number,
+) {
   const key = adapters.join("\n");
   const { data: loaded } = useQuery({
-    queryKey: ["adapter-history", colonyId, key, bucketSeconds],
+    queryKey: ["adapter-history", colonyId, key, bucketSeconds, sinceMs ?? null],
     enabled,
     queryFn: async () => {
       const names = key.split("\n");
-      const since = historySince();
+      const since = sinceMs === undefined ? historySince() : new Date(sinceMs).toISOString();
       const events: HistoryEvent[] = [];
       for (;;) {
         const page = unwrap(
