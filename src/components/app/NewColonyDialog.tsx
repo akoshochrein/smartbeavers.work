@@ -1,5 +1,5 @@
 import { useState, type FormEvent, type ReactNode } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,7 +37,7 @@ export function NewColonyDialog({ children }: { children: ReactNode }) {
     setName("");
     setFaction(undefined);
     toast.success(`${data.name} created`);
-    navigate(`/colonies/${data.id}`);
+    navigate({ to: "/colonies/$id", params: { id: data.id } });
   }
 
   return (

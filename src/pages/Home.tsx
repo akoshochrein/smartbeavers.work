@@ -1,5 +1,5 @@
 import { BarChart3, CloudSun, Radio, ToggleRight } from "lucide-react";
-import { Link } from "react-router";
+import { Link } from "@tanstack/react-router";
 import { Logo } from "@/components/brand/Logo";
 import { SiteFooter } from "@/components/PublicPage";
 import { AdapterDemo, LeverDemo } from "@/components/landing/Demos";

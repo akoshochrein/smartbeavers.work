@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router";
+import { Link } from "@tanstack/react-router";
 import { StatusDot } from "@/components/app/StatusDot";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -97,7 +97,7 @@ export function WeatherCard({
       <header className="flex items-center gap-3">
         <h2 className="text-xl font-semibold">Weather</h2>
         <Button asChild variant="ghost" size="sm" className="ml-auto text-cobalt-deep hover:text-cobalt-deep">
-          <Link to="trackers/weather">Setup guide</Link>
+          <Link to="/colonies/$id/trackers/weather" params={{ id: colonyId }}>Setup guide</Link>
         </Button>
       </header>
 

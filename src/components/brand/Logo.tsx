@@ -1,5 +1,5 @@
 import { useId } from "react";
-import { Link } from "react-router";
+import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 
 const HEAD = "M32 15.5c8 0 13.5 4.5 16 12.5 2 6 2.5 9 2.5 11.5 0 8-7.5 12-18.5 12s-18.5-4-18.5-12c0-2.5.5-5.5 2.5-11.5 2.5-8 8-12.5 16-12.5Z";
@@ -45,7 +45,7 @@ export function LogoMark({ className }: { className?: string }) {
   );
 }
 
-export function Logo({ to = "/", className }: { to?: string; className?: string }) {
+export function Logo({ to = "/", className }: { to?: "/" | "/dashboard"; className?: string }) {
   return (
     <Link to={to} className={cn("inline-flex items-center gap-2 rounded-md", className)} aria-label="smartbeavers home">
       <LogoMark className="size-[1.7rem]" />

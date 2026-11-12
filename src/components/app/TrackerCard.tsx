@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router";
+import { Link } from "@tanstack/react-router";
 import { StatusDot } from "@/components/app/StatusDot";
 import { ValueChart } from "@/components/ValueChart";
 import { SignalMeter } from "@/components/SignalMeter";
@@ -36,7 +36,7 @@ export function TrackerCard({ ladder, feed }: { ladder: Ladder; feed: ColonyFeed
         {metric.kind === "resource" && <GoodIcon good={metric.prefix} className="size-7" />}
         <h2 className="text-xl font-semibold">{metric.label}</h2>
         <Button asChild variant="ghost" size="sm" className="ml-auto text-cobalt-deep hover:text-cobalt-deep">
-          <Link to={`trackers/${ladder.id}`}>Setup guide</Link>
+          <Link to="/colonies/$id/trackers/$ladderId" params={{ id: ladder.colony_id, ladderId: ladder.id }}>Setup guide</Link>
         </Button>
       </header>
 

@@ -7,7 +7,7 @@ A web companion for Timberborn's **HTTP Lever** and **HTTP Adapter** automation 
 ```
  Player's machine                                   Cloud
 ┌──────────────────────────┐              ┌───────────────────────────────┐
-│ Timberborn               │  webhooks    │ Cloudflare Worker (Hono)      │
+│ Timberborn               │  webhooks    │ Cloudflare Worker (TanStack)  │
 │  HTTP Adapter ───────────┼─────────────▶│  /hook/:token/:on|off/:name   │──┐
 │                          │              │  + static React SPA           │  │ secret key
 │  HTTP API :8080 ◀────┐   │              └───────────────────────────────┘  ▼
@@ -28,21 +28,25 @@ A web companion for Timberborn's **HTTP Lever** and **HTTP Adapter** automation 
 
 | Layer    | Choice                                                       |
 | -------- | ------------------------------------------------------------ |
-| Frontend | React 19 + React Router (SPA), Tailwind CSS v4, Vite         |
-| Backend  | Cloudflare Worker with Hono, serving the SPA as static assets |
+| Frontend | React 19, TanStack Router + Query, Tailwind CSS v4, Vite     |
+| Backend  | TanStack Start server routes on a Cloudflare Worker          |
 | Data     | Supabase (Postgres + RLS, magic-link auth, Realtime)         |
 
 ## Layout
 
 ```
-src/                 React SPA
+src/                 TanStack Start app (pages render in the browser)
+  routes/            One file per URL. api/ and hook/ are server routes; _app.* needs sign-in
+  pages/             The page components the routes render
+  router.tsx         Router + TanStack Query client
+  start.ts           Turns off server rendering of pages (sign-in lives in the browser)
+  lib/queries.ts     Query keys and cache helpers
   lib/timberborn.ts  Client for the game's local HTTP API
   lib/supabase.ts    Browser Supabase client (publishable key)
-  pages/             Home, Login, AuthCallback, Dashboard, Colony
-  shared/            Code shared with the Worker (webhook URL format, generated DB types)
-worker/index.ts      Hono app: /api/*, /hook/*
+  server/            Server-only code: Supabase client with the secret key
+  shared/            Code shared by browser and server (webhook URL format, generated DB types)
 supabase/            config.toml + SQL migrations
-wrangler.jsonc       Worker + static assets config
+wrangler.jsonc       Worker config (entry: TanStack Start's server entry)
 ```
 
 ## Local development
@@ -54,7 +58,7 @@ pnpm install
 pnpm db:start                     # local Supabase; prints the keys below
 cp .env.example .env.local        # VITE_SUPABASE_PUBLISHABLE_KEY
 cp .dev.vars.example .dev.vars    # SUPABASE_SECRET_KEY (Worker only)
-pnpm cf-typegen                   # regenerate Worker Env types after editing vars
+# after adding a Worker var or secret, also add it to src/server/env.d.ts
 pnpm dev                          # http://localhost:5173
 ```
 

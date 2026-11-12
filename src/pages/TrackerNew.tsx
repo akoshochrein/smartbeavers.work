@@ -1,6 +1,7 @@
+import { keys, useInvalidate } from "@/lib/queries";
 import { ArrowLeft, CalendarClock, ChevronRight, Users } from "lucide-react";
 import { useState, type FormEvent } from "react";
-import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router";
+import { Link, Navigate, useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { WeatherBadge } from "@/components/app/weather";
 import { DateSetter } from "@/components/app/DateSetter";
@@ -19,15 +20,18 @@ import { GoodIcon } from "@/components/app/GoodIcon";
 import { Input } from "@/components/ui/input";
 import { WEATHERS } from "@/shared/weather";
 
+export const TRACKER_KINDS = ["numbers", "resource", "weather", "clock"] as const;
+export type TrackerKind = (typeof TRACKER_KINDS)[number];
+const ROUTE = "/_app/colonies/$id/trackers/new";
+
 export function TrackerNew() {
-  const { id } = useParams<{ id: string }>();
-  const [params] = useSearchParams();
-  const kind = params.get("kind");
+  const { id } = useParams({ from: ROUTE });
+  const { kind } = useSearch({ from: ROUTE });
   if (kind === "numbers") return <CounterTrackerForm kind="population" />;
   if (kind === "resource") return <CounterTrackerForm kind="resource" />;
-  if (kind === "weather") return <WeatherTrackerNew colonyId={id!} />;
-  if (kind === "clock") return <GameClockNew colonyId={id!} />;
-  return <TrackerChooser colonyId={id!} />;
+  if (kind === "weather") return <WeatherTrackerNew colonyId={id} />;
+  if (kind === "clock") return <GameClockNew colonyId={id} />;
+  return <TrackerChooser colonyId={id} />;
 }
 
 function TrackerChooser({ colonyId }: { colonyId: string }) {
@@ -45,7 +49,12 @@ function TrackerChooser({ colonyId }: { colonyId: string }) {
       <p className="mt-3 max-w-xl text-lg leading-relaxed text-ink-soft">What do you want to follow?</p>
 
       <div className="mt-8 grid max-w-5xl gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <Link to={clock ? `/colonies/${colony.id}/trackers/clock` : "?kind=clock"} className={cn(option, clock && "bg-mist-2/40")}>
+        <Link
+          to={clock ? "/colonies/$id/trackers/clock" : "/colonies/$id/trackers/new"}
+          params={{ id: colony.id }}
+          search={clock ? undefined : { kind: "clock" }}
+          className={cn(option, clock && "bg-mist-2/40")}
+        >
           <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-pine text-mist">
             <CalendarClock className="size-5" />
           </span>
@@ -61,7 +70,7 @@ function TrackerChooser({ colonyId }: { colonyId: string }) {
         </Link>
 
         {weather ? (
-          <Link to={`/colonies/${colony.id}/trackers/weather`} className={cn(option, "bg-mist-2/40")}>
+          <Link to="/colonies/$id/trackers/weather" params={{ id: colony.id }} className={cn(option, "bg-mist-2/40")}>
             <span className="flex shrink-0 -space-x-2">
               {WEATHERS.map((w) => <WeatherBadge key={w.key} weather={w.key} size="md" className="ring-2 ring-paper" />)}
             </span>
@@ -72,7 +81,7 @@ function TrackerChooser({ colonyId }: { colonyId: string }) {
             <ChevronRight className="mt-2 size-5 shrink-0 text-ink-soft" />
           </Link>
         ) : (
-          <Link to="?kind=weather" className={option}>
+          <Link to="/colonies/$id/trackers/new" params={{ id: colony.id }} search={{ kind: "weather" }} className={option}>
             <span className="flex shrink-0 -space-x-2">
               {WEATHERS.map((w) => <WeatherBadge key={w.key} weather={w.key} size="md" className="ring-2 ring-paper" />)}
             </span>
@@ -86,7 +95,7 @@ function TrackerChooser({ colonyId }: { colonyId: string }) {
           </Link>
         )}
 
-        <Link to="?kind=resource" className={option}>
+        <Link to="/colonies/$id/trackers/new" params={{ id: colony.id }} search={{ kind: "resource" }} className={option}>
           <span className="grid size-10 shrink-0 grid-cols-2 place-items-center gap-0.5 rounded-lg bg-mist-2 p-1">
             {["Water", "Logs", "Berries", "Gears"].map((g) => <GoodIcon key={g} good={g} className="size-3.5" />)}
           </span>
@@ -99,7 +108,7 @@ function TrackerChooser({ colonyId }: { colonyId: string }) {
           <ChevronRight className="mt-2 size-5 shrink-0 text-ink-soft transition-transform group-hover:translate-x-0.5" />
         </Link>
 
-        <Link to="?kind=numbers" className={option}>
+        <Link to="/colonies/$id/trackers/new" params={{ id: colony.id }} search={{ kind: "numbers" }} className={option}>
           <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-cobalt text-white">
             <Users className="size-5" />
           </span>
@@ -118,6 +127,7 @@ function TrackerChooser({ colonyId }: { colonyId: string }) {
 
 function GameClockNew({ colonyId }: { colonyId: string }) {
   const navigate = useNavigate();
+  const invalidate = useInvalidate();
   const [colony] = useColony(colonyId);
   const [clock] = useGameClock(colonyId);
   const [weather] = useWeatherTracker(colonyId);
@@ -126,15 +136,16 @@ function GameClockNew({ colonyId }: { colonyId: string }) {
 
   if (colony === undefined || clock === undefined || weather === undefined) return <Skeleton className="h-96 w-full rounded-2xl" />;
   if (colony === null) return <p className="text-ink-soft">Colony not found.</p>;
-  if (clock) return <Navigate to={`/colonies/${colony.id}/trackers/clock`} replace />;
+  if (clock) return <Navigate to="/colonies/$id/trackers/clock" params={{ id: colony.id }} replace />;
 
   async function start() {
     setSaving(true);
     const { error } = await setGameDate(colonyId, value.cycle, value.day);
     setSaving(false);
     if (error) return toast.error(`Couldn't start the game clock: ${error.message}`);
+    await invalidate(keys.gameClock(colonyId), keys.gameDate(colonyId));
     toast.success("Game clock started");
-    navigate(`/colonies/${colonyId}/trackers/clock`);
+    navigate({ to: "/colonies/$id/trackers/clock", params: { id: colonyId } });
   }
 
   return (
@@ -166,21 +177,23 @@ function GameClockNew({ colonyId }: { colonyId: string }) {
 
 function WeatherTrackerNew({ colonyId }: { colonyId: string }) {
   const navigate = useNavigate();
+  const invalidate = useInvalidate();
   const [colony] = useColony(colonyId);
   const [exists] = useWeatherTracker(colonyId);
   const [saving, setSaving] = useState(false);
 
   if (colony === undefined || exists === undefined) return <Skeleton className="h-96 w-full rounded-2xl" />;
   if (colony === null) return <p className="text-ink-soft">Colony not found.</p>;
-  if (exists) return <Navigate to={`/colonies/${colony.id}/trackers/weather`} replace />;
+  if (exists) return <Navigate to="/colonies/$id/trackers/weather" params={{ id: colony.id }} replace />;
 
   async function start() {
     setSaving(true);
     const { error } = await supabase.from("weather_trackers").insert({ colony_id: colonyId });
     setSaving(false);
     if (error && error.code !== "23505") return toast.error(`Couldn't start weather tracking: ${error.message}`);
+    await invalidate(keys.weatherTracker(colonyId));
     toast.success("Weather tracking started");
-    navigate(`/colonies/${colonyId}/trackers/weather`);
+    navigate({ to: "/colonies/$id/trackers/weather", params: { id: colonyId } });
   }
 
   return (
@@ -212,8 +225,9 @@ function WeatherTrackerNew({ colonyId }: { colonyId: string }) {
 }
 
 function CounterTrackerForm({ kind }: { kind: Metric["kind"] }) {
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams({ from: ROUTE });
   const navigate = useNavigate();
+  const invalidate = useInvalidate();
   const [colony] = useColony(id);
   const ladders = useLadders(id);
 
@@ -254,8 +268,9 @@ function CounterTrackerForm({ kind }: { kind: Metric["kind"] }) {
       toast.error(error.code === "23505" ? `${metric.label} is already tracked in this colony.` : `Couldn't create the tracker: ${error.message}`);
       return;
     }
+    await invalidate(keys.ladders(colony!.id), keys.colonySummaries);
     toast.success(`${metric.label} tracker created`);
-    navigate(`/colonies/${colony!.id}/trackers/${data.id}`);
+    navigate({ to: "/colonies/$id/trackers/$ladderId", params: { id: colony!.id, ladderId: data.id } });
   }
 
   return (
@@ -379,7 +394,7 @@ function GoodPicker({
       />
       <p className="text-sm text-ink-soft">
         {factionLabel(faction) ? `Showing ${factionLabel(faction)} goods.` : "Showing both factions' goods."}{" "}
-        <Link to={`/colonies/${colonyId}?tab=settings`} className="text-cobalt-deep hover:underline">
+        <Link to="/colonies/$id" params={{ id: colonyId }} search={{ tab: "settings" }} className="text-cobalt-deep hover:underline">
           {factionLabel(faction) ? "Change faction" : "Set this colony's faction"}
         </Link>
       </p>
@@ -418,7 +433,7 @@ function GoodPicker({
 
 export function BackLink({ colonyId, name }: { colonyId: string; name: string }) {
   return (
-    <Link to={`/colonies/${colonyId}`} className="inline-flex items-center gap-1.5 text-sm text-cobalt-deep hover:underline">
+    <Link to="/colonies/$id" params={{ id: colonyId }} className="inline-flex items-center gap-1.5 text-sm text-cobalt-deep hover:underline">
       <ArrowLeft className="size-4" /> {name}
     </Link>
   );

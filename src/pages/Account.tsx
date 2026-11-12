@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -50,7 +50,7 @@ export function Account() {
     // The account is gone on the server; drop the local session without calling it again.
     await supabase.auth.signOut({ scope: "local" });
     toast.success("Your account and its data are deleted");
-    navigate("/", { replace: true });
+    navigate({ to: "/", replace: true });
   }
 
   return (

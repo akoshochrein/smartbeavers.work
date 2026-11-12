@@ -1,7 +1,7 @@
 import { CalendarClock } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router";
+import { Link } from "@tanstack/react-router";
 import { SetDateDialog } from "@/components/app/SetDateDialog";
 import { StatusDot } from "@/components/app/StatusDot";
 import { WeatherBadge } from "@/components/app/weather";
@@ -57,7 +57,7 @@ export function GameClockCard({
             </SetDateDialog>
           )}
           <Button asChild variant="ghost" size="sm" className="text-cobalt-deep hover:text-cobalt-deep">
-            <Link to="trackers/clock">Setup guide</Link>
+            <Link to="/colonies/$id/trackers/clock" params={{ id: colonyId }}>Setup guide</Link>
           </Button>
         </div>
       </header>

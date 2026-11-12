@@ -1,6 +1,7 @@
+import { keys, useInvalidate } from "@/lib/queries";
 import { Copy } from "lucide-react";
 import { useMemo, useRef } from "react";
-import { useNavigate, useParams } from "react-router";
+import { useNavigate, useParams } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { copyText, CopyField } from "@/components/app/CopyField";
 import { StatusDot } from "@/components/app/StatusDot";
@@ -28,7 +29,7 @@ import { webhookUrl } from "@/shared/webhook";
 import { BackLink } from "./TrackerNew";
 
 export function TrackerGuide() {
-  const { id, ladderId } = useParams<{ id: string; ladderId: string }>();
+  const { id, ladderId } = useParams({ from: "/_app/colonies/$id/trackers/$ladderId" });
   const [colony] = useColony(id);
   const ladders = useLadders(id);
 
@@ -41,6 +42,7 @@ export function TrackerGuide() {
 
 function Guide({ colonyId, colonyName, token, ladder }: { colonyId: string; colonyName: string; token: string; ladder: Ladder }) {
   const navigate = useNavigate();
+  const invalidate = useInvalidate();
   const feed = useColonyFeed(colonyId);
   const metric = metricFor(ladder.metric);
   const symbol = comparisonSymbol(ladder.comparison as Comparison);
@@ -59,8 +61,9 @@ function Guide({ colonyId, colonyName, token, ladder }: { colonyId: string; colo
   async function remove() {
     const { error } = await supabase.from("ladders").delete().eq("id", ladder.id);
     if (error) return toast.error(`Couldn't delete the tracker: ${error.message}`);
+    await invalidate(keys.ladders(colonyId), keys.colonySummaries);
     toast.success(`${metric.label} tracker deleted`);
-    navigate(`/colonies/${colonyId}`);
+    navigate({ to: "/colonies/$id", params: { id: colonyId } });
   }
 
   return (

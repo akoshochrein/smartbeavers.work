@@ -1,3 +1,4 @@
+import { keys, useInvalidate } from "@/lib/queries";
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { DateSetter } from "@/components/app/DateSetter";
@@ -29,12 +30,14 @@ export function SetDateDialog({
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState(current ?? { cycle: 1, day: 1 });
   const [saving, setSaving] = useState(false);
+  const invalidate = useInvalidate();
 
   async function save() {
     setSaving(true);
     const { error } = await setGameDate(colonyId, value.cycle, value.day);
     setSaving(false);
     if (error) return toast.error(`Couldn't set the date: ${error.message}`);
+    await invalidate(keys.gameClock(colonyId), keys.gameDate(colonyId));
     toast.success(`Clock set to ${formatGameDate(value.cycle, value.day)}`);
     setOpen(false);
     onSet();

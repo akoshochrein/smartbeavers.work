@@ -1,5 +1,5 @@
 import { ChevronsUpDown, LogOut, Plus, UserRound } from "lucide-react";
-import { Link, NavLink, Outlet, useParams } from "react-router";
+import { Link, Outlet, useParams } from "@tanstack/react-router";
 import { Logo } from "@/components/brand/Logo";
 import { NewColonyDialog } from "@/components/app/NewColonyDialog";
 import { Button } from "@/components/ui/button";
@@ -13,23 +13,20 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/lib/auth";
-import { ColoniesProvider, useColonies } from "@/lib/colonies";
+import { useColonies } from "@/lib/colonies";
 import { supabase } from "@/lib/supabase";
-import { cn } from "@/lib/utils";
 
 export function AppShell() {
   return (
-    <ColoniesProvider>
-      <div className="min-h-dvh lg:grid lg:grid-cols-[17rem_1fr]">
-        <Sidebar />
-        <MobileBar />
-        <main className="min-w-0">
-          <div className="mx-auto max-w-6xl px-5 py-8 sm:px-8 lg:py-12">
-            <Outlet />
-          </div>
-        </main>
-      </div>
-    </ColoniesProvider>
+    <div className="min-h-dvh lg:grid lg:grid-cols-[17rem_1fr]">
+      <Sidebar />
+      <MobileBar />
+      <main className="min-w-0">
+        <div className="mx-auto max-w-6xl px-5 py-8 sm:px-8 lg:py-12">
+          <Outlet />
+        </div>
+      </main>
+    </div>
   );
 }
 
@@ -52,18 +49,20 @@ function Sidebar() {
         {colonies === undefined
           ? [0, 1].map((i) => <Skeleton key={i} className="mx-3 my-2 h-5 bg-pine-soft" />)
           : colonies.map((c) => (
-              <NavLink
+              <Link
                 key={c.id}
-                to={`/colonies/${c.id}`}
-                className={({ isActive }) =>
-                  cn(
-                    "relative block truncate rounded-lg px-3 py-2 text-[15px] text-sage transition-colors hover:bg-pine-soft hover:text-mist",
-                    isActive && "bg-pine-soft font-medium text-mist before:absolute before:top-2 before:bottom-2 before:-left-3 before:w-1 before:rounded-r-full before:bg-resin",
-                  )
-                }
+                to="/colonies/$id"
+                params={{ id: c.id }}
+                // Stays highlighted on the colony's sub-pages (trackers, guides) too.
+                activeOptions={{ exact: false, includeSearch: false }}
+                className="relative block truncate rounded-lg px-3 py-2 text-[15px] text-sage transition-colors hover:bg-pine-soft hover:text-mist"
+                activeProps={{
+                  className:
+                    "bg-pine-soft font-medium text-mist before:absolute before:top-2 before:bottom-2 before:-left-3 before:w-1 before:rounded-r-full before:bg-resin",
+                }}
               >
                 {c.name}
-              </NavLink>
+              </Link>
             ))}
         {colonies?.length === 0 && <p className="px-3 py-2 text-sm text-sage">No colonies yet.</p>}
       </nav>
@@ -106,7 +105,7 @@ function AccountMenu() {
 
 function MobileBar() {
   const { colonies } = useColonies();
-  const { id } = useParams();
+  const { id } = useParams({ strict: false });
   const current = colonies?.find((c) => c.id === id);
   return (
     <div className="sticky top-0 z-20 flex items-center gap-2 bg-pine px-4 py-3 text-mist lg:hidden">
@@ -121,12 +120,14 @@ function MobileBar() {
         <DropdownMenuContent align="end" className="w-64">
           {colonies?.map((c) => (
             <DropdownMenuItem key={c.id} asChild>
-              <NavLink to={`/colonies/${c.id}`}>{c.name}</NavLink>
+              <Link to="/colonies/$id" params={{ id: c.id }}>
+                {c.name}
+              </Link>
             </DropdownMenuItem>
           ))}
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
-            <NavLink to="/dashboard">All colonies</NavLink>
+            <Link to="/dashboard">All colonies</Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link to="/account">

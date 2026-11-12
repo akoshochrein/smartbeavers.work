@@ -1,7 +1,7 @@
 import { BarChart3, CloudSun, MailCheck, Radio, ToggleRight } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState, type FormEvent } from "react";
-import { Link, Navigate } from "react-router";
+import { Link, Navigate } from "@tanstack/react-router";
 import { Logo } from "@/components/brand/Logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

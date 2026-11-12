@@ -1,6 +1,7 @@
+import { keys, useInvalidate } from "@/lib/queries";
 import { CalendarClock } from "lucide-react";
 import { useState } from "react";
-import { Link, useNavigate, useParams } from "react-router";
+import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { copyText, CopyField } from "@/components/app/CopyField";
 import { SetDateDialog } from "@/components/app/SetDateDialog";
@@ -29,7 +30,7 @@ import { webhookUrl } from "@/shared/webhook";
 import { BackLink } from "./TrackerNew";
 
 export function ClockGuide() {
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams({ from: "/_app/colonies/$id/trackers/clock" });
   const [colony] = useColony(id);
   const [clock] = useGameClock(id);
   if (colony === undefined || clock === undefined) return <Skeleton className="h-96 w-full rounded-2xl" />;
@@ -39,6 +40,7 @@ export function ClockGuide() {
 
 function Guide({ colonyId, colonyName, token }: { colonyId: string; colonyName: string; token: string }) {
   const navigate = useNavigate();
+  const invalidate = useInvalidate();
   const feed = useColonyFeed(colonyId);
   const [setCount, setSetCount] = useState(0);
   const version = useDateVersion(feed);
@@ -48,8 +50,9 @@ function Guide({ colonyId, colonyName, token }: { colonyId: string; colonyName: 
   async function remove() {
     const { error } = await supabase.from("game_clocks").delete().eq("colony_id", colonyId);
     if (error) return toast.error(`Couldn't remove the game clock: ${error.message}`);
+    await invalidate(keys.gameClock(colonyId), keys.gameDate(colonyId));
     toast.success("Game clock removed");
-    navigate(`/colonies/${colonyId}`);
+    navigate({ to: "/colonies/$id", params: { id: colonyId } });
   }
 
   return (
@@ -137,7 +140,7 @@ function Guide({ colonyId, colonyName, token }: { colonyId: string; colonyName: 
             {date && !date.cycles_tracked && (
               <p className="rounded-lg bg-resin-soft/60 px-3 py-2 text-ink">
                 That needs weather tracking, which this colony doesn't have yet.{" "}
-                <Link to={`/colonies/${colonyId}/trackers/new?kind=weather`} className="font-medium text-cobalt-deep underline-offset-4 hover:underline">
+                <Link to="/colonies/$id/trackers/new" params={{ id: colonyId }} search={{ kind: "weather" }} className="font-medium text-cobalt-deep underline-offset-4 hover:underline">
                   Set it up
                 </Link>
               </p>

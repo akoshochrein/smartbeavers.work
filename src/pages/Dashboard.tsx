@@ -1,11 +1,12 @@
 import { ChevronRight, Plus } from "lucide-react";
-import { useEffect, useState } from "react";
-import { Link } from "react-router";
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { NewColonyDialog } from "@/components/app/NewColonyDialog";
 import { StatusDot } from "@/components/app/StatusDot";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useColonies } from "@/lib/colonies";
+import { keys, unwrap } from "@/lib/queries";
 import { supabase } from "@/lib/supabase";
 import { timeAgo } from "@/lib/time";
 
@@ -15,22 +16,19 @@ const RECENT_MS = 10 * 60_000;
 
 export function Dashboard() {
   const { colonies } = useColonies();
-  const [summaries, setSummaries] = useState<Map<string, Summary>>(new Map());
-
-  useEffect(() => {
-    if (!colonies?.length) return;
-    supabase
-      .from("colonies")
-      .select("id, ladders(count), adapter_states(updated_at)")
-      .then(({ data }) => {
-        const map = new Map<string, Summary>();
-        for (const row of data ?? []) {
-          const last = row.adapter_states.map((s) => s.updated_at).sort().at(-1);
-          map.set(row.id, { id: row.id, trackers: row.ladders[0]?.count ?? 0, lastSignal: last });
-        }
-        setSummaries(map);
-      });
-  }, [colonies]);
+  const { data: summaries = new Map<string, Summary>() } = useQuery({
+    queryKey: keys.colonySummaries,
+    enabled: !!colonies?.length,
+    queryFn: async () => {
+      const rows = unwrap(await supabase.from("colonies").select("id, ladders(count), adapter_states(updated_at)")) ?? [];
+      const map = new Map<string, Summary>();
+      for (const row of rows) {
+        const last = row.adapter_states.map((s) => s.updated_at).sort().at(-1);
+        map.set(row.id, { id: row.id, trackers: row.ladders[0]?.count ?? 0, lastSignal: last });
+      }
+      return map;
+    },
+  });
 
   if (colonies === undefined) {
     return (
@@ -61,7 +59,8 @@ export function Dashboard() {
           return (
             <li key={c.id}>
               <Link
-                to={`/colonies/${c.id}`}
+                to="/colonies/$id"
+                params={{ id: c.id }}
                 className="group flex items-center gap-6 py-6 outline-offset-4 transition-colors hover:bg-paper sm:px-4"
               >
                 <div className="min-w-0 flex-1">

@@ -1,6 +1,6 @@
 import { CalendarClock, Plug, Plus, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import { Link, useNavigate, useParams, useSearchParams } from "react-router";
+import { Link, useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { CopyField } from "@/components/app/CopyField";
 import { StatusDot } from "@/components/app/StatusDot";
@@ -41,11 +41,13 @@ import { useRecentSignals } from "@/lib/history";
 import { useColonyFeed, type ColonyFeed } from "@/lib/useColonyFeed";
 import { webhookUrl } from "@/shared/webhook";
 
-const TABS = ["trackers", "signals", "levers", "settings"] as const;
+export const COLONY_TABS = ["trackers", "signals", "levers", "settings"] as const;
+export type ColonyTab = (typeof COLONY_TABS)[number];
+const ROUTE = "/_app/colonies/$id/";
 const LIVE_MS = 10 * 60_000;
 
 export function ColonyPage() {
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams({ from: ROUTE });
   const [colony, setColony] = useColony(id);
 
   if (colony === undefined) {
@@ -78,8 +80,8 @@ function ColonyDashboard({ colony, onChange }: { colony: Colony; onChange: (c: C
   const dateVersion = useDateVersion(feed);
   const [dateSets, setDateSets] = useState(0);
   const date = useGameDate(colony.id, !!clock, `${dateVersion}-${dateSets}`);
-  const [params, setParams] = useSearchParams();
-  const tab = TABS.find((t) => t === params.get("tab")) ?? "trackers";
+  const navigate = useNavigate();
+  const tab = useSearch({ from: ROUTE }).tab ?? "trackers";
 
   const lastSignal = [...feed.states.values()].map((s) => s.updated_at).sort().at(-1);
   const live = !!lastSignal && Date.now() - Date.parse(lastSignal) < LIVE_MS;
@@ -106,13 +108,13 @@ function ColonyDashboard({ colony, onChange }: { colony: Colony; onChange: (c: C
           </p>
         </div>
         <Button asChild className="sm:ml-auto">
-          <Link to="trackers/new">
+          <Link to="/colonies/$id/trackers/new" params={{ id: colony.id }}>
             <Plus /> Add tracker
           </Link>
         </Button>
       </header>
 
-      <Tabs value={tab} onValueChange={(v) => setParams(v === "trackers" ? {} : { tab: v }, { replace: true })} className="mt-8">
+      <Tabs value={tab} onValueChange={(v) => navigate({ to: "/colonies/$id", params: { id: colony.id }, search: v === "trackers" ? {} : { tab: v as ColonyTab }, replace: true })} className="mt-8">
         <TabsList variant="line" className="w-full justify-start gap-4 border-b pb-0">
           {[
             ["trackers", "Trackers"],
@@ -130,7 +132,7 @@ function ColonyDashboard({ colony, onChange }: { colony: Colony; onChange: (c: C
           {ladders === undefined || weather === undefined || clock === undefined ? (
             <Skeleton className="h-80 w-full rounded-2xl" />
           ) : ladders.length === 0 && !weather && !clock ? (
-            <NoTrackers />
+            <NoTrackers colonyId={colony.id} />
           ) : (
             <div className="grid items-start gap-6 xl:grid-cols-2">
               {clock && <GameClockCard colonyId={colony.id} feed={feed} date={date} onDateSet={() => setDateSets((n) => n + 1)} />}
@@ -162,7 +164,7 @@ function ColonyDashboard({ colony, onChange }: { colony: Colony; onChange: (c: C
   );
 }
 
-function NoTrackers() {
+function NoTrackers({ colonyId }: { colonyId: string }) {
   return (
     <div className="rounded-2xl border border-dashed border-ink/20 p-8">
       <div className="max-w-md">
@@ -173,7 +175,7 @@ function NoTrackers() {
         </p>
         <SignalMeter steps={[10, 20, 30, 40, 50].map((bound) => ({ bound, state: undefined }))} labels={false} size="sm" className="mt-5 max-w-xs" />
         <Button asChild className="mt-5">
-          <Link to="trackers/new">
+          <Link to="/colonies/$id/trackers/new" params={{ id: colonyId }}>
             <Plus /> Add a tracker
           </Link>
         </Button>
@@ -436,7 +438,7 @@ function SettingsTab({ colony, onChange }: { colony: Colony; onChange: (c: Colon
     if (error) return toast.error(`Couldn't delete: ${error.message}`);
     await reload();
     toast.success(`${colony.name} deleted`);
-    navigate("/dashboard");
+    navigate({ to: "/dashboard" });
   }
 
   return (

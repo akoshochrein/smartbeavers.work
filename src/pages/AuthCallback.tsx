@@ -1,4 +1,4 @@
-import { Link, Navigate } from "react-router";
+import { Link, Navigate } from "@tanstack/react-router";
 import { LogoMark } from "@/components/brand/Logo";
 import { useAuth } from "@/lib/auth";
 

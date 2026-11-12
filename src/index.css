@@ -1,3 +1,7 @@
+@import "@fontsource-variable/gabarito";
+@import "@fontsource-variable/atkinson-hyperlegible-next";
+@import "@fontsource-variable/atkinson-hyperlegible-next/wght-italic.css";
+@import "@fontsource-variable/jetbrains-mono";
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";

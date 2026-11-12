@@ -1,6 +1,7 @@
 import type { Session } from "@supabase/supabase-js";
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { Navigate, useLocation } from "react-router";
+import { useQueryClient } from "@tanstack/react-query";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { Navigate } from "@tanstack/react-router";
 import { supabase } from "./supabase";
 
 type AuthState = { session: Session | null; loading: boolean };
@@ -9,6 +10,15 @@ const AuthContext = createContext<AuthState>({ session: null, loading: true });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>({ session: null, loading: true });
+  const queryClient = useQueryClient();
+  const userId = state.session?.user.id;
+
+  // Cached colonies and signals belong to one player: drop them when that player changes or signs out.
+  const lastUser = useRef(userId);
+  useEffect(() => {
+    if (lastUser.current && lastUser.current !== userId) queryClient.clear();
+    lastUser.current = userId;
+  }, [userId, queryClient]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setState({ session: data.session, loading: false }));
@@ -25,8 +35,7 @@ export const useAuth = () => useContext(AuthContext);
 
 export function RequireAuth({ children }: { children: ReactNode }) {
   const { session, loading } = useAuth();
-  const location = useLocation();
   if (loading) return <div className="min-h-dvh bg-mist" aria-busy="true" />;
-  if (!session) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  if (!session) return <Navigate to="/login" replace />;
   return children;
 }

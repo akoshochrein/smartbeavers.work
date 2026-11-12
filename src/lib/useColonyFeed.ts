@@ -1,4 +1,6 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
+import { keys, unwrap } from "./queries";
 import { supabase, type AdapterEvent, type AdapterState } from "./supabase";
 
 /** How much signal history trackers chart. */
@@ -17,23 +19,16 @@ export type ColonyFeed = {
  * Deliberately loads no history: each tracker asks for just the slice it charts.
  */
 export function useColonyFeed(colonyId: string): ColonyFeed {
-  const [feed, setFeed] = useState<ColonyFeed>({ loading: true, states: new Map(), live: [] });
+  const { data: loaded } = useQuery({
+    queryKey: keys.adapterStates(colonyId),
+    queryFn: async () => unwrap(await supabase.from("adapter_states").select("*").eq("colony_id", colonyId)) ?? [],
+  });
+
+  // Signals Realtime delivered while this page has been open, for this colony only.
+  const [live, setLive] = useState<{ colonyId: string; events: AdapterEvent[] }>({ colonyId, events: [] });
 
   useEffect(() => {
-    let cancelled = false;
-    setFeed({ loading: true, states: new Map(), live: [] });
-
-    supabase
-      .from("adapter_states")
-      .select("*")
-      .eq("colony_id", colonyId)
-      .then(({ data }) => {
-        if (cancelled) return;
-        const loaded = (data ?? []).map((x) => [x.name, x] as const);
-        // Keep anything Realtime delivered while we were loading (it's newer).
-        setFeed((prev) => ({ ...prev, loading: false, states: new Map([...loaded, ...prev.states]) }));
-      });
-
+    setLive({ colonyId, events: [] });
     const channel = supabase
       .channel(`colony-feed:${colonyId}`)
       .on(
@@ -41,21 +36,24 @@ export function useColonyFeed(colonyId: string): ColonyFeed {
         { event: "INSERT", schema: "public", table: "adapter_events", filter: `colony_id=eq.${colonyId}` },
         (payload) => {
           const ev = payload.new as AdapterEvent;
-          setFeed((prev) => {
-            if (prev.live.some((e) => e.id === ev.id)) return prev;
-            const states = new Map(prev.states);
-            states.set(ev.adapter_name, { colony_id: ev.colony_id, name: ev.adapter_name, state: ev.state, updated_at: ev.received_at });
-            return { ...prev, states, live: [...prev.live, ev] };
-          });
+          setLive((prev) => (prev.events.some((e) => e.id === ev.id) ? prev : { colonyId, events: [...prev.events, ev] }));
         },
       )
       .subscribe();
-
     return () => {
-      cancelled = true;
       supabase.removeChannel(channel);
     };
   }, [colonyId]);
 
-  return feed;
+  return useMemo(() => {
+    const events = live.colonyId === colonyId ? live.events : [];
+    const states = new Map((loaded ?? []).map((s) => [s.name, s] as const));
+    // A live signal replaces the loaded state unless the loaded one is newer (it was fetched later).
+    for (const ev of events) {
+      const known = states.get(ev.adapter_name);
+      if (known && Date.parse(known.updated_at) > Date.parse(ev.received_at)) continue;
+      states.set(ev.adapter_name, { colony_id: ev.colony_id, name: ev.adapter_name, state: ev.state, updated_at: ev.received_at });
+    }
+    return { loading: loaded === undefined, states, live: events };
+  }, [loaded, live, colonyId]);
 }

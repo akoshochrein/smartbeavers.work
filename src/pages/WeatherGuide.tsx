@@ -1,6 +1,7 @@
+import { keys, useInvalidate } from "@/lib/queries";
 import { Copy } from "lucide-react";
 import { useRef } from "react";
-import { useNavigate, useParams } from "react-router";
+import { useNavigate, useParams } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { copyText, CopyField } from "@/components/app/CopyField";
 import { StatusDot } from "@/components/app/StatusDot";
@@ -29,7 +30,7 @@ import { webhookUrl } from "@/shared/webhook";
 import { BackLink } from "./TrackerNew";
 
 export function WeatherGuide() {
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams({ from: "/_app/colonies/$id/trackers/weather" });
   const [colony] = useColony(id);
   const [exists] = useWeatherTracker(id);
 
@@ -40,6 +41,7 @@ export function WeatherGuide() {
 
 function Guide({ colonyId, colonyName, token }: { colonyId: string; colonyName: string; token: string }) {
   const navigate = useNavigate();
+  const invalidate = useInvalidate();
   const feed = useColonyFeed(colonyId);
   const origin = window.location.origin;
   const reporting = WEATHERS.filter((w) => feed.states.has(w.adapter)).length;
@@ -52,8 +54,9 @@ function Guide({ colonyId, colonyName, token }: { colonyId: string; colonyName: 
   async function remove() {
     const { error } = await supabase.from("weather_trackers").delete().eq("colony_id", colonyId);
     if (error) return toast.error(`Couldn't remove weather tracking: ${error.message}`);
+    await invalidate(keys.weatherTracker(colonyId));
     toast.success("Weather tracking removed");
-    navigate(`/colonies/${colonyId}`);
+    navigate({ to: "/colonies/$id", params: { id: colonyId } });
   }
 
   return (

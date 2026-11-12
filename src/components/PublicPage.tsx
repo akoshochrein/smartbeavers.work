@@ -1,6 +1,6 @@
 import { ArrowLeft } from "lucide-react";
 import type { ReactNode } from "react";
-import { Link } from "react-router";
+import { Link } from "@tanstack/react-router";
 import { Logo } from "@/components/brand/Logo";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
@@ -12,11 +12,13 @@ export function SiteFooter() {
       <div className="mx-auto flex max-w-5xl flex-col gap-x-6 gap-y-3 px-5 py-8 text-sm text-ink-soft sm:flex-row sm:flex-wrap sm:items-center sm:px-8">
         <Logo className="text-ink" />
         <nav aria-label="About this site" className="flex flex-wrap gap-x-5 gap-y-2">
-          {[
-            ["/contact", "Contact"],
-            ["/privacy", "Privacy"],
-            ["/terms", "Terms"],
-          ].map(([to, label]) => (
+          {(
+            [
+              ["/contact", "Contact"],
+              ["/privacy", "Privacy"],
+              ["/terms", "Terms"],
+            ] as const
+          ).map(([to, label]) => (
             <Link key={to} to={to} className="text-cobalt-deep underline-offset-4 hover:underline">
               {label}
             </Link>

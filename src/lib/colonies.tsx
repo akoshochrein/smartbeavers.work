@@ -1,21 +1,13 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { keys, unwrap, useInvalidate } from "./queries";
 import { supabase, type Colony } from "./supabase";
 
-type ColoniesState = { colonies: Colony[] | undefined; reload: () => Promise<void> };
-
-const ColoniesContext = createContext<ColoniesState>({ colonies: undefined, reload: async () => {} });
-
-/** The signed-in player's colonies, shared by the sidebar and pages so both stay in sync. */
-export function ColoniesProvider({ children }: { children: ReactNode }) {
-  const [colonies, setColonies] = useState<Colony[]>();
-  const reload = useCallback(async () => {
-    const { data } = await supabase.from("colonies").select("*").order("created_at");
-    setColonies(data ?? []);
-  }, []);
-  useEffect(() => {
-    reload();
-  }, [reload]);
-  return <ColoniesContext.Provider value={{ colonies, reload }}>{children}</ColoniesContext.Provider>;
+/** The signed-in player's colonies. One cached list shared by the sidebar and the pages. */
+export function useColonies(): { colonies: Colony[] | undefined; reload: () => Promise<unknown> } {
+  const { data } = useQuery({
+    queryKey: keys.colonies,
+    queryFn: async () => unwrap(await supabase.from("colonies").select("*").order("created_at")) ?? [],
+  });
+  const invalidate = useInvalidate();
+  return { colonies: data, reload: () => invalidate(keys.colonies) };
 }
-
-export const useColonies = () => useContext(ColoniesContext);
