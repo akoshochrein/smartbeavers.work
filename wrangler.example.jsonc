@@ -1,0 +1,18 @@
+// Copy to wrangler.jsonc and fill in your own values. wrangler.jsonc is not committed.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "smartbeavers",
+  // Our server entry (wraps TanStack Start's): serves the page shell, the built assets and the server
+  // routes in src/routes/api and src/routes/hook.
+  "main": "src/server.ts",
+  "compatibility_date": "2026-11-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  "vars": {
+    // Production values. Local dev overrides these from .dev.vars.
+    // The secret key is set with `wrangler secret put SUPABASE_SECRET_KEY`, never here.
+    "SUPABASE_URL": "https://YOUR-PROJECT-REF.supabase.co"
+  }
+  // To serve it from your own domain (the zone must be on the same Cloudflare account):
+  // "routes": [{ "pattern": "example.com", "custom_domain": true }]
+}

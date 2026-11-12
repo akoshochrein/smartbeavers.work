@@ -133,9 +133,15 @@ export function Privacy() {
             </li>
           </ul>
           <p>
-            For anything else, write to {mail}. We answer within one month. You also have the right to complain to a
-            data protection authority: the one where you live, or the Hungarian authority, NAIH (
-            <a href="https://www.naih.hu" target="_blank" rel="noreferrer">naih.hu</a>), since smartbeavers is run from Hungary.
+            For anything else, write to {mail}. We answer within one month. You also have the right to complain to the
+            data protection authority where you live
+            {OPERATOR.authority && (
+              <>
+                , or to {OPERATOR.authority}
+                {OPERATOR.country && <>, since smartbeavers is run from {OPERATOR.country}</>}
+              </>
+            )}
+            .
           </p>
         </section>
 

@@ -7,3 +7,10 @@ dist
 *.tsbuildinfo
 supabase/.branches
 supabase/.temp
+
+# Your own deployment's settings. Start from the .example files.
+.env.production
+wrangler.jsonc
+
+# Generated
+.tanstack

@@ -1,19 +1,27 @@
-// Who runs smartbeavers and how to reach them. Shown on the contact page, the privacy policy
-// and the terms. Leave a value empty to hide it; the legal pages need name, email and country
-// filled in before they're published.
+// Who runs this copy of the site and how to reach them. Shown on the contact page, the privacy
+// policy and the terms.
+//
+// Set in .env.production (see .env.production.example), never in code: someone deploying their
+// own copy must not end up publishing legal pages that name somebody else. A value left empty
+// is simply not shown; the legal pages need at least a name and an email to be worth publishing.
+
+const env = import.meta.env;
 
 export const OPERATOR = {
-  /** Full legal name of the person responsible for the site. */
-  name: "Ákos Hochrein",
-  /** Postal address. Required in a privacy policy by some countries' imprint rules (e.g. Germany). */
-  address: "",
-  /** Country whose law governs the terms, e.g. "Germany". */
-  country: "Hungary",
+  /** Full name of the person or organisation responsible for the site. */
+  name: env.VITE_OPERATOR_NAME ?? "",
+  /** Postal address, if your country's rules require one. */
+  address: env.VITE_OPERATOR_ADDRESS ?? "",
+  /** Country whose law governs the terms, e.g. "Hungary". */
+  country: env.VITE_OPERATOR_COUNTRY ?? "",
+  /** Data protection authority to name in the privacy policy, e.g. "NAIH (naih.hu)". */
+  authority: env.VITE_OPERATOR_AUTHORITY ?? "",
   /** Public contact address, also used for privacy requests. */
-  email: "hoch.akos@gmail.com",
-  github: "akoshochrein",
-  /** Full profile URL. */
-  linkedin: "",
+  email: env.VITE_OPERATOR_EMAIL ?? "",
+  /** GitHub username. */
+  github: env.VITE_OPERATOR_GITHUB ?? "",
+  /** Full LinkedIn profile URL. */
+  linkedin: env.VITE_OPERATOR_LINKEDIN ?? "",
 };
 
 /** Shown as "Last updated" on the privacy policy and terms. Change it whenever their text changes. */

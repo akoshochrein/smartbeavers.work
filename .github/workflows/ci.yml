@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # The real settings files aren't committed; the examples are enough to build.
+      - run: cp .env.production.example .env.production && cp wrangler.example.jsonc wrangler.jsonc
+      # Builds the app, then type-checks it.
+      - run: pnpm build
