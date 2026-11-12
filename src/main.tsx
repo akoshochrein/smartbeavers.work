@@ -1,3 +1,7 @@
+import "@fontsource-variable/gabarito";
+import "@fontsource-variable/atkinson-hyperlegible-next";
+import "@fontsource-variable/atkinson-hyperlegible-next/wght-italic.css";
+import "@fontsource-variable/jetbrains-mono";
 import { MotionConfig } from "motion/react";
 import { lazy, StrictMode, Suspense } from "react";
 import { createRoot } from "react-dom/client";
@@ -17,6 +21,9 @@ const ColonyPage = lazy(() => import("./pages/Colony").then((m) => ({ default: m
 const TrackerNew = lazy(() => import("./pages/TrackerNew").then((m) => ({ default: m.TrackerNew })));
 const TrackerGuide = lazy(() => import("./pages/TrackerGuide").then((m) => ({ default: m.TrackerGuide })));
 const WeatherGuide = lazy(() => import("./pages/WeatherGuide").then((m) => ({ default: m.WeatherGuide })));
+const Contact = lazy(() => import("./pages/Contact").then((m) => ({ default: m.Contact })));
+const Privacy = lazy(() => import("./pages/Privacy").then((m) => ({ default: m.Privacy })));
+const Terms = lazy(() => import("./pages/Terms").then((m) => ({ default: m.Terms })));
 const Account = lazy(() => import("./pages/Account").then((m) => ({ default: m.Account })));
 const ClockGuide = lazy(() => import("./pages/ClockGuide").then((m) => ({ default: m.ClockGuide })));
 
@@ -30,6 +37,9 @@ createRoot(document.getElementById("root")!).render(
             <Routes>
               <Route index element={<Home />} />
               <Route path="login" element={<Login />} />
+              <Route path="contact" element={<Contact />} />
+              <Route path="privacy" element={<Privacy />} />
+              <Route path="terms" element={<Terms />} />
               <Route path="auth/callback" element={<AuthCallback />} />
               <Route element={<RequireAuth><AppShell /></RequireAuth>}>
                 <Route path="dashboard" element={<Dashboard />} />

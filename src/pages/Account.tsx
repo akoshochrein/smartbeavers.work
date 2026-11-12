@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -65,6 +65,13 @@ export function Account() {
         <Button variant="outline" onClick={() => supabase.auth.signOut()}>
           Sign out
         </Button>
+        <p className="text-sm text-ink-soft">
+          Questions about your account or data?{" "}
+          <Link to="/contact" className="text-cobalt-deep hover:underline">
+            Get in touch
+          </Link>
+          .
+        </p>
       </section>
 
       <section className="mt-12 flex flex-col gap-4 border-t pt-10 sm:flex-row sm:items-center">

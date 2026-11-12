@@ -1,6 +1,7 @@
 import { BarChart3, CloudSun, Radio, ToggleRight } from "lucide-react";
 import { Link } from "react-router";
 import { Logo } from "@/components/brand/Logo";
+import { SiteFooter } from "@/components/PublicPage";
 import { AdapterDemo, LeverDemo } from "@/components/landing/Demos";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
@@ -147,12 +148,7 @@ export function Home() {
         </section>
       </main>
 
-      <footer className="border-t border-ink/10">
-        <div className="mx-auto flex max-w-5xl flex-col gap-3 px-5 py-8 text-sm text-ink-soft sm:flex-row sm:items-center sm:px-8">
-          <Logo className="text-ink" />
-          <p className="sm:ml-auto">A fan-made tool. Not affiliated with Mechanistry, the studio behind Timberborn.</p>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

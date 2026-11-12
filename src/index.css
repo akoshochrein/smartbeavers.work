@@ -32,8 +32,8 @@
   --color-drought: #e9a23b;
   --color-badtide: #8e52b5;
 
-  --font-display: "Gabarito", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  --font-display: "Gabarito Variable", "Gabarito", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, Menlo, monospace;
 
   --animate-signal: signal 1.6s ease-out infinite;
 
@@ -44,7 +44,7 @@
 }
 
 @theme inline {
-  --font-sans: "Atkinson Hyperlegible Next", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Atkinson Hyperlegible Next Variable", "Atkinson Hyperlegible Next", ui-sans-serif, system-ui, sans-serif;
   --font-heading: var(--font-display);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);

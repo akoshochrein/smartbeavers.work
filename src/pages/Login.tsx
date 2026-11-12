@@ -1,7 +1,7 @@
 import { BarChart3, CloudSun, MailCheck, Radio, ToggleRight } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState, type FormEvent } from "react";
-import { Navigate } from "react-router";
+import { Link, Navigate } from "react-router";
 import { Logo } from "@/components/brand/Logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -91,6 +91,12 @@ export function Login() {
                   {status === "sending" ? "Sending link…" : "Email me a sign-in link"}
                 </Button>
                 {error && <p role="alert" className="mt-3 text-sm text-danger">{error}</p>}
+                <p className="mt-5 text-sm leading-relaxed text-ink-soft">
+                  By signing in you agree to the{" "}
+                  <Link to="/terms" className="text-cobalt-deep underline-offset-4 hover:underline">terms of use</Link>. The{" "}
+                  <Link to="/privacy" className="text-cobalt-deep underline-offset-4 hover:underline">privacy policy</Link>{" "}
+                  explains what we store.
+                </p>
               </motion.form>
             )}
           </AnimatePresence>
