@@ -16,6 +16,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { StartApiNote } from "@/components/app/StartApiNote";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -131,6 +132,7 @@ function Guide({ colonyId, colonyName, token, ladder }: { colonyId: string; colo
                 </li>
               ))}
             </ol>
+            <StartApiNote className="mt-6" />
           </section>
         </div>
 

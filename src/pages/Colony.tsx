@@ -1,5 +1,5 @@
 import { CalendarClock, Plug, Plus, RefreshCw } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { Link, useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { CopyField } from "@/components/app/CopyField";
@@ -25,6 +25,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { StartApiNote } from "@/components/app/StartApiNote";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -134,20 +135,28 @@ function ColonyDashboard({ colony, onChange }: { colony: Colony; onChange: (c: C
           ) : ladders.length === 0 && !weather && !clock ? (
             <NoTrackers colonyId={colony.id} />
           ) : (
-            <div className="grid items-start gap-6 xl:grid-cols-2">
-              {clock && <GameClockCard colonyId={colony.id} feed={feed} date={date} onDateSet={() => setDateSets((n) => n + 1)} />}
-              {weather && (
-                <WeatherCard
-                  colonyId={colony.id}
-                  feed={feed}
-                  clockFrom={date?.first_day_at ? Date.parse(date.first_day_at) : undefined}
-                  dayVersion={dateVersion}
-                />
-              )}
-              {ladders.map((l) => (
-                <TrackerCard key={l.id} ladder={l} feed={feed} />
-              ))}
-            </div>
+            <TrackerColumns
+              cards={[
+                clock && {
+                  key: "clock",
+                  weight: 1,
+                  node: <GameClockCard colonyId={colony.id} feed={feed} date={date} onDateSet={() => setDateSets((n) => n + 1)} />,
+                },
+                weather && {
+                  key: "weather",
+                  weight: 2,
+                  node: (
+                    <WeatherCard
+                      colonyId={colony.id}
+                      feed={feed}
+                      clockFrom={date?.first_day_at ? Date.parse(date.first_day_at) : undefined}
+                      dayVersion={dateVersion}
+                    />
+                  ),
+                },
+                ...ladders.map((l) => ({ key: l.id, weight: 1.4, node: <TrackerCard ladder={l} feed={feed} /> })),
+              ].filter((c) => !!c)}
+            />
           )}
         </TabsContent>
         <TabsContent value="signals" className="pt-8">
@@ -160,6 +169,38 @@ function ColonyDashboard({ colony, onChange }: { colony: Colony; onChange: (c: C
           <SettingsTab colony={colony} onChange={onChange} />
         </TabsContent>
       </Tabs>
+    </div>
+  );
+}
+
+type TrackerTile = { key: string; /** Rough relative height, used to balance the columns. */ weight: number; node: ReactNode };
+
+/**
+ * Two columns on wide screens, each card going into whichever column is shorter so far, so a
+ * tall card doesn't leave a hole next to it. On narrow screens the columns dissolve and the
+ * cards stack in their original order.
+ */
+function TrackerColumns({ cards }: { cards: TrackerTile[] }) {
+  const columns: { height: number; items: { tile: TrackerTile; order: number }[] }[] = [
+    { height: 0, items: [] },
+    { height: 0, items: [] },
+  ];
+  cards.forEach((tile, order) => {
+    const col = columns[1].height < columns[0].height ? columns[1] : columns[0];
+    col.items.push({ tile, order });
+    col.height += tile.weight;
+  });
+  return (
+    <div className="flex flex-col gap-6 xl:flex-row xl:items-start">
+      {columns.map((col, i) => (
+        <div key={i} className="contents xl:flex xl:min-w-0 xl:flex-1 xl:flex-col xl:gap-6">
+          {col.items.map(({ tile, order }) => (
+            <div key={tile.key} style={{ order }} className="min-w-0">
+              {tile.node}
+            </div>
+          ))}
+        </div>
+      ))}
     </div>
   );
 }
@@ -204,6 +245,7 @@ function SignalsTab({ colony, feed }: { colony: Colony; feed: ColonyFeed }) {
         </div>
         <CopyField label="Call when switched on" what="On link" value={webhookUrl(origin, colony.webhook_token, "on")} />
         <CopyField label="Call when switched off" what="Off link" value={webhookUrl(origin, colony.webhook_token, "off")} />
+        <StartApiNote />
 
         <div className="pt-4">
           <h2 className="text-2xl font-bold tracking-tight">Adapters</h2>
@@ -314,6 +356,7 @@ function LeversTab({ colony }: { colony: Colony }) {
         <code className="font-mono text-[13px] text-ink">{game.baseUrl}</code> directly, so this only works on the
         machine running the game.
       </p>
+      {!connected && <StartApiNote className="mt-4 max-w-xl" />}
 
       {!connected && (
         <div className="mt-6 flex flex-wrap items-center gap-3">

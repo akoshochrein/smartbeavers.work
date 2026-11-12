@@ -17,6 +17,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { StartApiNote } from "@/components/app/StartApiNote";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGameClock, useGameDate } from "@/lib/clock";
@@ -126,6 +127,7 @@ function Guide({ colonyId, colonyName, token }: { colonyId: string; colonyName: 
               </li>
             ))}
           </ol>
+          <StartApiNote className="mt-6" />
         </section>
 
         <div className="space-y-10">
