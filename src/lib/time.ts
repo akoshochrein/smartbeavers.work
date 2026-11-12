@@ -8,5 +8,16 @@ export function timeAgo(iso: string | number, now = Date.now()): string {
   return `${Math.round(h / 24)} days ago`;
 }
 
-export const formatTime = (t: number) =>
-  new Date(t).toLocaleString(undefined, { weekday: "short", hour: "2-digit", minute: "2-digit" });
+const WEEK_MS = 6 * 86_400_000;
+
+/** "Tue 09:44" within the last week, "Oct 12, 09:44" before that. */
+export const formatTime = (t: number, now = Date.now()) =>
+  new Date(t).toLocaleString(
+    undefined,
+    now - t < WEEK_MS
+      ? { weekday: "short", hour: "2-digit", minute: "2-digit" }
+      : { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" },
+  );
+
+/** "Oct 12": for axis labels that only need the day. */
+export const formatDay = (t: number) => new Date(t).toLocaleDateString(undefined, { month: "short", day: "numeric" });

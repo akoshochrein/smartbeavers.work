@@ -2,14 +2,15 @@ import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { StatusDot } from "@/components/app/StatusDot";
-import { RangeChart } from "@/components/RangeChart";
+import { ValueChart } from "@/components/ValueChart";
 import { SignalMeter } from "@/components/SignalMeter";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CHART_BUCKET_SECONDS, useAdapterHistory } from "@/lib/history";
 import type { Ladder } from "@/lib/supabase";
 import { timeAgo } from "@/lib/time";
-import type { ColonyFeed } from "@/lib/useColonyFeed";
-import { formatReading, ladderHistory, ladderSteps, metricFor, readSteps } from "@/shared/ladders";
+import { HISTORY_DAYS, type ColonyFeed } from "@/lib/useColonyFeed";
+import { describeValue, discoverSteps, formatValue, ladderHistory, latestValue, metricFor } from "@/shared/ladders";
 
 const LIVE_MS = 5 * 60_000;
 
@@ -17,22 +18,15 @@ export function TrackerCard({ ladder, feed }: { ladder: Ladder; feed: ColonyFeed
   const metric = metricFor(ladder.metric);
   const now = useNow(30_000);
 
-  const steps = useMemo(() => ladderSteps(ladder, (name) => feed.states.get(name)?.state), [ladder, feed.states]);
-  const reading = readSteps(steps);
-  const history = useMemo(() => ladderHistory(ladder, feed.events), [ladder, feed.events]);
+  const steps = useMemo(() => discoverSteps(ladder, feed.states.values()), [ladder, feed.states]);
+  const value = latestValue(steps);
+  const names = useMemo(() => steps.map((s) => s.name), [steps]);
+  const events = useAdapterHistory(ladder.colony_id, names, CHART_BUCKET_SECONDS, feed.live, names.length > 0);
+  const history = useMemo(() => (events ? ladderHistory(ladder, events) : []), [ladder, events]);
 
-  const lastUpdate = steps
-    .map((s) => feed.states.get(s.name)?.updated_at)
-    .filter((t): t is string => !!t)
-    .sort()
-    .at(-1);
-  const live = !!lastUpdate && now - Date.parse(lastUpdate) < LIVE_MS;
-
-  const bounds = steps.map((s) => s.bound);
-  const topBound = bounds[bounds.length - 1];
-  const gap = bounds.length > 1 ? topBound - bounds[bounds.length - 2] : Math.max(1, Math.round(topBound / 4));
-  const yTop = topBound + gap;
-  const waiting = steps.filter((s) => s.state === undefined).length;
+  const live = value.kind !== "waiting" && now - value.at < LIVE_MS;
+  const peak = Math.max(1, ...history.map((p) => p.value.value), ...steps.map((s) => s.bound));
+  const yTop = Math.ceil(peak * 1.15);
 
   return (
     <article className="rounded-2xl border bg-paper p-5 sm:p-6">
@@ -49,14 +43,15 @@ export function TrackerCard({ ladder, feed }: { ladder: Ladder; feed: ColonyFeed
             <Skeleton className="h-14 w-40" />
             <Skeleton className="h-4 w-28" />
           </div>
-        ) : reading.kind === "waiting" ? (
+        ) : value.kind === "waiting" ? (
           <div>
             <div className="flex items-center gap-2.5 text-sm text-ink-soft">
               <StatusDot state={undefined} live className="size-2" /> Listening
             </div>
-            <p className="mt-2 font-display text-xl leading-tight font-semibold">Waiting for the first signal</p>
+            <p className="mt-2 font-display text-xl leading-tight font-semibold">Waiting for the first counter</p>
             <p className="mt-1 max-w-md text-sm leading-relaxed text-ink-soft">
-              Counters report the next time they switch on or off. The setup guide shows how to make them report now.
+              Name an adapter <span className="font-mono text-[13px]">{metric.prefix}</span> plus its counter's number, such as{" "}
+              <span className="font-mono text-[13px]">{metric.prefix}30</span>. It shows up here the next time it switches on or off.
             </p>
           </div>
         ) : (
@@ -65,48 +60,33 @@ export function TrackerCard({ ladder, feed }: { ladder: Ladder; feed: ColonyFeed
               <div className="relative h-12 min-w-0 overflow-hidden">
                 <AnimatePresence mode="popLayout" initial={false}>
                   <motion.div
-                    key={formatReading(reading)}
+                    key={formatValue(value)}
                     initial={{ y: 40, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     exit={{ y: -40, opacity: 0 }}
                     transition={{ type: "spring", stiffness: 220, damping: 24 }}
-                    className={
-                      reading.kind === "conflict"
-                        ? "font-display text-2xl leading-[3rem] font-bold whitespace-nowrap text-danger"
-                        : "font-display text-5xl leading-none font-bold tracking-tight whitespace-nowrap tabular-nums"
-                    }
+                    className="font-display text-5xl leading-none font-bold tracking-tight whitespace-nowrap tabular-nums"
                   >
-                    {reading.kind === "conflict" ? "Mixed signals" : formatReading(reading)}
+                    {formatValue(value)}
                   </motion.div>
                 </AnimatePresence>
               </div>
-              {reading.kind === "range" && <span className="text-lg text-ink-soft">{metric.unit}</span>}
+              <span className="text-lg text-ink-soft">{metric.unit}</span>
             </div>
             <p className="mt-2 flex items-center gap-2 text-sm text-ink-soft">
-              {reading.kind === "conflict" ? (
-                "A higher counter is on while a lower one is off. Check their numbers and adapter names."
-              ) : (
-                <>
-                  <StatusDot state live={live} className="size-2" />
-                  {lastUpdate && `Changed ${timeAgo(lastUpdate, now)}`}
-                </>
-              )}
+              <StatusDot state live={live} className="size-2" />
+              {describeValue(value)} {timeAgo(value.at, now)}
             </p>
           </>
         )}
       </div>
 
-      <SignalMeter steps={steps} className="mt-5" />
-      {waiting > 0 && reading.kind !== "waiting" && (
-        <p className="mt-2 text-xs text-ink-soft">
-          {waiting} of {steps.length} counters haven't reported yet, so the range is wider than it will be.
-        </p>
-      )}
+      {steps.length > 0 && <SignalMeter steps={steps} className="mt-5" />}
 
       {history.length > 0 && (
         <div className="mt-6 border-t pt-4">
-          <div className="mb-2 text-sm text-ink-soft">Last 7 days</div>
-          <RangeChart points={history} now={now} yTop={yTop} unit={metric.unit} />
+          <div className="mb-2 text-sm text-ink-soft">Last {HISTORY_DAYS} days</div>
+          <ValueChart points={history} now={now} yTop={yTop} unit={metric.unit} />
         </div>
       )}
     </article>

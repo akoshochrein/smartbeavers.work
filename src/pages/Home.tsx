@@ -1,4 +1,4 @@
-import { BarChart3, Radio, ToggleRight } from "lucide-react";
+import { BarChart3, CloudSun, Radio, ToggleRight } from "lucide-react";
 import { Link } from "react-router";
 import { Logo } from "@/components/brand/Logo";
 import { AdapterDemo, LeverDemo } from "@/components/landing/Demos";
@@ -21,8 +21,14 @@ const FEATURES = [
   {
     icon: BarChart3,
     title: "Track numbers",
-    body: "Wire a few Population Counters to adapters and smartbeavers turns them into a number, like your population, free beds or open jobs.",
-    where: "Works anywhere, with a 7-day history.",
+    body: "Wire a few Population Counters to adapters and smartbeavers turns them into a number, like your population, free beds, vacancies or contaminated beavers.",
+    where: "Works anywhere, with 180 days of history.",
+  },
+  {
+    icon: CloudSun,
+    title: "Follow the weather",
+    body: "Three Weather Stations tell smartbeavers whether it's temperate, a drought or a badtide, with a log and a count of each.",
+    where: "Works anywhere, so you know when to head back.",
   },
 ];
 
@@ -92,7 +98,7 @@ export function Home() {
 
         <section aria-labelledby="features" className="border-t border-ink/10 py-20">
           <h2 id="features" className="text-2xl font-bold tracking-tight sm:text-3xl">What you can do</h2>
-          <ul className="mt-10 grid gap-10 md:grid-cols-3">
+          <ul className="mt-10 grid gap-x-12 gap-y-10 md:grid-cols-2">
             {FEATURES.map(({ icon: Icon, title, body, where }) => (
               <li key={title}>
                 <Icon className="size-6 text-cobalt-deep" strokeWidth={1.75} />

@@ -58,6 +58,11 @@ pnpm cf-typegen                   # regenerate Worker Env types after editing va
 pnpm dev                          # http://localhost:5173
 ```
 
+- `pnpm db:seed` fills the local database with a realistic colony to look at: the player
+  `test-beaver@example.com`, a population tracker, a weather tracker, a game clock, and about 4 months
+  of signals simulated from Timberborn's weather rules (Normal difficulty) and evening play sessions.
+  It checks that the database's game date matches the simulation. It only
+  ever writes to a local Supabase, and running it again replaces that colony's history.
 - Magic-link emails land in Mailpit: http://127.0.0.1:54324
 - Supabase Studio: http://127.0.0.1:54323
 - After changing SQL: `pnpm db:reset && pnpm db:types`

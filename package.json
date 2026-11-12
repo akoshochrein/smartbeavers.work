@@ -12,7 +12,8 @@
     "cf-typegen": "wrangler types",
     "db:start": "supabase start",
     "db:reset": "supabase db reset",
-    "db:types": "supabase gen types typescript --local > src/shared/database.types.ts"
+    "db:types": "supabase gen types typescript --local > src/shared/database.types.ts",
+    "db:seed": "node scripts/seed-dev.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.119.0",

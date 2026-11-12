@@ -1,29 +1,200 @@
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, BarChart3, CalendarClock, ChevronRight } from "lucide-react";
 import { useState, type FormEvent } from "react";
-import { Link, useNavigate, useParams } from "react-router";
+import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router";
 import { toast } from "sonner";
-import { SignalMeter } from "@/components/SignalMeter";
+import { WeatherBadge } from "@/components/app/weather";
+import { DateSetter } from "@/components/app/DateSetter";
+import { setGameDate, useGameClock } from "@/lib/clock";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/lib/supabase";
-import { useColony, useLadders } from "@/lib/useColony";
+import { useColony, useLadders, useWeatherTracker } from "@/lib/useColony";
 import { cn } from "@/lib/utils";
-import {
-  METRICS,
-  adapterName,
-  comparisonSymbol,
-  generateThresholds,
-  lowerBound,
-  metricFor,
-  readSteps,
-  type Comparison,
-} from "@/shared/ladders";
+import { METRICS, METRIC_GROUPS, adapterName, comparisonSymbol, metricFor, type Comparison } from "@/shared/ladders";
+import { WEATHERS } from "@/shared/weather";
 
 export function TrackerNew() {
+  const { id } = useParams<{ id: string }>();
+  const [params] = useSearchParams();
+  const kind = params.get("kind");
+  if (kind === "numbers") return <CounterTrackerForm />;
+  if (kind === "weather") return <WeatherTrackerNew colonyId={id!} />;
+  if (kind === "clock") return <GameClockNew colonyId={id!} />;
+  return <TrackerChooser colonyId={id!} />;
+}
+
+function TrackerChooser({ colonyId }: { colonyId: string }) {
+  const [colony] = useColony(colonyId);
+  const [weather] = useWeatherTracker(colonyId);
+  const [clock] = useGameClock(colonyId);
+  if (colony === undefined || weather === undefined || clock === undefined) return <Skeleton className="h-96 w-full rounded-2xl" />;
+  if (colony === null) return <p className="text-ink-soft">Colony not found.</p>;
+
+  const option = "group flex items-start gap-4 rounded-2xl border bg-paper p-5 transition-colors hover:border-cobalt/50 hover:bg-cobalt-soft/30";
+  return (
+    <div>
+      <BackLink colonyId={colony.id} name={colony.name} />
+      <h1 className="mt-4 text-3xl leading-tight font-bold tracking-tight sm:text-4xl">New tracker</h1>
+      <p className="mt-3 max-w-xl text-lg leading-relaxed text-ink-soft">What do you want to follow?</p>
+
+      <div className="mt-8 grid max-w-5xl gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <Link to="?kind=numbers" className={option}>
+          <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-cobalt text-white">
+            <BarChart3 className="size-5" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-xl font-semibold">A number</span>
+            <span className="mt-1 block text-sm leading-relaxed text-ink-soft">
+              Anything a Population Counter can count: population, beds, jobs, workers or contamination. Uses a few counters, and you can add more any time.
+            </span>
+          </span>
+          <ChevronRight className="mt-2 size-5 shrink-0 text-ink-soft transition-transform group-hover:translate-x-0.5" />
+        </Link>
+
+        {weather ? (
+          <Link to={`/colonies/${colony.id}/trackers/weather`} className={cn(option, "bg-mist-2/40")}>
+            <span className="flex shrink-0 -space-x-2">
+              {WEATHERS.map((w) => <WeatherBadge key={w.key} weather={w.key} size="md" className="ring-2 ring-paper" />)}
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-xl font-semibold">The weather</span>
+              <span className="mt-1 block text-sm leading-relaxed text-ink-soft">Already set up. Open its setup guide.</span>
+            </span>
+            <ChevronRight className="mt-2 size-5 shrink-0 text-ink-soft" />
+          </Link>
+        ) : (
+          <Link to="?kind=weather" className={option}>
+            <span className="flex shrink-0 -space-x-2">
+              {WEATHERS.map((w) => <WeatherBadge key={w.key} weather={w.key} size="md" className="ring-2 ring-paper" />)}
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-xl font-semibold">The weather</span>
+              <span className="mt-1 block text-sm leading-relaxed text-ink-soft">
+                Which weather is on, how often each one comes, and a log. Uses three Weather Stations.
+              </span>
+            </span>
+            <ChevronRight className="mt-2 size-5 shrink-0 text-ink-soft transition-transform group-hover:translate-x-0.5" />
+          </Link>
+        )}
+
+        <Link to={clock ? `/colonies/${colony.id}/trackers/clock` : "?kind=clock"} className={cn(option, clock && "bg-mist-2/40")}>
+          <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-pine text-mist">
+            <CalendarClock className="size-5" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-xl font-semibold">The game clock</span>
+            <span className="mt-1 block text-sm leading-relaxed text-ink-soft">
+              {clock
+                ? "Already set up. Open its setup guide."
+                : "The cycle and day like the game shows them, and whether the game is running. Uses one Chronometer."}
+            </span>
+          </span>
+          <ChevronRight className="mt-2 size-5 shrink-0 text-ink-soft transition-transform group-hover:translate-x-0.5" />
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function GameClockNew({ colonyId }: { colonyId: string }) {
+  const navigate = useNavigate();
+  const [colony] = useColony(colonyId);
+  const [clock] = useGameClock(colonyId);
+  const [weather] = useWeatherTracker(colonyId);
+  const [value, setValue] = useState({ cycle: 1, day: 1 });
+  const [saving, setSaving] = useState(false);
+
+  if (colony === undefined || clock === undefined || weather === undefined) return <Skeleton className="h-96 w-full rounded-2xl" />;
+  if (colony === null) return <p className="text-ink-soft">Colony not found.</p>;
+  if (clock) return <Navigate to={`/colonies/${colony.id}/trackers/clock`} replace />;
+
+  async function start() {
+    setSaving(true);
+    const { error } = await setGameDate(colonyId, value.cycle, value.day);
+    setSaving(false);
+    if (error) return toast.error(`Couldn't start the game clock: ${error.message}`);
+    toast.success("Game clock started");
+    navigate(`/colonies/${colonyId}/trackers/clock`);
+  }
+
+  return (
+    <div>
+      <BackLink colonyId={colony.id} name={colony.name} />
+      <h1 className="mt-4 text-3xl leading-tight font-bold tracking-tight sm:text-4xl">Start the game clock</h1>
+      <p className="mt-3 max-w-xl text-lg leading-relaxed text-ink-soft">
+        Set it like a clock on the wall: tell us the date the game's calendar shows right now. A Chronometer then moves
+        it on every game day.
+      </p>
+
+      <section className="mt-10 max-w-xl">
+        <h2 className="text-2xl font-bold tracking-tight">What does the game show now?</h2>
+        <div className="mt-4">
+          <DateSetter cycle={value.cycle} day={value.day} onChange={setValue} />
+        </div>
+        {!weather && (
+          <p className="mt-4 rounded-lg bg-resin-soft/60 px-3 py-2 text-sm text-ink">
+            Cycles move on when temperate weather starts, which needs weather tracking. You can add it afterwards.
+          </p>
+        )}
+        <Button size="lg" onClick={start} disabled={saving} className="mt-8 h-11 px-5 text-base">
+          {saving ? "Starting…" : "Start the game clock"}
+        </Button>
+      </section>
+    </div>
+  );
+}
+
+function WeatherTrackerNew({ colonyId }: { colonyId: string }) {
+  const navigate = useNavigate();
+  const [colony] = useColony(colonyId);
+  const [exists] = useWeatherTracker(colonyId);
+  const [saving, setSaving] = useState(false);
+
+  if (colony === undefined || exists === undefined) return <Skeleton className="h-96 w-full rounded-2xl" />;
+  if (colony === null) return <p className="text-ink-soft">Colony not found.</p>;
+  if (exists) return <Navigate to={`/colonies/${colony.id}/trackers/weather`} replace />;
+
+  async function start() {
+    setSaving(true);
+    const { error } = await supabase.from("weather_trackers").insert({ colony_id: colonyId });
+    setSaving(false);
+    if (error && error.code !== "23505") return toast.error(`Couldn't start weather tracking: ${error.message}`);
+    toast.success("Weather tracking started");
+    navigate(`/colonies/${colonyId}/trackers/weather`);
+  }
+
+  return (
+    <div>
+      <BackLink colonyId={colony.id} name={colony.name} />
+      <h1 className="mt-4 text-3xl leading-tight font-bold tracking-tight sm:text-4xl">Track the weather</h1>
+      <p className="mt-3 max-w-xl text-lg leading-relaxed text-ink-soft">
+        Each Weather Station switches on while its weather is happening. The station that switched on last tells
+        smartbeavers which weather your colony is in.
+      </p>
+
+      <section className="mt-10 max-w-xl">
+        <h2 className="text-2xl font-bold tracking-tight">You'll build 3 stations and 3 adapters</h2>
+        <ul className="mt-4 divide-y rounded-xl border bg-paper">
+          {WEATHERS.map((w) => (
+            <li key={w.key} className="flex items-center gap-3 px-4 py-3">
+              <WeatherBadge weather={w.key} />
+              <span className="flex-1">Weather Station set to <strong>{w.stationSetting}</strong></span>
+              <span className="font-mono text-[13px] text-ink-soft">{w.adapter}</span>
+            </li>
+          ))}
+        </ul>
+        <Button size="lg" onClick={start} disabled={saving} className="mt-8 h-11 px-5 text-base">
+          {saving ? "Starting…" : "Start tracking weather"}
+        </Button>
+      </section>
+    </div>
+  );
+}
+
+function CounterTrackerForm() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [colony] = useColony(id);
@@ -31,9 +202,6 @@ export function TrackerNew() {
 
   const [prefix, setPrefix] = useState<string>();
   const [comparison, setComparison] = useState<Comparison>("gte");
-  const [from, setFrom] = useState(10);
-  const [to, setTo] = useState(100);
-  const [step, setStep] = useState(10);
   const [saving, setSaving] = useState(false);
 
   if (colony === undefined || ladders === undefined) return <Skeleton className="h-96 w-full rounded-2xl" />;
@@ -52,16 +220,13 @@ export function TrackerNew() {
   }
 
   const metric = metricFor(prefix && !taken.has(prefix) ? prefix : available[0].prefix);
-  const thresholds = generateThresholds(from, to, step);
-  const valid = typeof thresholds !== "string";
 
   async function save(e: FormEvent) {
     e.preventDefault();
-    if (!valid) return;
     setSaving(true);
     const { data, error } = await supabase
       .from("ladders")
-      .insert({ colony_id: colony!.id, metric: metric.prefix, comparison, thresholds })
+      .insert({ colony_id: colony!.id, metric: metric.prefix, comparison })
       .select()
       .single();
     setSaving(false);
@@ -76,10 +241,10 @@ export function TrackerNew() {
   return (
     <div>
       <BackLink colonyId={colony.id} name={colony.name} />
-      <h1 className="mt-4 text-3xl leading-tight font-bold tracking-tight sm:text-4xl">New tracker</h1>
+      <h1 className="mt-4 text-3xl leading-tight font-bold tracking-tight sm:text-4xl">Track a number</h1>
       <p className="mt-3 max-w-xl text-lg leading-relaxed text-ink-soft">
-        Each Population Counter switches on at one number. With several of them, smartbeavers can tell which numbers
-        your colony has passed. More counters give a more precise reading.
+        Each Population Counter switches on at one number. Every time your colony passes one, smartbeavers knows the
+        number at that moment. Build as many or as few as you like, at any numbers, and add more later.
       </p>
 
       <form onSubmit={save} className="mt-10 grid gap-12 lg:grid-cols-[1fr_20rem]">
@@ -91,13 +256,25 @@ export function TrackerNew() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {available.map((m) => (
-                  <SelectItem key={m.prefix} value={m.prefix}>
-                    {m.label}
-                  </SelectItem>
-                ))}
+                {METRIC_GROUPS.map((group) => {
+                  const items = available.filter((m) => m.group === group);
+                  if (items.length === 0) return null;
+                  return (
+                    <SelectGroup key={group}>
+                      <SelectLabel>{group}</SelectLabel>
+                      {items.map((m) => (
+                        <SelectItem key={m.prefix} value={m.prefix}>
+                          {m.label}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  );
+                })}
               </SelectContent>
             </Select>
+            <p className="text-sm text-ink-soft">
+              In the counter's list this is <strong className="font-medium text-ink">{metric.counterSetting}</strong>.
+            </p>
           </div>
 
           <fieldset className="space-y-3">
@@ -121,81 +298,26 @@ export function TrackerNew() {
             <p className="text-sm text-ink-soft">Pick whichever you like, then set every counter in this tracker the same way.</p>
           </fieldset>
 
-          <fieldset className="space-y-3">
-            <legend className="text-base font-medium">Which numbers to mark</legend>
-            <div className="flex flex-wrap gap-4">
-              <NumberField id="from" label="From" value={from} onChange={setFrom} min={0} />
-              <NumberField id="to" label="To" value={to} onChange={setTo} min={0} />
-              <NumberField id="every" label="Every" value={step} onChange={setStep} min={1} />
-            </div>
-            {!valid && <p role="alert" className="text-sm text-danger">{thresholds}</p>}
-          </fieldset>
-
-          {valid && (
-            <section className="space-y-3">
-              <h2 className="text-2xl font-bold tracking-tight">You'll build {thresholds.length} counters and {thresholds.length} adapters</h2>
-              <p className="text-sm text-ink-soft">Name the adapters exactly like this. Capital letters matter.</p>
-              <ul className="flex flex-wrap gap-2">
-                {thresholds.map((t) => (
-                  <li key={t} className="rounded-lg border bg-paper px-2.5 py-1 text-[13px]">
-                    <span className="font-mono">{adapterName(metric.prefix, t)}</span>
-                    <span className="ml-2 text-ink-soft">{comparisonSymbol(comparison)} {t}</span>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-
-          <Button type="submit" size="lg" disabled={saving || !valid} className="h-11 px-5 text-base">
+          <Button type="submit" size="lg" disabled={saving} className="h-11 px-5 text-base">
             {saving ? "Creating…" : "Create tracker"}
           </Button>
         </div>
 
         <aside className="order-first lg:order-none">
           <div className="rounded-2xl bg-pine p-6 text-mist lg:sticky lg:top-8">
-            <div className="text-sm text-sage">Preview</div>
-            {valid ? <Preview thresholds={thresholds} comparison={comparison} unit={metric.unit} /> : <p className="mt-4 text-sage">Fix the numbers to see a preview.</p>}
+            <div className="text-sm text-sage">How adapters are named</div>
+            <div className="mt-3 font-mono text-3xl leading-none font-bold">
+              {metric.prefix}
+              <span className="text-resin">30</span>
+            </div>
+            <p className="mt-4 text-sm leading-relaxed text-sage">
+              <span className="font-mono">{metric.prefix}</span> plus the counter's number. A counter set to{" "}
+              {comparisonSymbol(comparison)} 30 gets an adapter named <span className="font-mono">{adapterName(metric.prefix, 30)}</span>.
+              There's no list to fill in here: counters show up as they report.
+            </p>
           </div>
         </aside>
       </form>
-    </div>
-  );
-}
-
-function Preview({ thresholds, comparison, unit }: { thresholds: number[]; comparison: Comparison; unit: string }) {
-  const bounds = thresholds.map((t) => lowerBound(t, comparison));
-  const midIndex = Math.floor((bounds.length - 1) / 2);
-  const marks = bounds.map((bound, i) => ({ bound, state: i <= midIndex }));
-  const reading = readSteps(marks);
-  const label = reading.kind === "range" ? (reading.max === null ? `${reading.min}+` : `${reading.min}–${reading.max}`) : "";
-
-  return (
-    <div className="mt-3">
-      <div className="flex items-baseline gap-2">
-        <span className="font-display text-4xl leading-none font-bold tracking-tight tabular-nums">{label}</span>
-        <span className="text-sage">{unit}</span>
-      </div>
-      <SignalMeter steps={marks} tone="dark" className="mt-5" />
-      <p className="mt-4 text-sm leading-relaxed text-sage">
-        Example: the first {midIndex + 1} counters are on, so the dashboard shows {label}.
-      </p>
-    </div>
-  );
-}
-
-function NumberField({ id, label, value, onChange, min }: { id: string; label: string; value: number; onChange: (n: number) => void; min: number }) {
-  return (
-    <div className="space-y-1.5">
-      <Label htmlFor={id} className="text-sm font-normal text-ink-soft">{label}</Label>
-      <Input
-        id={id}
-        type="number"
-        inputMode="numeric"
-        min={min}
-        value={Number.isNaN(value) ? "" : value}
-        onChange={(e) => onChange(e.target.valueAsNumber)}
-        className="h-11 w-28 bg-paper text-base tabular-nums"
-      />
     </div>
   );
 }

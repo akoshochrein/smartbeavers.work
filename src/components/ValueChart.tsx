@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type PointerEvent, type RefObject } from "react";
-import { formatTime } from "@/lib/time";
-import { formatReading, type HistoryPoint } from "@/shared/ladders";
+import { formatDay, formatTime } from "@/lib/time";
+import { HISTORY_DAYS } from "@/lib/useColonyFeed";
+import { describeValue, formatValue, type HistoryPoint } from "@/shared/ladders";
 
 const HEIGHT = 150;
 const PAD = { top: 10, right: 10, bottom: 22, left: 30 };
@@ -8,10 +9,10 @@ const PAD = { top: 10, right: 10, bottom: 22, left: 30 };
 type Segment = { t0: number; t1: number; point: HistoryPoint };
 
 /**
- * Step chart of a tracker's reading over time. The light wash is the range the value is
- * known to be in; the 2px line is its lower bound. Gaps are mixed signals.
+ * A tracker's value over time. Each point is a signal, where the value is known; the line
+ * between two signals is the straight path from one to the next, then flat from the last to now.
  */
-export function RangeChart({ points, now, yTop, unit }: { points: HistoryPoint[]; now: number; yTop: number; unit: string }) {
+export function ValueChart({ points, now, yTop, unit }: { points: HistoryPoint[]; now: number; yTop: number; unit: string }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const width = useWidth(wrapRef);
   const [hover, setHover] = useState<Segment>();
@@ -27,19 +28,9 @@ export function RangeChart({ points, now, yTop, unit }: { points: HistoryPoint[]
 
   const segments: Segment[] = points.map((point, i) => ({ t0: point.t, t1: points[i + 1]?.t ?? t1, point }));
 
-  let line = "";
-  let penDown = false;
-  for (const s of segments) {
-    const r = s.point.reading;
-    if (r.kind !== "range") {
-      penDown = false;
-      continue;
-    }
-    line += `${penDown ? "L" : "M"}${x(s.t0)},${y(r.min)}H${x(s.t1)}`;
-    penDown = true;
-  }
   const last = segments[segments.length - 1];
-  const lastReading = last.point.reading;
+  const lastValue = last.point.value;
+  const line = segments.map((s, i) => `${i ? "L" : "M"}${x(s.t0)},${y(s.point.value.value)}`).join("") + `H${x(t1)}`;
   const ticks = niceTicks(yTop);
 
   function onMove(e: PointerEvent<SVGSVGElement>) {
@@ -57,7 +48,7 @@ export function RangeChart({ points, now, yTop, unit }: { points: HistoryPoint[]
           width={width}
           height={HEIGHT}
           role="img"
-          aria-label={`Last 7 days. Now ${formatReading(lastReading)} ${unit}.`}
+          aria-label={`Last ${HISTORY_DAYS} days. Now ${formatValue(lastValue)} ${unit}.`}
           onPointerMove={onMove}
           onPointerLeave={() => setHover(undefined)}
           className="block touch-none"
@@ -71,20 +62,11 @@ export function RangeChart({ points, now, yTop, unit }: { points: HistoryPoint[]
             </g>
           ))}
 
-          {segments.map((s, i) => {
-            const r = s.point.reading;
-            if (r.kind !== "range") return null;
-            const top = y(r.max === null ? yTop : r.max + 1);
-            return (
-              <rect key={i} x={x(s.t0)} width={Math.max(0, x(s.t1) - x(s.t0))} y={top} height={Math.max(1, y(r.min) - top)} className="fill-cobalt" fillOpacity={0.14} />
-            );
-          })}
-
           <path d={line} fill="none" className="stroke-cobalt" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
 
-          {lastReading.kind === "range" && <circle cx={x(t1)} cy={y(lastReading.min)} r={4} className="fill-cobalt stroke-paper" strokeWidth={2} />}
+          <circle cx={x(t1)} cy={y(lastValue.value)} r={4} className="fill-cobalt stroke-paper" strokeWidth={2} />
 
-          <text x={PAD.left} y={HEIGHT - 5} className="fill-ink-soft text-[10px]">{formatTime(t0)}</text>
+          <text x={PAD.left} y={HEIGHT - 5} className="fill-ink-soft text-[10px]">{formatDay(t0)}</text>
           <text x={width - PAD.right} y={HEIGHT - 5} textAnchor="end" className="fill-ink-soft text-[10px]">now</text>
 
           {hover && <line x1={hoverX} x2={hoverX} y1={PAD.top} y2={PAD.top + plotH} className="stroke-ink-soft/60" strokeWidth={1} />}
@@ -97,8 +79,9 @@ export function RangeChart({ points, now, yTop, unit }: { points: HistoryPoint[]
         >
           <div className="text-sage">{formatTime(hover.t0)}</div>
           <div className="font-bold tabular-nums">
-            {formatReading(hover.point.reading)} {hover.point.reading.kind === "range" ? unit : ""}
+            {formatValue(hover.point.value)} {unit}
           </div>
+          <div className="text-sage">{describeValue(hover.point.value)}</div>
         </div>
       )}
     </div>

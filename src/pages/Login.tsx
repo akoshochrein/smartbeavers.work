@@ -1,4 +1,4 @@
-import { BarChart3, MailCheck, Radio, ToggleRight } from "lucide-react";
+import { BarChart3, CloudSun, MailCheck, Radio, ToggleRight } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState, type FormEvent } from "react";
 import { Navigate } from "react-router";
@@ -13,6 +13,7 @@ const PERKS = [
   { icon: ToggleRight, text: "Switch your HTTP Levers from the browser" },
   { icon: Radio, text: "See every HTTP Adapter signal as it happens" },
   { icon: BarChart3, text: "Track numbers like population or free beds" },
+  { icon: CloudSun, text: "Know whether it's temperate, a drought or a badtide" },
 ];
 
 export function Login() {

@@ -1,8 +1,9 @@
 import { motion, useReducedMotion } from "motion/react";
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
-import type { StepState } from "@/shared/ladders";
 
+/** undefined = the counter hasn't sent anything yet. */
+export type StepState = boolean | undefined;
 export type MeterStep = { bound: number; state: StepState };
 
 // Literal colors (motion can't interpolate CSS variables). Keep in sync with index.css.

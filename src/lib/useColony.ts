@@ -24,3 +24,18 @@ export function useLadders(colonyId: string | undefined) {
   }, [colonyId]);
   return ladders;
 }
+
+/** Whether the colony tracks weather: undefined while loading. */
+export function useWeatherTracker(colonyId: string | undefined) {
+  const [exists, setExists] = useState<boolean>();
+  useEffect(() => {
+    if (!colonyId) return;
+    supabase
+      .from("weather_trackers")
+      .select("colony_id")
+      .eq("colony_id", colonyId)
+      .maybeSingle()
+      .then(({ data }) => setExists(!!data));
+  }, [colonyId]);
+  return [exists, setExists] as const;
+}

@@ -16,14 +16,13 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase, type Ladder } from "@/lib/supabase";
 import { timeAgo } from "@/lib/time";
 import { useColony, useLadders } from "@/lib/useColony";
 import { useColonyFeed } from "@/lib/useColonyFeed";
-import { comparisonSymbol, ladderSteps, metricFor, type Comparison } from "@/shared/ladders";
+import { comparisonSymbol, discoverSteps, metricFor, type Comparison } from "@/shared/ladders";
 import { webhookUrl } from "@/shared/webhook";
 import { BackLink } from "./TrackerNew";
 
@@ -44,14 +43,13 @@ function Guide({ colonyId, colonyName, token, ladder }: { colonyId: string; colo
   const feed = useColonyFeed(colonyId);
   const metric = metricFor(ladder.metric);
   const symbol = comparisonSymbol(ladder.comparison as Comparison);
-  const steps = useMemo(() => ladderSteps(ladder, (n) => feed.states.get(n)?.state), [ladder, feed.states]);
-  const reporting = steps.filter((s) => s.state !== undefined).length;
+  const steps = useMemo(() => discoverSteps(ladder, feed.states.values()), [ladder, feed.states]);
   const origin = window.location.origin;
 
   // Counters that start reporting while this page is open get a highlight.
   const reportedAtLoad = useRef<Set<string> | null>(null);
   if (reportedAtLoad.current === null && !feed.loading) {
-    reportedAtLoad.current = new Set(steps.filter((s) => s.state !== undefined).map((s) => s.name));
+    reportedAtLoad.current = new Set(steps.map((s) => s.name));
   }
 
   async function remove() {
@@ -66,15 +64,11 @@ function Guide({ colonyId, colonyName, token, ladder }: { colonyId: string; colo
       <BackLink colonyId={colonyId} name={colonyName} />
       <h1 className="mt-4 text-3xl leading-tight font-bold tracking-tight sm:text-4xl">Set up your {metric.label.toLowerCase()} tracker</h1>
 
-      <div className="mt-6 max-w-md">
-        <div className="flex items-baseline justify-between text-sm">
-          <span className="font-medium">
-            {reporting} of {steps.length} counters reporting
-          </span>
-          {reporting === steps.length && <span className="text-cobalt-deep">All set</span>}
-        </div>
-        <Progress value={(reporting / steps.length) * 100} className="mt-2 h-2 bg-mist-2 [&>div]:bg-cobalt" />
-      </div>
+      <p className="mt-3 max-w-xl text-lg leading-relaxed text-ink-soft">
+        Build a counter at any number you want to mark and name its adapter{" "}
+        <span className="font-mono text-base">{metric.prefix}</span> plus that number. Two or three around your current{" "}
+        {metric.label.toLowerCase()} is enough to start.
+      </p>
 
       <div className="mt-12 grid gap-14 lg:grid-cols-[1fr_1.15fr]">
         <div className="space-y-12">
@@ -85,17 +79,18 @@ function Guide({ colonyId, colonyName, token, ladder }: { colonyId: string; colo
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold tracking-tight">For each counter in the list</h2>
+            <h2 className="text-2xl font-bold tracking-tight">For each number you want to mark</h2>
             <ol className="mt-5 space-y-5">
               {[
                 <>
-                  Build a <strong>Population Counter</strong>. Set it to count <strong>{metric.counterSetting}</strong>,
-                  pick <strong className="font-mono">{symbol}</strong>, and enter the counter's number. Count the whole
-                  colony or one district, as long as every counter does the same.
+                  Build a <strong>Population Counter</strong>. Pick <strong>{metric.counterSetting}</strong> from its list,
+                  pick <strong className="font-mono">{symbol}</strong>, and enter your number. <strong>District mode</strong> and{" "}
+                  <strong>Global mode</strong> both work, as long as every counter of this tracker uses the same one.
                 </>,
                 <>
-                  Build an <strong>HTTP Adapter</strong>. Click the pencil next to its name and rename it to the adapter
-                  name from the list.
+                  Build an <strong>HTTP Adapter</strong>. Click the pencil next to its name and rename it to{" "}
+                  <strong className="font-mono">{metric.prefix}</strong> plus the counter's number: a counter at 30 gets{" "}
+                  <strong className="font-mono">{metric.prefix}30</strong>. Capital letters matter.
                 </>,
                 <>
                   On the adapter, press <strong>Automate</strong> and choose that counter.
@@ -106,7 +101,7 @@ function Guide({ colonyId, colonyName, token, ladder }: { colonyId: string; colo
                 </>,
                 <>
                   To see it report straight away, set the counter's number to <span className="font-mono">0</span>, then{" "}
-                  <span className="font-mono">9999</span>, then back. Its row lights up here.
+                  <span className="font-mono">9999</span>, then back. It appears in the list here.
                 </>,
               ].map((body, i) => (
                 <li key={i} className="flex gap-4">
@@ -121,7 +116,7 @@ function Guide({ colonyId, colonyName, token, ladder }: { colonyId: string; colo
         </div>
 
         <section>
-          <h2 className="text-2xl font-bold tracking-tight">Counters</h2>
+          <h2 className="text-2xl font-bold tracking-tight">Counters reporting</h2>
           <div className="mt-4 overflow-hidden rounded-xl border bg-paper">
             <Table>
               <TableHeader>
@@ -132,9 +127,17 @@ function Guide({ colonyId, colonyName, token, ladder }: { colonyId: string; colo
                 </TableRow>
               </TableHeader>
               <TableBody>
+                {!feed.loading && steps.length === 0 && (
+                  <TableRow className="hover:bg-transparent">
+                    <TableCell colSpan={3} className="px-4 py-8 text-center text-ink-soft">
+                      <span className="inline-flex items-center gap-2">
+                        <StatusDot state={undefined} live /> Listening. Counters appear here as they report.
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                )}
                 {steps.map((s) => {
-                  const st = feed.states.get(s.name);
-                  const fresh = !!st && reportedAtLoad.current !== null && !reportedAtLoad.current.has(s.name);
+                  const fresh = reportedAtLoad.current !== null && !reportedAtLoad.current.has(s.name);
                   return (
                     <TableRow key={s.name} className={fresh ? "animate-in bg-resin-soft/60 duration-700 fade-in" : undefined}>
                       <TableCell className="pl-4 whitespace-nowrap tabular-nums">
@@ -153,19 +156,11 @@ function Guide({ colonyId, colonyName, token, ladder }: { colonyId: string; colo
                         </Button>
                       </TableCell>
                       <TableCell className="pr-4 whitespace-nowrap">
-                        {feed.loading ? (
-                          <Skeleton className="h-4 w-24" />
-                        ) : st ? (
-                          <span className="inline-flex items-center gap-2">
-                            <StatusDot state={st.state} live={fresh} />
-                            {st.state ? "On" : "Off"}
-                            <span className="text-ink-soft">{timeAgo(st.updated_at)}</span>
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-2 text-ink-soft">
-                            <StatusDot state={undefined} /> Waiting
-                          </span>
-                        )}
+                        <span className="inline-flex items-center gap-2">
+                          <StatusDot state={s.state} live={fresh} />
+                          {s.state ? "On" : "Off"}
+                          <span className="text-ink-soft">{timeAgo(s.at)}</span>
+                        </span>
                       </TableCell>
                     </TableRow>
                   );

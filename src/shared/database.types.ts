@@ -77,13 +77,33 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"game_clocks": {
+                  Row: {
+                    "anchor_at": string,"anchor_cycle": number,"anchor_day": number,"colony_id": string,"created_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "anchor_at"?: string,"anchor_cycle": number,"anchor_day": number,"colony_id": string,"created_at"?: string
+                  }
+                  Update: {
+                    "anchor_at"?: string,"anchor_cycle"?: number,"anchor_day"?: number,"colony_id"?: string,"created_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "game_clocks_colony_id_fkey"
+      columns: ["colony_id"]
+isOneToOne: true
+      referencedRelation: "colonies"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"ladders": {
                   Row: {
                     "colony_id": string,"comparison": string,"created_at": string,"id": string,"metric": string,"thresholds": (number)[]
                   }
                   ComputedFields: never
                   Insert: {
-                    "colony_id": string,"comparison"?: string,"created_at"?: string,"id"?: string,"metric": string,"thresholds": (number)[]
+                    "colony_id": string,"comparison"?: string,"created_at"?: string,"id"?: string,"metric": string,"thresholds"?: (number)[]
                   }
                   Update: {
                     "colony_id"?: string,"comparison"?: string,"created_at"?: string,"id"?: string,"metric"?: string,"thresholds"?: (number)[]
@@ -97,17 +117,57 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"weather_trackers": {
+                  Row: {
+                    "colony_id": string,"created_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "colony_id": string,"created_at"?: string
+                  }
+                  Update: {
+                    "colony_id"?: string,"created_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "weather_trackers_colony_id_fkey"
+      columns: ["colony_id"]
+isOneToOne: true
+      referencedRelation: "colonies"
+      referencedColumns: ["id"]
+    }
+                  ]
                 }
           }
           Views: {
             [_ in never]: never
           }
           Functions: {
-            "record_adapter_event":
+            "adapter_history":
+{ Args: { "p_adapters": (string)[],"p_bucket_seconds"?: number,"p_colony": string,"p_since": string }; Returns: {
+              "adapter_name": string,"carried": boolean,"received_at": string,"state": boolean
+            }[]
+                           },
+"game_date":
+{ Args: { "p_colony": string }; Returns: {
+              "cycle": number,"cycles_tracked": boolean,"day": number,"days_counted": number,"first_day_at": string,"last_day_at": string,"seconds_per_day": number
+            }[]
+                           },
+"record_adapter_event":
 { Args: { "p_adapter": string,"p_state": boolean,"p_token": string }; Returns: boolean
                            },
 "rotate_webhook_token":
 { Args: { "p_colony": string }; Returns: string
+                           },
+"signal_counts":
+{ Args: { "p_adapter": string,"p_bounds": (string)[],"p_colony": string }; Returns: {
+              "idx": number,"n": number
+            }[]
+                           },
+"weather_history":
+{ Args: { "p_adapters": (string)[],"p_bucket_seconds": number,"p_colony": string,"p_since": string }; Returns: {
+              "adapter_name": string,"share": number,"slot_start": string
+            }[]
                            }
           }
           Enums: {

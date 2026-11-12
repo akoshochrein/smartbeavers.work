@@ -26,6 +26,12 @@
   --color-danger: #b83a26;
   --color-chart: var(--color-cobalt);
 
+  /* Weather (validated as a categorical set, all pairs CVD-safe). Always pair with icon + label:
+     drought is below 3:1 on light surfaces. */
+  --color-temperate: #2e7d4a;
+  --color-drought: #e9a23b;
+  --color-badtide: #8e52b5;
+
   --font-display: "Gabarito", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
 

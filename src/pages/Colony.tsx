@@ -1,10 +1,14 @@
-import { Plug, Plus, RefreshCw } from "lucide-react";
+import { CalendarClock, Plug, Plus, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { CopyField } from "@/components/app/CopyField";
 import { StatusDot } from "@/components/app/StatusDot";
 import { TrackerCard } from "@/components/app/TrackerCard";
+import { WeatherCard } from "@/components/app/WeatherCard";
+import { GameClockCard, useDateVersion } from "@/components/app/GameClockCard";
+import { useGameClock, useGameDate } from "@/lib/clock";
+import { formatGameDate } from "@/shared/clock";
 import { SignalMeter } from "@/components/SignalMeter";
 import {
   AlertDialog,
@@ -28,7 +32,8 @@ import { useColonies } from "@/lib/colonies";
 import { supabase, type Colony } from "@/lib/supabase";
 import { formatTime, timeAgo } from "@/lib/time";
 import { createGameClient, type Adapter, type GameClient, type Lever } from "@/lib/timberborn";
-import { useColony, useLadders } from "@/lib/useColony";
+import { useColony, useLadders, useWeatherTracker } from "@/lib/useColony";
+import { useRecentSignals } from "@/lib/history";
 import { useColonyFeed, type ColonyFeed } from "@/lib/useColonyFeed";
 import { webhookUrl } from "@/shared/webhook";
 
@@ -64,6 +69,11 @@ export function ColonyPage() {
 function ColonyDashboard({ colony, onChange }: { colony: Colony; onChange: (c: Colony) => void }) {
   const feed = useColonyFeed(colony.id);
   const ladders = useLadders(colony.id);
+  const [weather] = useWeatherTracker(colony.id);
+  const [clock] = useGameClock(colony.id);
+  const dateVersion = useDateVersion(feed);
+  const [dateSets, setDateSets] = useState(0);
+  const date = useGameDate(colony.id, !!clock, `${dateVersion}-${dateSets}`);
   const [params, setParams] = useSearchParams();
   const tab = TABS.find((t) => t === params.get("tab")) ?? "trackers";
 
@@ -75,14 +85,19 @@ function ColonyDashboard({ colony, onChange }: { colony: Colony; onChange: (c: C
       <header className="flex flex-wrap items-end gap-x-6 gap-y-4">
         <div className="min-w-0">
           <h1 className="text-3xl leading-tight font-bold tracking-tight sm:text-4xl break-words">{colony.name}</h1>
-          <p className="mt-3 flex items-center gap-2 text-sm text-ink-soft">
+          <p className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-ink-soft">
+            {date && (
+              <span className="inline-flex items-center gap-1.5 font-medium text-ink">
+                <CalendarClock className="size-4 text-ink-soft" /> {formatGameDate(date.cycle, date.day)}
+              </span>
+            )}
             {feed.loading ? (
               " "
             ) : (
-              <>
+              <span className="inline-flex items-center gap-2">
                 <StatusDot state={lastSignal ? true : undefined} live={live} />
                 {lastSignal ? `Last signal ${timeAgo(lastSignal)}` : "No signals yet. Connect an adapter to get started."}
-              </>
+              </span>
             )}
           </p>
         </div>
@@ -108,12 +123,21 @@ function ColonyDashboard({ colony, onChange }: { colony: Colony; onChange: (c: C
         </TabsList>
 
         <TabsContent value="trackers" className="pt-8">
-          {ladders === undefined ? (
+          {ladders === undefined || weather === undefined || clock === undefined ? (
             <Skeleton className="h-80 w-full rounded-2xl" />
-          ) : ladders.length === 0 ? (
+          ) : ladders.length === 0 && !weather && !clock ? (
             <NoTrackers />
           ) : (
             <div className="grid items-start gap-6 xl:grid-cols-2">
+              {clock && <GameClockCard colonyId={colony.id} feed={feed} date={date} onDateSet={() => setDateSets((n) => n + 1)} />}
+              {weather && (
+                <WeatherCard
+                  colonyId={colony.id}
+                  feed={feed}
+                  clockFrom={date?.first_day_at ? Date.parse(date.first_day_at) : undefined}
+                  dayVersion={dateVersion}
+                />
+              )}
               {ladders.map((l) => (
                 <TrackerCard key={l.id} ladder={l} feed={feed} />
               ))}
@@ -138,10 +162,10 @@ function NoTrackers() {
   return (
     <div className="rounded-2xl border border-dashed border-ink/20 p-8">
       <div className="max-w-md">
-        <h2 className="text-2xl font-bold tracking-tight">Track a number</h2>
+        <h2 className="text-2xl font-bold tracking-tight">Add your first tracker</h2>
         <p className="mt-3 leading-relaxed text-ink-soft">
-          A tracker turns a row of Population Counters into a number you can check from anywhere, such as your
-          population, free beds or open jobs.
+          Follow the weather with three Weather Stations, keep the game's date with a Chronometer, or turn a row of
+          Population Counters into a number such as your population, free beds or vacancies.
         </p>
         <SignalMeter steps={[10, 20, 30, 40, 50].map((bound) => ({ bound, state: undefined }))} labels={false} size="sm" className="mt-5 max-w-xs" />
         <Button asChild className="mt-5">
@@ -157,10 +181,10 @@ function NoTrackers() {
 function SignalsTab({ colony, feed }: { colony: Colony; feed: ColonyFeed }) {
   const origin = window.location.origin;
   const states = [...feed.states.values()].sort((a, b) => a.name.localeCompare(b.name));
-  const events = feed.events.slice(-50).reverse();
+  const events = useRecentSignals(colony.id, feed.live);
   // Rows that arrive after the page loaded get a short highlight.
   const firstSeenMax = useRef<number | null>(null);
-  if (firstSeenMax.current === null && !feed.loading) firstSeenMax.current = feed.events.at(-1)?.id ?? 0;
+  if (firstSeenMax.current === null && events) firstSeenMax.current = events[0]?.id ?? 0;
 
   return (
     <div className="grid gap-10 lg:grid-cols-[1fr_1.1fr]">
@@ -208,7 +232,9 @@ function SignalsTab({ colony, feed }: { colony: Colony; feed: ColonyFeed }) {
 
       <section>
         <h2 className="text-2xl font-bold tracking-tight">Recent signals</h2>
-        {events.length === 0 ? (
+        {events === undefined ? (
+          <Skeleton className="mt-3 h-64 w-full" />
+        ) : events.length === 0 ? (
           <p className="mt-2 text-sm text-ink-soft">Nothing yet. Signals show up here the moment an adapter calls.</p>
         ) : (
           <Table className="mt-3">

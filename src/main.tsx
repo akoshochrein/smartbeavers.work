@@ -16,6 +16,8 @@ const Dashboard = lazy(() => import("./pages/Dashboard").then((m) => ({ default:
 const ColonyPage = lazy(() => import("./pages/Colony").then((m) => ({ default: m.ColonyPage })));
 const TrackerNew = lazy(() => import("./pages/TrackerNew").then((m) => ({ default: m.TrackerNew })));
 const TrackerGuide = lazy(() => import("./pages/TrackerGuide").then((m) => ({ default: m.TrackerGuide })));
+const WeatherGuide = lazy(() => import("./pages/WeatherGuide").then((m) => ({ default: m.WeatherGuide })));
+const ClockGuide = lazy(() => import("./pages/ClockGuide").then((m) => ({ default: m.ClockGuide })));
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -32,6 +34,8 @@ createRoot(document.getElementById("root")!).render(
                 <Route path="dashboard" element={<Dashboard />} />
                 <Route path="colonies/:id" element={<ColonyPage />} />
                 <Route path="colonies/:id/trackers/new" element={<TrackerNew />} />
+                <Route path="colonies/:id/trackers/weather" element={<WeatherGuide />} />
+                <Route path="colonies/:id/trackers/clock" element={<ClockGuide />} />
                 <Route path="colonies/:id/trackers/:ladderId" element={<TrackerGuide />} />
               </Route>
             </Routes>
