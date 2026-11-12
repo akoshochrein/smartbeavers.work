@@ -1,5 +1,5 @@
-import { ChevronsUpDown, LogOut, Plus } from "lucide-react";
-import { NavLink, Outlet, useParams } from "react-router";
+import { ChevronsUpDown, LogOut, Plus, UserRound } from "lucide-react";
+import { Link, NavLink, Outlet, useParams } from "react-router";
 import { Logo } from "@/components/brand/Logo";
 import { NewColonyDialog } from "@/components/app/NewColonyDialog";
 import { Button } from "@/components/ui/button";
@@ -90,6 +90,11 @@ function AccountMenu() {
         <DropdownMenuContent align="start" side="top" className="w-60">
           <DropdownMenuLabel className="truncate font-normal text-muted-foreground">{email}</DropdownMenuLabel>
           <DropdownMenuSeparator />
+          <DropdownMenuItem asChild>
+            <Link to="/account">
+              <UserRound /> Account
+            </Link>
+          </DropdownMenuItem>
           <DropdownMenuItem onSelect={() => supabase.auth.signOut()}>
             <LogOut /> Sign out
           </DropdownMenuItem>
@@ -122,6 +127,11 @@ function MobileBar() {
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
             <NavLink to="/dashboard">All colonies</NavLink>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link to="/account">
+              <UserRound /> Account
+            </Link>
           </DropdownMenuItem>
           <DropdownMenuItem onSelect={() => supabase.auth.signOut()}>
             <LogOut /> Sign out

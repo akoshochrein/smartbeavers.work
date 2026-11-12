@@ -17,6 +17,7 @@ const ColonyPage = lazy(() => import("./pages/Colony").then((m) => ({ default: m
 const TrackerNew = lazy(() => import("./pages/TrackerNew").then((m) => ({ default: m.TrackerNew })));
 const TrackerGuide = lazy(() => import("./pages/TrackerGuide").then((m) => ({ default: m.TrackerGuide })));
 const WeatherGuide = lazy(() => import("./pages/WeatherGuide").then((m) => ({ default: m.WeatherGuide })));
+const Account = lazy(() => import("./pages/Account").then((m) => ({ default: m.Account })));
 const ClockGuide = lazy(() => import("./pages/ClockGuide").then((m) => ({ default: m.ClockGuide })));
 
 createRoot(document.getElementById("root")!).render(
@@ -32,6 +33,7 @@ createRoot(document.getElementById("root")!).render(
               <Route path="auth/callback" element={<AuthCallback />} />
               <Route element={<RequireAuth><AppShell /></RequireAuth>}>
                 <Route path="dashboard" element={<Dashboard />} />
+                <Route path="account" element={<Account />} />
                 <Route path="colonies/:id" element={<ColonyPage />} />
                 <Route path="colonies/:id/trackers/new" element={<TrackerNew />} />
                 <Route path="colonies/:id/trackers/weather" element={<WeatherGuide />} />

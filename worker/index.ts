@@ -42,6 +42,29 @@ app.on(["GET", "POST"], "/hook/:token/:signal/:name", async (c) => {
   return c.body(null, 204);
 });
 
+// Deletes the signed-in player's account. Removing the auth user cascades to their colonies,
+// and from there to trackers, adapter states and signal history. Needs the secret key, so it
+// lives here rather than in the browser.
+app.delete("/api/account", async (c) => {
+  const token = c.req.header("Authorization")?.match(/^Bearer (.+)$/)?.[1];
+  if (!token) return c.json({ error: "not signed in" }, 401);
+
+  const supabase = createClient<Database>(c.env.SUPABASE_URL, c.env.SUPABASE_SECRET_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+
+  // Only ever delete the user the token itself proves, never an id from the request.
+  const { data, error: authError } = await supabase.auth.getUser(token);
+  if (authError || !data.user) return c.json({ error: "not signed in" }, 401);
+
+  const { error } = await supabase.auth.admin.deleteUser(data.user.id);
+  if (error) {
+    console.error("deleteUser failed", error);
+    return c.json({ error: "failed to delete account" }, 500);
+  }
+  return c.body(null, 204);
+});
+
 app.all("/api/*", (c) => c.json({ error: "not found" }, 404));
 
 export default app satisfies ExportedHandler<Env>;
