@@ -42,6 +42,27 @@ export function Terms() {
         </section>
 
         <section>
+          <h2>Public profiles and names</h2>
+          <p>
+            Your profile is private unless you switch on "Public profile". If you do, your handle, the names of your
+            colonies and their game date, weather and population are shown on the colony ladder, which anyone can see.
+            You can switch it off again at any time.
+          </p>
+          <p>Handles, colony names and profile pictures must be fit for anyone to read. They must not be:</p>
+          <ul>
+            <li>hateful, harassing, threatening, sexually explicit, crude or otherwise offensive;</li>
+            <li>someone else's name or brand used to pass yourself off as them, including Mechanistry or smartbeavers;</li>
+            <li>personal details about you or anyone else, such as a full name, address or phone number;</li>
+            <li>advertising or links.</li>
+          </ul>
+          <p>
+            This applies whether or not your profile is public. We may rename or remove a handle, colony name or
+            picture, make a profile private, or close the account, if these rules are broken. If you see something on
+            the ladder that shouldn't be there, tell us through the <Link to="/contact">contact page</Link>.
+          </p>
+        </section>
+
+        <section>
           <h2>Your content</h2>
           <p>
             The names you enter and the signals your game sends stay yours. You allow us to store and process them only

@@ -18,6 +18,7 @@ import { useAuth } from "@/lib/auth";
 import { useColonies } from "@/lib/colonies";
 import { supabase } from "@/lib/supabase";
 import { ExportButton } from "@/components/app/ExportButton";
+import { ProfileForm } from "@/components/app/ProfileForm";
 import { exportAccount } from "@/lib/export";
 
 const CONFIRM_WORD = "delete";
@@ -57,7 +58,13 @@ export function Account() {
     <div className="max-w-2xl">
       <h1 className="text-3xl leading-tight font-bold tracking-tight sm:text-4xl">Account</h1>
 
-      <section className="mt-8 space-y-4">
+      {session && (
+        <section className="mt-8">
+          <ProfileForm userId={session.user.id} email={email} />
+        </section>
+      )}
+
+      <section className="mt-10 space-y-4 border-t pt-10">
         <div>
           <div className="text-sm text-ink-soft">Signed in as</div>
           <div className="mt-1 text-lg break-all">{email}</div>
@@ -78,7 +85,7 @@ export function Account() {
         <div className="max-w-md">
           <h2 className="text-xl font-semibold">Export your data</h2>
           <p className="mt-1 text-sm leading-relaxed text-ink-soft">
-            One JSON file with your account details and every colony: settings, trackers and the full signal history.
+            One JSON file with your account details, handle and picture, and every colony: settings, trackers and the full signal history.
             It includes your adapter links, so treat the file as private.
           </p>
         </div>

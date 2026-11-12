@@ -1,4 +1,5 @@
 import type { User } from "@supabase/supabase-js";
+import { avatarDataUrl } from "./profile";
 import { supabase, type Colony } from "./supabase";
 
 // Data export: everything stored for a colony (or for every colony of an account) as one JSON
@@ -56,12 +57,25 @@ export async function exportColony(colony: Colony) {
 
 export async function exportAccount(user: User) {
   const colonies = unwrap(await supabase.from("colonies").select("*").order("created_at"));
+  const profileRes = await supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle();
+  if (profileRes.error) throw new Error(profileRes.error.message);
+  const profile = profileRes.data;
+  const picture = await avatarDataUrl(profile);
   const data = [];
   // One colony at a time: a long history is many requests already.
   for (const colony of colonies) data.push(await colonyData(colony));
   download(`smartbeavers-account-${today()}.json`, {
     ...envelope(),
-    account: { id: user.id, email: user.email ?? null, created_at: user.created_at, last_sign_in_at: user.last_sign_in_at ?? null },
+    account: {
+      id: user.id,
+      email: user.email ?? null,
+      created_at: user.created_at,
+      last_sign_in_at: user.last_sign_in_at ?? null,
+      handle: profile?.handle ?? null,
+      public_profile: profile?.is_public ?? false,
+      // The profile picture itself, as a data: URL that any browser can open.
+      picture,
+    },
     colonies: data,
   });
 }

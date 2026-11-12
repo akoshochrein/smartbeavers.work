@@ -117,6 +117,20 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"profiles": {
+                  Row: {
+                    "avatar_path": string | null,"handle": string | null,"is_public": boolean,"updated_at": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "avatar_path"?: string | null,"handle"?: string | null,"is_public"?: boolean,"updated_at"?: string,"user_id"?: string
+                  }
+                  Update: {
+                    "avatar_path"?: string | null,"handle"?: string | null,"is_public"?: boolean,"updated_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"weather_trackers": {
                   Row: {
                     "colony_id": string,"created_at": string
@@ -146,6 +160,11 @@ isOneToOne: true
             "adapter_history":
 { Args: { "p_adapters": (string)[],"p_bucket_seconds"?: number,"p_colony": string,"p_since": string }; Returns: {
               "adapter_name": string,"carried": boolean,"received_at": string,"state": boolean
+            }[]
+                           },
+"colony_ladder":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "colony_name": string,"cycle": number,"cycle_started_at": string,"day": number,"faction": string,"handle": string,"key": string,"last_signal_at": string,"pop_comparison": string,"pop_steps": Json,"weather": string
             }[]
                            },
 "game_date":

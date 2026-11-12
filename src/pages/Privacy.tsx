@@ -19,6 +19,7 @@ export function Privacy() {
           <ul>
             <li>We store your email address and what your colonies' adapters report. Nothing from your save files.</li>
             <li>No ads, no analytics, no tracking, and nothing is sold or shared for marketing.</li>
+            <li>Nothing about you or your colonies is public unless you switch that on yourself.</li>
             <li>You can download everything and delete your account yourself, at any time.</li>
           </ul>
         </section>
@@ -37,7 +38,9 @@ export function Privacy() {
           <ul>
             <li>
               <strong>Your account:</strong> your email address, an account id, and when you created the account and last
-              signed in.
+              signed in. If you choose to add them, a handle and a profile picture. The picture is shrunk in your
+              browser first, which also removes details stored inside the file, such as where a photo was taken.
+              Only you can see it.
             </li>
             <li>
               <strong>Your colonies:</strong> the name you give each one, its faction, the game address you set, and the
@@ -59,6 +62,26 @@ export function Privacy() {
           <p>
             Switching levers happens directly between your browser and the game on your own computer. Those commands
             never reach us.
+          </p>
+        </section>
+
+        <section>
+          <h2>If you make your profile public</h2>
+          <p>
+            Your profile is private by default. If you switch on "Public profile" on your account page, the following
+            is shown on the colony ladder, a page anyone can open without signing in:
+          </p>
+          <ul>
+            <li>your handle;</li>
+            <li>the name and faction of each of your colonies;</li>
+            <li>each colony's game date, weather and population, where you track them;</li>
+            <li>roughly when each colony last sent a signal.</li>
+          </ul>
+          <p>
+            A colony is listed only while it has sent a signal in the last hour. Your email address, profile picture,
+            adapter links, signal history and other trackers are never shown. We do this only with your consent (GDPR
+            Art. 6(1)(a)), which you can withdraw at any time by switching the setting off; your colonies then leave
+            the ladder straight away. What others copied while it was public is outside our control.
           </p>
         </section>
 
@@ -109,7 +132,7 @@ export function Privacy() {
         <section>
           <h2>How long we keep it</h2>
           <ul>
-            <li>Account, colonies and signal history: until you delete the colony or your account.</li>
+            <li>Account, handle, picture, colonies and signal history: until you remove them or delete your account.</li>
             <li>Technical logs: for a short period set by the hosting provider, typically days to a few weeks.</li>
             <li>Backups made by the database provider may hold deleted data for a short time before they expire.</li>
           </ul>

@@ -1,5 +1,5 @@
 import { useState, type FormEvent, type ReactNode } from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -60,6 +60,13 @@ export function NewColonyDialog({ children }: { children: ReactNode }) {
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
+            <p className="text-sm text-ink-soft">
+              Keep it friendly: with a public profile, colony names show on the colony ladder. The{" "}
+              <Link to="/terms" className="text-cobalt-deep underline-offset-4 hover:underline">
+                terms
+              </Link>{" "}
+              say what's not allowed.
+            </p>
           </div>
           <div className="space-y-2">
             <div className="text-sm font-medium">Faction</div>

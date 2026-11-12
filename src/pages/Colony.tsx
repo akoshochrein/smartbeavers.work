@@ -448,6 +448,13 @@ function SettingsTab({ colony, onChange }: { colony: Colony; onChange: (c: Colon
         <div className="space-y-2">
           <Label htmlFor="colony-name">Name</Label>
           <Input id="colony-name" value={name} maxLength={80} required onChange={(e) => setName(e.target.value)} className="bg-paper" />
+          <p className="text-sm text-ink-soft">
+            Keep it friendly: with a public profile, colony names show on the colony ladder. The{" "}
+            <Link to="/terms" className="text-cobalt-deep underline-offset-4 hover:underline">
+              terms
+            </Link>{" "}
+            say what's not allowed.
+          </p>
         </div>
         <div className="space-y-2">
           <div className="text-sm font-medium">Faction</div>

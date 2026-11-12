@@ -1,4 +1,4 @@
-import { ChevronsUpDown, LogOut, Plus, UserRound } from "lucide-react";
+import { ChevronsUpDown, LogOut, Plus, Trophy, UserRound } from "lucide-react";
 import { Link, Outlet, useParams } from "@tanstack/react-router";
 import { Logo } from "@/components/brand/Logo";
 import { NewColonyDialog } from "@/components/app/NewColonyDialog";
@@ -12,7 +12,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar } from "@/components/app/Avatar";
 import { useAuth } from "@/lib/auth";
+import { useAvatarUrl, useProfile } from "@/lib/profile";
 import { useColonies } from "@/lib/colonies";
 import { supabase } from "@/lib/supabase";
 
@@ -66,6 +68,11 @@ function Sidebar() {
             ))}
         {colonies?.length === 0 && <p className="px-3 py-2 text-sm text-sage">No colonies yet.</p>}
       </nav>
+      <div className="px-3 pb-3">
+        <Link to="/ladder" className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-[15px] text-sage transition-colors hover:bg-pine-soft hover:text-mist">
+          <Trophy className="size-4" /> Colony ladder
+        </Link>
+      </div>
       <AccountMenu />
     </aside>
   );
@@ -74,15 +81,16 @@ function Sidebar() {
 function AccountMenu() {
   const { session } = useAuth();
   const email = session?.user.email ?? "";
+  const profile = useProfile(session?.user.id);
+  const avatarUrl = useAvatarUrl(profile);
+  const name = profile?.handle || email;
   return (
     <div className="border-t border-sidebar-border p-3">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-sage hover:bg-pine-soft hover:text-mist">
-            <span className="grid size-7 shrink-0 place-items-center rounded-full bg-heartwood font-display text-base font-bold text-mist uppercase">
-              {email.slice(0, 1)}
-            </span>
-            <span className="min-w-0 flex-1 truncate">{email}</span>
+            <Avatar url={avatarUrl} name={name} className="size-7 text-base" />
+            <span className="min-w-0 flex-1 truncate">{name}</span>
             <ChevronsUpDown className="size-4 shrink-0" />
           </button>
         </DropdownMenuTrigger>
@@ -128,6 +136,11 @@ function MobileBar() {
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
             <Link to="/dashboard">All colonies</Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link to="/ladder">
+              <Trophy /> Colony ladder
+            </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link to="/account">

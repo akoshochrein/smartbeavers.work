@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as LadderRouteImport } from './routes/ladder'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as TermsRouteImport } from './routes/terms'
@@ -39,6 +40,11 @@ const AppRoute = AppRouteImport.update({
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LadderRoute = LadderRouteImport.update({
+  id: '/ladder',
+  path: '/ladder',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -119,6 +125,7 @@ const AppColoniesIdTrackersWeatherRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/contact': typeof ContactRoute
+  '/ladder': typeof LadderRoute
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
@@ -137,6 +144,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/contact': typeof ContactRoute
+  '/ladder': typeof LadderRoute
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
@@ -157,6 +165,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/contact': typeof ContactRoute
+  '/ladder': typeof LadderRoute
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
@@ -177,6 +186,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/contact'
+    | '/ladder'
     | '/login'
     | '/privacy'
     | '/terms'
@@ -195,6 +205,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/contact'
+    | '/ladder'
     | '/login'
     | '/privacy'
     | '/terms'
@@ -214,6 +225,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_app'
     | '/contact'
+    | '/ladder'
     | '/login'
     | '/privacy'
     | '/terms'
@@ -234,6 +246,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
   ContactRoute: typeof ContactRoute
+  LadderRoute: typeof LadderRoute
   LoginRoute: typeof LoginRoute
   PrivacyRoute: typeof PrivacyRoute
   TermsRoute: typeof TermsRoute
@@ -264,6 +277,13 @@ declare module '@tanstack/react-router' {
       path: '/contact'
       fullPath: '/contact'
       preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ladder': {
+      id: '/ladder'
+      path: '/ladder'
+      fullPath: '/ladder'
+      preLoaderRoute: typeof LadderRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -393,6 +413,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   ContactRoute: ContactRoute,
+  LadderRoute: LadderRoute,
   LoginRoute: LoginRoute,
   PrivacyRoute: PrivacyRoute,
   TermsRoute: TermsRoute,
