@@ -93,7 +93,9 @@ export function ProfileForm({ userId, email }: { userId: string; email: string }
               </Button>
             )}
           </div>
-          <p className="mt-2 text-sm text-ink-soft">Cropped to a square and shrunk before it's stored. Only you see it.</p>
+          <p className="mt-2 text-sm text-ink-soft">
+            Cropped to a square and shrunk before it's stored. {profile?.is_public ? "Shown next to your colonies on the ladder." : "Only you see it, unless you make your profile public."}
+          </p>
           <input
             ref={fileInput}
             type="file"
@@ -161,7 +163,7 @@ export function ProfileForm({ userId, email }: { userId: string; email: string }
           <div>
             <div className="font-medium">Anyone can see</div>
             <ul className="mt-1.5 list-disc space-y-1 pl-5 text-ink-soft">
-              <li>your handle</li>
+              <li>your handle and picture</li>
               <li>the names and factions of your colonies</li>
               <li>each colony's game date, weather and population, where you track them</li>
               <li>roughly when each colony was last played</li>
@@ -170,7 +172,7 @@ export function ProfileForm({ userId, email }: { userId: string; email: string }
           <div>
             <div className="font-medium">Stays private</div>
             <ul className="mt-1.5 list-disc space-y-1 pl-5 text-ink-soft">
-              <li>your email address and picture</li>
+              <li>your email address</li>
               <li>your adapter links, signals and history</li>
               <li>every other tracker</li>
             </ul>

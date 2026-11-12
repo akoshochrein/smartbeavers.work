@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
 import type { Database } from "@/shared/database.types";
 import { unwrap } from "./queries";
 import { supabase } from "./supabase";
@@ -26,26 +25,27 @@ export function useProfile(userId: string | undefined): Profile | null | undefin
 }
 
 /**
- * A URL for the player's picture, or undefined if they have none (or it's still loading).
- * The bucket is private, so the picture is downloaded with the session and shown from memory.
+ * A URL for a stored picture, or undefined if there is none (or it's still loading).
+ * The bucket isn't public, so the picture is downloaded through the API and shown from memory.
+ * `version` should change when the picture does, e.g. the profile's updated_at.
  */
-export function useAvatarUrl(profile: Profile | null | undefined): string | undefined {
-  const path = profile?.avatar_path ?? "";
+export function useStoredPicture(path: string | null | undefined, version: string | null | undefined): string | undefined {
   const { data: url } = useQuery({
-    // updated_at changes when a new picture is saved, which makes this a new query.
-    queryKey: ["avatar", path, profile?.updated_at ?? ""],
+    queryKey: ["avatar", path ?? "", version ?? ""],
     enabled: !!path,
     staleTime: Infinity,
-    gcTime: Infinity,
+    retry: false,
     queryFn: async () => {
-      const { data, error } = await supabase.storage.from(AVATAR_BUCKET).download(path);
+      const { data, error } = await supabase.storage.from(AVATAR_BUCKET).download(path!);
       if (error) throw new Error(error.message);
       return URL.createObjectURL(data);
     },
   });
-  useEffect(() => () => void (url && URL.revokeObjectURL(url)), [url]);
   return path ? url : undefined;
 }
+
+/** The signed-in player's own picture. */
+export const useAvatarUrl = (profile: Profile | null | undefined) => useStoredPicture(profile?.avatar_path, profile?.updated_at);
 
 /** Sets or clears (null) the handle. Returns "taken" if another player has it. */
 export async function saveHandle(handle: string | null): Promise<"ok" | "taken" | { error: string }> {

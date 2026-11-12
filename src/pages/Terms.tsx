@@ -44,8 +44,8 @@ export function Terms() {
         <section>
           <h2>Public profiles and names</h2>
           <p>
-            Your profile is private unless you switch on "Public profile". If you do, your handle, the names of your
-            colonies and their game date, weather and population are shown on the colony ladder, which anyone can see.
+            Your profile is private unless you switch on "Public profile". If you do, your handle, your picture, the
+            names of your colonies and their game date, weather and population are shown on the colony ladder, which anyone can see.
             You can switch it off again at any time.
           </p>
           <p>Handles, colony names and profile pictures must be fit for anyone to read. They must not be:</p>

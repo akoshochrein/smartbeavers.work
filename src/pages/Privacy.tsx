@@ -40,7 +40,7 @@ export function Privacy() {
               <strong>Your account:</strong> your email address, an account id, and when you created the account and last
               signed in. If you choose to add them, a handle and a profile picture. The picture is shrunk in your
               browser first, which also removes details stored inside the file, such as where a photo was taken.
-              Only you can see it.
+              Only you can see it, unless you make your profile public.
             </li>
             <li>
               <strong>Your colonies:</strong> the name you give each one, its faction, the game address you set, and the
@@ -72,13 +72,13 @@ export function Privacy() {
             is shown on the colony ladder, a page anyone can open without signing in:
           </p>
           <ul>
-            <li>your handle;</li>
+            <li>your handle and profile picture;</li>
             <li>the name and faction of each of your colonies;</li>
             <li>each colony's game date, weather and population, where you track them;</li>
             <li>roughly when each colony last sent a signal.</li>
           </ul>
           <p>
-            A colony is listed only while it has sent a signal in the last hour. Your email address, profile picture,
+            A colony is listed only while it has sent a signal in the last hour. Your email address,
             adapter links, signal history and other trackers are never shown. We do this only with your consent (GDPR
             Art. 6(1)(a)), which you can withdraw at any time by switching the setting off; your colonies then leave
             the ladder straight away. What others copied while it was public is outside our control.

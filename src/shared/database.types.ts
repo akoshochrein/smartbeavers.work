@@ -164,13 +164,16 @@ isOneToOne: true
                            },
 "colony_ladder":
 { Args: Record<PropertyKey, never>; Returns: {
-              "colony_name": string,"cycle": number,"cycle_started_at": string,"day": number,"faction": string,"handle": string,"key": string,"last_signal_at": string,"pop_comparison": string,"pop_steps": Json,"weather": string
+              "avatar_path": string,"colony_name": string,"cycle": number,"cycle_started_at": string,"day": number,"faction": string,"handle": string,"key": string,"last_signal_at": string,"pop_comparison": string,"pop_steps": Json,"profile_updated_at": string,"weather": string
             }[]
                            },
 "game_date":
 { Args: { "p_colony": string }; Returns: {
               "cycle": number,"cycles_tracked": boolean,"day": number,"days_counted": number,"first_day_at": string,"last_day_at": string,"seconds_per_day": number
             }[]
+                           },
+"is_public_avatar":
+{ Args: { "p_name": string }; Returns: boolean
                            },
 "record_adapter_event":
 { Args: { "p_adapter": string,"p_state": boolean,"p_token": string }; Returns: boolean

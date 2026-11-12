@@ -4,7 +4,9 @@ import { useEffect, useRef } from "react";
 import { PublicPage } from "@/components/PublicPage";
 import { WeatherBadge } from "@/components/app/weather";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar } from "@/components/app/Avatar";
 import { useAuth } from "@/lib/auth";
+import { useStoredPicture } from "@/lib/profile";
 import { useColonyLadder, type LadderEntry } from "@/lib/ladder";
 import { timeAgo } from "@/lib/time";
 import { formatGameDate } from "@/shared/clock";
@@ -61,6 +63,7 @@ export function Ladder() {
 
 function Entry({ entry, rank, ref }: { entry: LadderEntry; rank: number; ref?: React.Ref<HTMLLIElement> }) {
   const faction = factionLabel(entry.faction);
+  const pictureUrl = useStoredPicture(entry.picture?.path, entry.picture?.version);
 
   // A row lights up briefly when its colony starts a new cycle, which is also what moves it to the top.
   const stamp = entry.cycleStartedAt ?? undefined;
@@ -97,6 +100,7 @@ function Entry({ entry, rank, ref }: { entry: LadderEntry; rank: number; ref?: R
           </motion.span>
         </AnimatePresence>
       </span>
+      <Avatar url={pictureUrl} name={entry.handle} className="relative size-11 text-xl" />
       <div className="relative min-w-0 flex-1 basis-56">
         <div className="truncate font-display text-xl leading-tight font-semibold">{entry.colonyName}</div>
         <div className="mt-0.5 truncate text-sm text-ink-soft">
