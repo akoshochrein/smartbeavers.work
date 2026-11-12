@@ -17,6 +17,8 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/auth";
 import { useColonies } from "@/lib/colonies";
 import { supabase } from "@/lib/supabase";
+import { ExportButton } from "@/components/app/ExportButton";
+import { exportAccount } from "@/lib/export";
 
 const CONFIRM_WORD = "delete";
 
@@ -66,6 +68,17 @@ export function Account() {
       </section>
 
       <section className="mt-12 flex flex-col gap-4 border-t pt-10 sm:flex-row sm:items-center">
+        <div className="max-w-md">
+          <h2 className="text-xl font-semibold">Export your data</h2>
+          <p className="mt-1 text-sm leading-relaxed text-ink-soft">
+            One JSON file with your account details and every colony: settings, trackers and the full signal history.
+            It includes your adapter links, so treat the file as private.
+          </p>
+        </div>
+        {session && <ExportButton run={() => exportAccount(session.user)} className="sm:ml-auto" />}
+      </section>
+
+      <section className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center">
         <div className="max-w-md">
           <h2 className="text-xl font-semibold">Delete your account</h2>
           <p className="mt-1 text-sm leading-relaxed text-ink-soft">

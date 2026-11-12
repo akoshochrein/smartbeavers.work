@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { CopyField } from "@/components/app/CopyField";
 import { StatusDot } from "@/components/app/StatusDot";
 import { TrackerCard } from "@/components/app/TrackerCard";
+import { ExportButton } from "@/components/app/ExportButton";
+import { exportColony } from "@/lib/export";
 import { FactionPicker } from "@/components/app/FactionPicker";
 import type { FactionKey } from "@/shared/goods";
 import { WeatherCard } from "@/components/app/WeatherCard";
@@ -465,6 +467,16 @@ function SettingsTab({ colony, onChange }: { colony: Colony; onChange: (c: Colon
       </form>
 
       <section className="space-y-6 border-t pt-10">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+          <div className="max-w-md">
+            <h3 className="text-xl font-semibold">Export this colony</h3>
+            <p className="mt-1 text-sm leading-relaxed text-ink-soft">
+              One JSON file with this colony's settings, trackers and full signal history. It includes the adapter
+              links, so treat the file as private.
+            </p>
+          </div>
+          <ExportButton run={() => exportColony(colony)} className="sm:ml-auto" />
+        </div>
         <SettingsAction
           title="Make new adapter links"
           body="Use this if your links leaked. The old links stop working straight away, and you'll need to paste the new ones into every adapter."
