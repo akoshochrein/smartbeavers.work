@@ -22,7 +22,7 @@ import { Route as ApiAccountRouteImport } from './routes/api/account'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as AppColoniesIdIndexRouteImport } from './routes/_app.colonies.$id.index'
-import { Route as HookTokenSignalNameRouteImport } from './routes/hook/$token/$signal/$name'
+import { Route as HookTokenSignalSplatRouteImport } from './routes/hook/$token/$signal/$'
 import { Route as AppColoniesIdTrackersLadderIdRouteImport } from './routes/_app.colonies.$id.trackers.$ladderId'
 import { Route as AppColoniesIdTrackersClockRouteImport } from './routes/_app.colonies.$id.trackers.clock'
 import { Route as AppColoniesIdTrackersNewRouteImport } from './routes/_app.colonies.$id.trackers.new'
@@ -92,9 +92,9 @@ const AppColoniesIdIndexRoute = AppColoniesIdIndexRouteImport.update({
   path: '/colonies/$id/',
   getParentRoute: () => AppRoute,
 } as any)
-const HookTokenSignalNameRoute = HookTokenSignalNameRouteImport.update({
-  id: '/hook/$token/$signal/$name',
-  path: '/hook/$token/$signal/$name',
+const HookTokenSignalSplatRoute = HookTokenSignalSplatRouteImport.update({
+  id: '/hook/$token/$signal/$',
+  path: '/hook/$token/$signal/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppColoniesIdTrackersLadderIdRoute =
@@ -134,7 +134,7 @@ export interface FileRoutesByFullPath {
   '/api/account': typeof ApiAccountRoute
   '/api/health': typeof ApiHealthRoute
   '/auth/callback': typeof AuthCallbackRoute
-  '/hook/$token/$signal/$name': typeof HookTokenSignalNameRoute
+  '/hook/$token/$signal/$': typeof HookTokenSignalSplatRoute
   '/colonies/$id/': typeof AppColoniesIdIndexRoute
   '/colonies/$id/trackers/$ladderId': typeof AppColoniesIdTrackersLadderIdRoute
   '/colonies/$id/trackers/clock': typeof AppColoniesIdTrackersClockRoute
@@ -153,7 +153,7 @@ export interface FileRoutesByTo {
   '/api/account': typeof ApiAccountRoute
   '/api/health': typeof ApiHealthRoute
   '/auth/callback': typeof AuthCallbackRoute
-  '/hook/$token/$signal/$name': typeof HookTokenSignalNameRoute
+  '/hook/$token/$signal/$': typeof HookTokenSignalSplatRoute
   '/colonies/$id': typeof AppColoniesIdIndexRoute
   '/colonies/$id/trackers/$ladderId': typeof AppColoniesIdTrackersLadderIdRoute
   '/colonies/$id/trackers/clock': typeof AppColoniesIdTrackersClockRoute
@@ -174,7 +174,7 @@ export interface FileRoutesById {
   '/api/account': typeof ApiAccountRoute
   '/api/health': typeof ApiHealthRoute
   '/auth/callback': typeof AuthCallbackRoute
-  '/hook/$token/$signal/$name': typeof HookTokenSignalNameRoute
+  '/hook/$token/$signal/$': typeof HookTokenSignalSplatRoute
   '/_app/colonies/$id/': typeof AppColoniesIdIndexRoute
   '/_app/colonies/$id/trackers/$ladderId': typeof AppColoniesIdTrackersLadderIdRoute
   '/_app/colonies/$id/trackers/clock': typeof AppColoniesIdTrackersClockRoute
@@ -195,7 +195,7 @@ export interface FileRouteTypes {
     | '/api/account'
     | '/api/health'
     | '/auth/callback'
-    | '/hook/$token/$signal/$name'
+    | '/hook/$token/$signal/$'
     | '/colonies/$id/'
     | '/colonies/$id/trackers/$ladderId'
     | '/colonies/$id/trackers/clock'
@@ -214,7 +214,7 @@ export interface FileRouteTypes {
     | '/api/account'
     | '/api/health'
     | '/auth/callback'
-    | '/hook/$token/$signal/$name'
+    | '/hook/$token/$signal/$'
     | '/colonies/$id'
     | '/colonies/$id/trackers/$ladderId'
     | '/colonies/$id/trackers/clock'
@@ -234,7 +234,7 @@ export interface FileRouteTypes {
     | '/api/account'
     | '/api/health'
     | '/auth/callback'
-    | '/hook/$token/$signal/$name'
+    | '/hook/$token/$signal/$'
     | '/_app/colonies/$id/'
     | '/_app/colonies/$id/trackers/$ladderId'
     | '/_app/colonies/$id/trackers/clock'
@@ -253,7 +253,7 @@ export interface RootRouteChildren {
   ApiAccountRoute: typeof ApiAccountRoute
   ApiHealthRoute: typeof ApiHealthRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
-  HookTokenSignalNameRoute: typeof HookTokenSignalNameRoute
+  HookTokenSignalSplatRoute: typeof HookTokenSignalSplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -349,11 +349,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppColoniesIdIndexRouteImport
       parentRoute: typeof AppRoute
     }
-    '/hook/$token/$signal/$name': {
-      id: '/hook/$token/$signal/$name'
-      path: '/hook/$token/$signal/$name'
-      fullPath: '/hook/$token/$signal/$name'
-      preLoaderRoute: typeof HookTokenSignalNameRouteImport
+    '/hook/$token/$signal/$': {
+      id: '/hook/$token/$signal/$'
+      path: '/hook/$token/$signal/$'
+      fullPath: '/hook/$token/$signal/$'
+      preLoaderRoute: typeof HookTokenSignalSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app/colonies/$id/trackers/$ladderId': {
@@ -420,7 +420,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAccountRoute: ApiAccountRoute,
   ApiHealthRoute: ApiHealthRoute,
   AuthCallbackRoute: AuthCallbackRoute,
-  HookTokenSignalNameRoute: HookTokenSignalNameRoute,
+  HookTokenSignalSplatRoute: HookTokenSignalSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
