@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { CopyField } from "@/components/app/CopyField";
 import { StatusDot } from "@/components/app/StatusDot";
 import { TrackerCard } from "@/components/app/TrackerCard";
+import { FactionPicker } from "@/components/app/FactionPicker";
+import type { FactionKey } from "@/shared/goods";
 import { WeatherCard } from "@/components/app/WeatherCard";
 import { GameClockCard, useDateVersion } from "@/components/app/GameClockCard";
 import { useGameClock, useGameDate } from "@/lib/clock";
@@ -403,13 +405,14 @@ function SettingsTab({ colony, onChange }: { colony: Colony; onChange: (c: Colon
   const { reload } = useColonies();
   const [name, setName] = useState(colony.name);
   const [apiUrl, setApiUrl] = useState(colony.api_base_url);
-  const dirty = name.trim() !== colony.name || apiUrl.trim() !== colony.api_base_url;
+  const [faction, setFaction] = useState<FactionKey | undefined>((colony.faction as FactionKey | null) ?? undefined);
+  const dirty = name.trim() !== colony.name || apiUrl.trim() !== colony.api_base_url || (faction ?? null) !== colony.faction;
 
   async function save(e: FormEvent) {
     e.preventDefault();
     const { data, error } = await supabase
       .from("colonies")
-      .update({ name: name.trim(), api_base_url: apiUrl.trim() })
+      .update({ name: name.trim(), api_base_url: apiUrl.trim(), faction: faction ?? null })
       .eq("id", colony.id)
       .select()
       .single();
@@ -441,6 +444,15 @@ function SettingsTab({ colony, onChange }: { colony: Colony; onChange: (c: Colon
         <div className="space-y-2">
           <Label htmlFor="colony-name">Name</Label>
           <Input id="colony-name" value={name} maxLength={80} required onChange={(e) => setName(e.target.value)} className="bg-paper" />
+        </div>
+        <div className="space-y-2">
+          <div className="text-sm font-medium">Faction</div>
+          <FactionPicker id="colony-faction" value={faction} onChange={setFaction} />
+          <p className="text-sm text-ink-soft">
+            {colony.faction
+              ? "Decides which goods you're offered when you add a resource tracker. Trackers you already have stay."
+              : "Not set yet, so you're offered both factions' goods. Pick one to narrow the list."}
+          </p>
         </div>
         <div className="space-y-2">
           <Label htmlFor="api-url">Game address</Label>

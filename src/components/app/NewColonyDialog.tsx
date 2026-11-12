@@ -15,10 +15,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useColonies } from "@/lib/colonies";
 import { supabase } from "@/lib/supabase";
+import { FactionPicker } from "@/components/app/FactionPicker";
+import type { FactionKey } from "@/shared/goods";
 
 export function NewColonyDialog({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
+  const [faction, setFaction] = useState<FactionKey>();
   const [saving, setSaving] = useState(false);
   const { reload } = useColonies();
   const navigate = useNavigate();
@@ -26,12 +29,13 @@ export function NewColonyDialog({ children }: { children: ReactNode }) {
   async function create(e: FormEvent) {
     e.preventDefault();
     setSaving(true);
-    const { data, error } = await supabase.from("colonies").insert({ name: name.trim() }).select().single();
+    const { data, error } = await supabase.from("colonies").insert({ name: name.trim(), faction }).select().single();
     setSaving(false);
     if (error) return toast.error(`Couldn't create the colony: ${error.message}`);
     await reload();
     setOpen(false);
     setName("");
+    setFaction(undefined);
     toast.success(`${data.name} created`);
     navigate(`/colonies/${data.id}`);
   }
@@ -57,8 +61,13 @@ export function NewColonyDialog({ children }: { children: ReactNode }) {
               onChange={(e) => setName(e.target.value)}
             />
           </div>
+          <div className="space-y-2">
+            <div className="text-sm font-medium">Faction</div>
+            <FactionPicker id="new-colony-faction" value={faction} onChange={setFaction} />
+            <p className="text-sm text-ink-soft">Decides which goods you're offered to track. You can change it later.</p>
+          </div>
           <DialogFooter>
-            <Button type="submit" disabled={saving || !name.trim()}>
+            <Button type="submit" disabled={saving || !name.trim() || !faction}>
               {saving ? "Creating…" : "Create colony"}
             </Button>
           </DialogFooter>

@@ -199,7 +199,7 @@ async function main() {
     await api(`/rest/v1/colonies`, {
       method: "POST",
       headers: { Prefer: "return=representation" },
-      body: JSON.stringify({ name: COLONY, owner_id: user.id }),
+      body: JSON.stringify({ name: COLONY, owner_id: user.id, faction: "folktails" }),
     })
   )[0];
 

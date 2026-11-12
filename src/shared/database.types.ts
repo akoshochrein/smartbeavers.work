@@ -65,14 +65,14 @@ isOneToOne: false
                   ]
                 },"colonies": {
                   Row: {
-                    "api_base_url": string,"created_at": string,"id": string,"name": string,"owner_id": string,"webhook_token": string
+                    "api_base_url": string,"created_at": string,"faction": string | null,"id": string,"name": string,"owner_id": string,"webhook_token": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "api_base_url"?: string,"created_at"?: string,"id"?: string,"name": string,"owner_id"?: string,"webhook_token"?: string
+                    "api_base_url"?: string,"created_at"?: string,"faction"?: string | null,"id"?: string,"name": string,"owner_id"?: string,"webhook_token"?: string
                   }
                   Update: {
-                    "api_base_url"?: string,"created_at"?: string,"id"?: string,"name"?: string,"owner_id"?: string,"webhook_token"?: string
+                    "api_base_url"?: string,"created_at"?: string,"faction"?: string | null,"id"?: string,"name"?: string,"owner_id"?: string,"webhook_token"?: string
                   }
                   Relationships: [
                     

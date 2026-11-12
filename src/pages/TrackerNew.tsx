@@ -1,4 +1,4 @@
-import { ArrowLeft, BarChart3, CalendarClock, ChevronRight } from "lucide-react";
+import { ArrowLeft, CalendarClock, ChevronRight, Users } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router";
 import { toast } from "sonner";
@@ -14,7 +14,7 @@ import { supabase } from "@/lib/supabase";
 import { useColony, useLadders, useWeatherTracker } from "@/lib/useColony";
 import { cn } from "@/lib/utils";
 import { METRICS, METRIC_GROUPS, RESOURCE_METRICS, adapterName, comparisonSymbol, metricFor, type Comparison, type Metric } from "@/shared/ladders";
-import { GOODS, GOOD_GROUPS } from "@/shared/goods";
+import { GOOD_GROUPS, factionLabel, goodsFor } from "@/shared/goods";
 import { GoodIcon } from "@/components/app/GoodIcon";
 import { Input } from "@/components/ui/input";
 import { WEATHERS } from "@/shared/weather";
@@ -45,27 +45,16 @@ function TrackerChooser({ colonyId }: { colonyId: string }) {
       <p className="mt-3 max-w-xl text-lg leading-relaxed text-ink-soft">What do you want to follow?</p>
 
       <div className="mt-8 grid max-w-5xl gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <Link to="?kind=numbers" className={option}>
-          <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-cobalt text-white">
-            <BarChart3 className="size-5" />
+        <Link to={clock ? `/colonies/${colony.id}/trackers/clock` : "?kind=clock"} className={cn(option, clock && "bg-mist-2/40")}>
+          <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-pine text-mist">
+            <CalendarClock className="size-5" />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-xl font-semibold">A number</span>
+            <span className="block text-xl font-semibold">The game clock</span>
             <span className="mt-1 block text-sm leading-relaxed text-ink-soft">
-              Anything a Population Counter can count: population, beds, jobs, workers or contamination. Uses a few counters, and you can add more any time.
-            </span>
-          </span>
-          <ChevronRight className="mt-2 size-5 shrink-0 text-ink-soft transition-transform group-hover:translate-x-0.5" />
-        </Link>
-
-        <Link to="?kind=resource" className={option}>
-          <span className="grid size-10 shrink-0 grid-cols-2 place-items-center gap-0.5 rounded-lg bg-mist-2 p-1">
-            {["Water", "Logs", "Berries", "Gears"].map((g) => <GoodIcon key={g} good={g} className="size-3.5" />)}
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-xl font-semibold">A resource</span>
-            <span className="mt-1 block text-sm leading-relaxed text-ink-soft">
-              How full the storage of any good is, in percent: water, logs, food and the rest. Uses a few Resource Counters.
+              {clock
+                ? "Already set up. Open its setup guide."
+                : "The cycle and day like the game shows them, and whether the game is running. Uses one Chronometer."}
             </span>
           </span>
           <ChevronRight className="mt-2 size-5 shrink-0 text-ink-soft transition-transform group-hover:translate-x-0.5" />
@@ -97,16 +86,27 @@ function TrackerChooser({ colonyId }: { colonyId: string }) {
           </Link>
         )}
 
-        <Link to={clock ? `/colonies/${colony.id}/trackers/clock` : "?kind=clock"} className={cn(option, clock && "bg-mist-2/40")}>
-          <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-pine text-mist">
-            <CalendarClock className="size-5" />
+        <Link to="?kind=resource" className={option}>
+          <span className="grid size-10 shrink-0 grid-cols-2 place-items-center gap-0.5 rounded-lg bg-mist-2 p-1">
+            {["Water", "Logs", "Berries", "Gears"].map((g) => <GoodIcon key={g} good={g} className="size-3.5" />)}
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-xl font-semibold">The game clock</span>
+            <span className="block text-xl font-semibold">Resources</span>
             <span className="mt-1 block text-sm leading-relaxed text-ink-soft">
-              {clock
-                ? "Already set up. Open its setup guide."
-                : "The cycle and day like the game shows them, and whether the game is running. Uses one Chronometer."}
+              How full the storage of any good is, in percent: water, logs, food and the rest. Uses a few Resource Counters.
+            </span>
+          </span>
+          <ChevronRight className="mt-2 size-5 shrink-0 text-ink-soft transition-transform group-hover:translate-x-0.5" />
+        </Link>
+
+        <Link to="?kind=numbers" className={option}>
+          <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-cobalt text-white">
+            <Users className="size-5" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-xl font-semibold">Population</span>
+            <span className="mt-1 block text-sm leading-relaxed text-ink-soft">
+              How many beavers and bots you have, plus beds, jobs, workers and contamination. Uses a few Population Counters.
             </span>
           </span>
           <ChevronRight className="mt-2 size-5 shrink-0 text-ink-soft transition-transform group-hover:translate-x-0.5" />
@@ -227,7 +227,8 @@ function CounterTrackerForm({ kind }: { kind: Metric["kind"] }) {
   const taken = new Set(ladders.map((l) => l.metric));
   const resource = kind === "resource";
   const example = resource ? 50 : 30;
-  const available = (resource ? RESOURCE_METRICS : METRICS).filter((m) => !taken.has(m.prefix));
+  const offered = new Set(goodsFor(colony.faction).map((g) => g.prefix));
+  const available = (resource ? RESOURCE_METRICS.filter((m) => offered.has(m.prefix)) : METRICS).filter((m) => !taken.has(m.prefix));
   if (available.length === 0) {
     return (
       <div className="py-6">
@@ -260,7 +261,7 @@ function CounterTrackerForm({ kind }: { kind: Metric["kind"] }) {
   return (
     <div>
       <BackLink colonyId={colony.id} name={colony.name} />
-      <h1 className="mt-4 text-3xl leading-tight font-bold tracking-tight sm:text-4xl">{resource ? "Track a resource" : "Track a number"}</h1>
+      <h1 className="mt-4 text-3xl leading-tight font-bold tracking-tight sm:text-4xl">{resource ? "Track a resource" : "Track your population"}</h1>
       <p className="mt-3 max-w-xl text-lg leading-relaxed text-ink-soft">
         {resource
           ? "Each Resource Counter switches on at one fill level, such as 50% full. Every time your storage passes one, smartbeavers knows the level at that moment. Build as many or as few as you like, and add more later."
@@ -270,7 +271,7 @@ function CounterTrackerForm({ kind }: { kind: Metric["kind"] }) {
       <form onSubmit={save} className="mt-10 grid gap-12 lg:grid-cols-[1fr_20rem]">
         <div className="space-y-10">
           {resource ? (
-            <GoodPicker available={available} value={metric.prefix} onChange={setPrefix} />
+            <GoodPicker colonyId={colony.id} faction={colony.faction} available={available} value={metric.prefix} onChange={setPrefix} />
           ) : (
           <div className="space-y-2">
             <Label htmlFor="metric" className="text-base">What to count</Label>
@@ -347,11 +348,23 @@ function CounterTrackerForm({ kind }: { kind: Metric["kind"] }) {
   );
 }
 
-function GoodPicker({ available, value, onChange }: { available: Metric[]; value: string; onChange: (prefix: string) => void }) {
+function GoodPicker({
+  colonyId,
+  faction,
+  available,
+  value,
+  onChange,
+}: {
+  colonyId: string;
+  faction: string | null;
+  available: Metric[];
+  value: string;
+  onChange: (prefix: string) => void;
+}) {
   const [query, setQuery] = useState("");
   const q = query.trim().toLowerCase();
   const open = new Set(available.map((m) => m.prefix));
-  const shown = GOODS.filter((g) => open.has(g.prefix) && (!q || g.label.toLowerCase().includes(q)));
+  const shown = goodsFor(faction).filter((g) => open.has(g.prefix) && (!q || g.label.toLowerCase().includes(q)));
 
   return (
     <fieldset className="space-y-4">
@@ -364,6 +377,12 @@ function GoodPicker({ available, value, onChange }: { available: Metric[]; value
         aria-label="Search goods"
         className="h-11 max-w-xs bg-paper text-base"
       />
+      <p className="text-sm text-ink-soft">
+        {factionLabel(faction) ? `Showing ${factionLabel(faction)} goods.` : "Showing both factions' goods."}{" "}
+        <Link to={`/colonies/${colonyId}?tab=settings`} className="text-cobalt-deep hover:underline">
+          {factionLabel(faction) ? "Change faction" : "Set this colony's faction"}
+        </Link>
+      </p>
       {shown.length === 0 && <p className="text-sm text-ink-soft">No good matches "{query}".</p>}
       <RadioGroup value={value} onValueChange={onChange} className="block space-y-5">
         {GOOD_GROUPS.map((group) => {

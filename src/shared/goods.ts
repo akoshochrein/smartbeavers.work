@@ -16,6 +16,22 @@ export type Good = {
 
 export const GOOD_GROUPS: GoodGroup[] = ["Fluids", "Food", "Ingredients", "Materials"];
 
+/** How a colony's faction is stored (colonies.faction). */
+export type FactionKey = "folktails" | "iron_teeth";
+
+export const FACTIONS: { key: FactionKey; label: Faction; hint: string }[] = [
+  { key: "folktails", label: "Folktails", hint: "Farmers: bread, carrots, paper" },
+  { key: "iron_teeth", label: "Iron Teeth", hint: "Engineers: rations, coffee, metal parts" },
+];
+
+export const factionLabel = (key: string | null | undefined): Faction | undefined => FACTIONS.find((f) => f.key === key)?.label;
+
+/** Goods a colony of this faction can have. No faction set: every good. */
+export const goodsFor = (key: string | null | undefined): Good[] => {
+  const faction = factionLabel(key);
+  return faction ? GOODS.filter((g) => !g.faction || g.faction === faction) : GOODS;
+};
+
 const F: Faction = "Folktails";
 const IT: Faction = "Iron Teeth";
 
