@@ -4,6 +4,9 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 import { Navigate } from "@tanstack/react-router";
 import { supabase } from "./supabase";
 
+/** Checked in the browser for new passwords. Keep at or above Supabase's own minimum (Auth → Providers → Email). */
+export const MIN_PASSWORD_LENGTH = 8;
+
 type AuthState = { session: Session | null; loading: boolean };
 
 const AuthContext = createContext<AuthState>({ session: null, loading: true });

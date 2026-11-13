@@ -18,6 +18,7 @@ import { useAuth } from "@/lib/auth";
 import { useColonies } from "@/lib/colonies";
 import { supabase } from "@/lib/supabase";
 import { ExportButton } from "@/components/app/ExportButton";
+import { PasswordForm } from "@/components/app/PasswordForm";
 import { ProfileForm } from "@/components/app/ProfileForm";
 import { exportAccount } from "@/lib/export";
 
@@ -79,6 +80,10 @@ export function Account() {
           </Link>
           .
         </p>
+      </section>
+
+      <section className="mt-12 border-t pt-10">
+        <PasswordForm email={email} />
       </section>
 
       <section className="mt-12 flex flex-col gap-4 border-t pt-10 sm:flex-row sm:items-center">

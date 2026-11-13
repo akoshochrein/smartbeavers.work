@@ -30,6 +30,7 @@ if (!SECRET) {
 }
 
 const EMAIL = "test-beaver@example.com";
+const PASSWORD = "test-beaver";
 const COLONY = "Folktails on Plains";
 const POP_STEPS = [20, 40, 60, 80, 100, 120, 140, 160, 180, 200];
 const COLONY_AGE_DAYS = 120; // real days since the colony was started
@@ -191,7 +192,9 @@ async function main() {
   // player
   const users = await api(`/auth/v1/admin/users?per_page=1000`);
   let user = users.users.find((u: { email: string }) => u.email === EMAIL);
-  user ??= await api(`/auth/v1/admin/users`, { method: "POST", body: JSON.stringify({ email: EMAIL, email_confirm: true }) });
+  user = user
+    ? await api(`/auth/v1/admin/users/${user.id}`, { method: "PUT", body: JSON.stringify({ password: PASSWORD }) })
+    : await api(`/auth/v1/admin/users`, { method: "POST", body: JSON.stringify({ email: EMAIL, password: PASSWORD, email_confirm: true }) });
 
   // colony
   let [colony] = await api(`/rest/v1/colonies?owner_id=eq.${user.id}&name=eq.${encodeURIComponent(COLONY)}&select=*`);
@@ -263,7 +266,7 @@ async function main() {
   );
   if (!match) process.exitCode = 1;
   console.log(`  recent cycles (game days): ${sim.recentCycles.join("; ")}`);
-  console.log(`Sign in at http://localhost:5173/login as ${EMAIL} (the link arrives in Mailpit, http://127.0.0.1:54324).`);
+  console.log(`Sign in at http://localhost:5173/login as ${EMAIL} with the password "${PASSWORD}".`);
 }
 
 main().catch((err) => {

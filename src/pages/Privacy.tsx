@@ -37,8 +37,8 @@ export function Privacy() {
           <h2>What we store</h2>
           <ul>
             <li>
-              <strong>Your account:</strong> your email address, an account id, and when you created the account and last
-              signed in. If you choose to add them, a handle and a profile picture. The picture is shrunk in your
+              <strong>Your account:</strong> your email address, your password stored only as a one-way hash (it can't be
+              turned back into the password), an account id, and when you created the account and last signed in. If you choose to add them, a handle and a profile picture. The picture is shrunk in your
               browser first, which also removes details stored inside the file, such as where a photo was taken.
               Only you can see it, unless you make your profile public.
             </li>
@@ -97,7 +97,7 @@ export function Privacy() {
               logs and abuse prevention.
             </li>
           </ul>
-          <p>We send email only to sign you in. There is no newsletter.</p>
+          <p>We don't send you email. There is no newsletter.</p>
         </section>
 
         <section>
@@ -115,7 +115,7 @@ export function Privacy() {
           <p>We use a small number of providers to run the site. They act on our instructions under data processing agreements.</p>
           <ul>
             <li>
-              <strong>Supabase</strong> stores the database and handles sign-in, including sending the sign-in email. The
+              <strong>Supabase</strong> stores the database and handles sign-in. The
               database is in the EU (Frankfurt, Germany).
             </li>
             <li>

@@ -58,7 +58,7 @@ the game.
 | -------- | ------------------------------------------------------------- |
 | Frontend | React 19, TanStack Router + Query, Tailwind CSS v4, shadcn/ui |
 | Backend  | TanStack Start server routes on a Cloudflare Worker           |
-| Data     | Supabase (Postgres + row level security, magic-link sign-in, Realtime) |
+| Data     | Supabase (Postgres + row level security, email + password sign-in, Realtime) |
 
 ## Run it locally
 
@@ -78,7 +78,7 @@ Then:
 - `pnpm db:seed` fills the local database with a realistic colony: the player
   `test-beaver@example.com`, a population tracker, a weather tracker, a game clock and about
   four months of simulated signals. It only ever writes to a local Supabase.
-- Sign in with that address. Sign-in emails land in Mailpit: http://127.0.0.1:54324
+- Sign in with that address and the password `test-beaver`, or create a new account on the sign-in page.
 - Supabase Studio: http://127.0.0.1:54323
 - After changing SQL: `pnpm db:reset && pnpm db:types`
 
@@ -119,9 +119,9 @@ account. Both have free tiers that are enough for this.
    npx supabase db push --remote
    ```
    The Supabase CLI targets the local database unless you pass `--remote`.
-2. **Sign-in.** In the Supabase dashboard under Auth → URL configuration, set the site URL to
-   your address and add `<your address>/auth/callback` to the redirect URLs. Set up custom
-   SMTP: the built-in mailer is heavily rate-limited.
+2. **Sign-in.** Players sign in with an email address and a password. In the Supabase dashboard
+   under Auth → Sign In / Providers → Email, turn off "Confirm email" so new accounts work straight
+   away and no email is sent, and set the minimum password length to 8.
 3. **Settings.** Two files hold your deployment's settings. Neither is committed.
    ```sh
    cp .env.production.example .env.production   # Supabase URL + publishable key, and who runs the site

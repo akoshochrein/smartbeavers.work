@@ -21,7 +21,7 @@ export function Terms() {
         <section>
           <h2>Your account</h2>
           <ul>
-            <li>You sign in with your email address. Keep access to that mailbox secure, since it is your key.</li>
+            <li>You sign in with your email address and a password. Keep the password to yourself and don't reuse one from another site.</li>
             <li>
               Your colonies' adapter links are secrets. Anyone who has them can send signals to your colony, so don't
               share them. If they leak, make new ones in the colony's settings.
