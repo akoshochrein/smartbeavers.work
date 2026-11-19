@@ -329,7 +329,7 @@ isOneToOne: false
                            },
 "colony_ladder":
 { Args: Record<PropertyKey, never>; Returns: {
-              "avatar_path": string,"colony_name": string,"cycle": number,"cycle_started_at": string,"day": number,"faction": string,"handle": string,"key": string,"last_signal_at": string,"pop_comparison": string,"pop_reading": number,"pop_steps": Json,"profile_updated_at": string,"weather": string
+              "avatar_path": string,"colony_name": string,"cycle": number,"day": number,"faction": string,"handle": string,"key": string,"last_signal_at": string,"pop_comparison": string,"pop_reading": number,"pop_steps": Json,"profile_updated_at": string,"weather": string,"weather_days": number
             }[]
                            },
 "date_as_of":
