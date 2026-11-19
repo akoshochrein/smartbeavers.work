@@ -130,10 +130,10 @@ function ColonyDashboard({ colony, onChange }: { colony: Colony; onChange: (c: C
                 <StatusDot state={lastSignal || modLastSeen ? true : undefined} live={live} />
                 {modReporting
                   ? "The companion mod is reporting"
-                  : lastSignal
-                    ? `Last signal ${timeAgo(lastSignal)}`
-                    : modLastSeen
-                      ? `The companion mod last reported ${timeAgo(modLastSeen)}`
+                  : modLastSeen && (!lastSignal || modLastSeen > Date.parse(lastSignal))
+                    ? `The companion mod last reported ${timeAgo(modLastSeen)}`
+                    : lastSignal
+                      ? `Last signal ${timeAgo(lastSignal)}`
                       : "No signals yet. Connect an adapter to get started."}
               </span>
             )}

@@ -47,10 +47,11 @@ export function TrackerCard({
   const now = useNow(30_000);
 
   const steps = useMemo(() => discoverSteps(ladder, feed.states.values()), [ladder, feed.states]);
-  // The mod's number is the value while the mod is reporting. When it isn't, the adapters'
-  // answer is, and with no adapters the mod's last number is the best there is.
+  // The mod's number is the value while the mod is reporting. When it isn't, the newer of the
+  // two is: counters that have switched since the mod's last number take over, silent ones don't.
   const fromSteps = latestValue(steps);
-  const exact = !!reading && (reading.reporting || fromSteps.kind === "waiting");
+  const newestStep = steps.reduce((t, s) => Math.max(t, s.at), 0);
+  const exact = !!reading && (reading.reporting || newestStep <= reading.at);
   const value = exact ? exactValue(reading.value, reading.at) : fromSteps;
   const names = useMemo(() => steps.map((s) => s.name), [steps]);
   // Game days: the chart spans the clock's recent day signals. Real time: the last HISTORY_DAYS.

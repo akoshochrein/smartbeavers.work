@@ -12,7 +12,7 @@ const WEATHER_NAMES = new Set(WEATHER_ADAPTERS);
  * The colony's feed with the companion mod's weather and day folded in, for the weather and game
  * clock cards. Those cards read four adapters with fixed names; here the mod's readings stand in
  * for them, the same way the `colony_signals` database view does for history:
- *   - while the mod is reporting a metric (or no adapter ever has), its reading is the state;
+ *   - while the mod is reporting a metric, or no adapter has reported it since, its reading is the state;
  *   - a new weather or day reading becomes the signal the adapter would have sent;
  *   - real signals from those adapters don't count while the mod is reporting.
  * Everything else in the feed is passed through.
@@ -27,13 +27,14 @@ export function withModSignals(feed: ColonyFeed, readings: ColonyReadings | unde
   const states = new Map(feed.states);
   const state = (name: string, on: boolean, at: number): AdapterState => ({ colony_id: colonyId, name, state: on, updated_at: new Date(at).toISOString() });
 
-  const modWeather = !!weather && (weather.reporting || !WEATHER_ADAPTERS.some((n) => feed.states.has(n)));
+  const newest = (names: string[]) => names.reduce((t, n) => Math.max(t, feed.states.has(n) ? Date.parse(feed.states.get(n)!.updated_at) : 0), 0);
+  const modWeather = !!weather && (weather.reporting || newest(WEATHER_ADAPTERS) <= weather.at);
   if (modWeather) {
     const active = weatherFromValue(weather.value);
     for (const name of WEATHER_ADAPTERS) states.delete(name);
     if (active) states.set(weatherInfo(active).adapter, state(weatherInfo(active).adapter, true, weather.at));
   }
-  const modDay = !!day && (day.reporting || !feed.states.has(CLOCK_ADAPTER));
+  const modDay = !!day && (day.reporting || newest([CLOCK_ADAPTER]) <= day.at);
   if (modDay) states.set(CLOCK_ADAPTER, state(CLOCK_ADAPTER, true, day.at));
 
   const fromMod: AdapterEvent[] = [];

@@ -9,7 +9,7 @@
 --   "adapter +30 Pop30 on"        an adapter signal
 --   "... carried"                 a value already in place when that stretch began
 begin;
-select plan(41);
+select plan(43);
 
 create temp table base on commit drop as select date_trunc('minute', now()) - interval '10 days' as t;
 
@@ -64,7 +64,7 @@ select results_eq(
 );
 
 -- ---------------------------------------------------------------------------
--- The mod wins while it is reporting; adapters fill the gaps.
+-- The mod wins while it is reporting; adapters fill the gaps they report in.
 -- The mod reported from +60 to +120 and again from +240 to +300.
 -- ---------------------------------------------------------------------------
 select pg_temp.session(60, 120);
@@ -82,8 +82,9 @@ select results_eq(
        ('adapter +30 Pop40 on'),
        ('mod +60 34'),
        ('mod +90 41'),
-       -- five minutes after the last heartbeat the adapters take over, with the states they
-       -- had by then (including the signal that arrived while the mod was reporting)
+       -- five minutes after the last heartbeat the adapters take over, because they went on to
+       -- report (+200). They start from the states they had by then, including the signal that
+       -- arrived while the mod was reporting
        ('adapter +125 Pop30 off carried'),
        ('adapter +125 Pop40 on carried'),
        ('adapter +200 Pop40 off'),
@@ -103,6 +104,16 @@ select results_eq(
   'no adapters for the metric: only the mod''s values'
 );
 
+-- Adapters only take over if they have something to say. Counters that went quiet before the
+-- mod arrived must not drag the chart back to their old state every time the game is closed.
+select pg_temp.signal(10, 'Homeless5', true);
+select pg_temp.reading(60, 'Homeless', 2);
+select pg_temp.reading(270, 'Homeless', 3);
+select results_eq(
+  $$ select * from pg_temp.history('Homeless', array['Homeless5']) $$,
+  $$ values ('adapter +10 Homeless5 on'), ('mod +60 2'), ('mod +240 2 carried'), ('mod +270 3') $$,
+  'adapters that stayed silent after the mod stopped do not take over');
+
 -- A metric the mod has never reported is not hidden by the mod's sessions.
 select pg_temp.signal(100, 'Jobs10', true);
 select results_eq(
@@ -117,12 +128,7 @@ select pg_temp.signal(250, 'Bots1', true);
 select pg_temp.signal(290, 'Bots2', true);
 select results_eq(
   $$ select * from pg_temp.history('Bots', array['Bots1', 'Bots2']) $$,
-  $$ values
-       ('adapter +250 Bots1 on'),
-       ('mod +280 3'),
-       ('adapter +305 Bots1 on carried'),
-       ('adapter +305 Bots2 on carried')
-  $$,
+  $$ values ('adapter +250 Bots1 on'), ('mod +280 3') $$,
   'a metric first reported mid-session is taken over from that moment, not from the session start'
 );
 
@@ -355,10 +361,15 @@ select is(
 
 update public.mod_sessions set last_seen_at = now() - interval '10 minutes'
  where colony_id = '00000000-0000-0000-0000-0000000000c2' and last_seen_at > now() - interval '5 minutes';
+select is((select pop_reading from public.colony_ladder() where colony_name = 'Intake'), 37,
+  'the mod stopped, but the counters have said nothing since: its last population stays');
+
+update public.adapter_states set updated_at = now() + interval '1 second'
+ where colony_id = '00000000-0000-0000-0000-0000000000c2' and name = 'Pop20';
 select is(
   (select coalesce(pop_reading::text, 'no reading') || ' ' || jsonb_array_length(pop_steps) from public.colony_ladder() where colony_name = 'Intake'),
   'no reading 1',
-  'once the mod stops reporting, the population counters take over');
+  'once a counter reports after the mod stopped, the counters take over');
 
 select is((select pop_reading from public.colony_ladder() where colony_name = 'Merge'), 50,
   'with no counters to take over, the mod''s last population stays');
