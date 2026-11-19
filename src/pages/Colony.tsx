@@ -1,8 +1,9 @@
-import { CalendarClock, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { Link, useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { CopyField } from "@/components/app/CopyField";
+import { StatusBand } from "@/components/app/StatusBand";
 import { StatusDot } from "@/components/app/StatusDot";
 import { TrackerTile } from "@/components/app/TrackerTile";
 import { ExportButton } from "@/components/app/ExportButton";
@@ -14,7 +15,6 @@ import { metricFor } from "@/shared/ladders";
 import { WeatherCard } from "@/components/app/WeatherCard";
 import { GameClockCard, useDateVersion } from "@/components/app/GameClockCard";
 import { useGameClock, useGameDate } from "@/lib/clock";
-import { formatGameDate } from "@/shared/clock";
 import { SignalMeter } from "@/components/SignalMeter";
 import {
   AlertDialog,
@@ -47,7 +47,6 @@ import { modUrl, webhookUrl } from "@/shared/webhook";
 export const COLONY_TABS = ["trackers", "signals", "settings"] as const;
 export type ColonyTab = (typeof COLONY_TABS)[number];
 const ROUTE = "/_app/colonies/$id/";
-const LIVE_MS = 10 * 60_000;
 /** Metrics that get a card as soon as the companion mod reports them, with no tracker set up. */
 const MOD_METRICS = ["Pop", "Bots"];
 
@@ -83,8 +82,6 @@ function ColonyDashboard({ colony, onChange }: { colony: Colony; onChange: (c: C
   const readings = useColonyReadings(colony.id);
   const [pinned, setPinned] = usePinnedMetrics(colony.id);
   const mod = useModStatus(colony.id);
-  const modLastSeen = mod?.lastSeen;
-  const modReporting = isReporting(mod);
   // Goods the mod reports storage for and the player hasn't set a tracker up for.
   const modGoods = goodsFor(colony.faction).filter((g) => readings?.byMetric.has(g.prefix) && !ladders?.some((l) => l.metric === g.prefix));
   // Trackers the mod feeds on its own: the default metrics and pinned goods it has reported,
@@ -114,34 +111,12 @@ function ColonyDashboard({ colony, onChange }: { colony: Colony; onChange: (c: C
   const date = useGameDate(colony.id, !!clock, `${dateVersion}-${dateSets}`);
 
   const lastSignal = [...feed.states.values()].map((s) => s.updated_at).sort().at(-1);
-  const live = modReporting || (!!lastSignal && Date.now() - Date.parse(lastSignal) < LIVE_MS);
 
   return (
     <div>
       <header className="flex flex-wrap items-end gap-x-6 gap-y-4">
         <div className="min-w-0">
           <h1 className="text-3xl leading-tight font-bold tracking-tight sm:text-4xl break-words">{colony.name}</h1>
-          <p className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-ink-soft">
-            {date && (
-              <span className="inline-flex items-center gap-1.5 font-medium text-ink">
-                <CalendarClock className="size-4 text-ink-soft" /> {formatGameDate(date.cycle, date.day)}
-              </span>
-            )}
-            {feed.loading ? (
-              " "
-            ) : (
-              <span className="inline-flex items-center gap-2">
-                <StatusDot state={lastSignal || modLastSeen ? true : undefined} live={live} />
-                {modReporting
-                  ? "The companion mod is reporting"
-                  : modLastSeen && (!lastSignal || modLastSeen > Date.parse(lastSignal))
-                    ? `The companion mod last reported ${timeAgo(modLastSeen)}`
-                    : lastSignal
-                      ? `Last signal ${timeAgo(lastSignal)}`
-                      : "No signals yet. Connect an adapter to get started."}
-              </span>
-            )}
-          </p>
         </div>
         <Button asChild className="sm:ml-auto">
           <Link to="/colonies/$id/trackers/new" params={{ id: colony.id }}>
@@ -150,7 +125,9 @@ function ColonyDashboard({ colony, onChange }: { colony: Colony; onChange: (c: C
         </Button>
       </header>
 
-      <Tabs value={tab} onValueChange={(v) => navigate({ to: "/colonies/$id", params: { id: colony.id }, search: v === "trackers" ? {} : { tab: v as ColonyTab }, replace: true })} className="mt-8">
+      <StatusBand colonyId={colony.id} feed={modFeed} date={clock === undefined ? undefined : date} mod={mod} lastSignal={lastSignal} dayVersion={dateVersion} />
+
+      <Tabs value={tab} onValueChange={(v) => navigate({ to: "/colonies/$id", params: { id: colony.id }, search: v === "trackers" ? {} : { tab: v as ColonyTab }, replace: true })} className="mt-6">
         <TabsList variant="line" className="w-full justify-start gap-4 border-b pb-0">
           {[
             ["trackers", "Trackers"],

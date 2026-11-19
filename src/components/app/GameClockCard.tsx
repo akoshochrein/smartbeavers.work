@@ -1,17 +1,13 @@
-import { CalendarClock } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Link } from "@tanstack/react-router";
 import { SetDateDialog } from "@/components/app/SetDateDialog";
-import { StatusDot } from "@/components/app/StatusDot";
 import { WeatherBadge } from "@/components/app/weather";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDayCounts, type GameDate } from "@/lib/clock";
 import { useRecentSignals } from "@/lib/history";
-import { formatTime } from "@/lib/time";
 import type { ColonyFeed } from "@/lib/useColonyFeed";
-import { CLOCK_ADAPTER, buildCycles, clockStatus, cycleBounds, formatGameDate, pluralDays } from "@/shared/clock";
+import { CLOCK_ADAPTER, buildCycles, cycleBounds, pluralDays } from "@/shared/clock";
 import { WEATHER_ADAPTERS, weatherPeriods } from "@/shared/weather";
 
 /** Signals that move the date: a new day, or a new cycle (temperate starting). */
@@ -43,9 +39,6 @@ export function GameClockCard({
   date: GameDate | null | undefined;
   onDateSet: () => void;
 }) {
-  const now = useNow(15_000);
-  const status = date ? clockStatus(date.last_day_at, date.seconds_per_day, now) : undefined;
-  const label = date ? formatGameDate(date.cycle, date.day) : "";
 
   return (
     <article className="rounded-2xl border bg-paper p-5 sm:p-6">
@@ -66,51 +59,11 @@ export function GameClockCard({
       </header>
 
       {date === undefined ? (
-        <div className="mt-4 space-y-3">
-          <Skeleton className="h-10 w-56" />
-          <Skeleton className="h-4 w-40" />
-        </div>
+        <Skeleton className="mt-4 h-10 w-full" />
       ) : date === null ? (
         <p className="mt-4 text-sm text-ink-soft">This colony has no game clock.</p>
       ) : (
         <>
-          <div className="mt-4 flex items-center gap-4">
-            <span className="grid size-16 shrink-0 place-items-center rounded-2xl bg-pine text-mist" aria-hidden>
-              <CalendarClock className="size-8" strokeWidth={1.75} />
-            </span>
-            <div className="min-w-0">
-              <div className="relative h-10 overflow-hidden">
-                <AnimatePresence mode="popLayout" initial={false}>
-                  <motion.div
-                    key={label}
-                    initial={{ y: 28, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: -28, opacity: 0 }}
-                    transition={{ type: "spring", stiffness: 240, damping: 24 }}
-                    className="font-display text-3xl leading-10 font-bold tracking-tight whitespace-nowrap"
-                  >
-                    {label}
-                  </motion.div>
-                </AnimatePresence>
-              </div>
-              <p className="mt-1 flex items-center gap-2 text-sm text-ink-soft">
-                {status?.kind === "running" ? (
-                  <>
-                    <StatusDot state live className="size-2" /> Running
-                  </>
-                ) : status?.kind === "stopped" ? (
-                  <>
-                    <StatusDot state={false} className="size-2" /> Paused or closed since {formatTime(status.since, now)}
-                  </>
-                ) : (
-                  <>
-                    <StatusDot state={undefined} live className="size-2" /> Waiting for the first day to pass
-                  </>
-                )}
-              </p>
-            </div>
-          </div>
-
           {date.cycles_tracked ? (
             <CycleLog
               colonyId={colonyId}
@@ -169,7 +122,7 @@ function CycleLog({
   });
 
   return (
-    <section className="mt-6 border-t pt-4">
+    <section className="mt-4">
       <h3 className="text-sm font-medium">Cycles</h3>
       {rows.length === 0 ? (
         <p className="mt-2 text-sm text-ink-soft">Cycles show up here once a new one starts with the clock running.</p>
@@ -203,13 +156,4 @@ function CycleLog({
       )}
     </section>
   );
-}
-
-function useNow(intervalMs: number) {
-  const [now, setNow] = useState(Date.now());
-  useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), intervalMs);
-    return () => clearInterval(t);
-  }, [intervalMs]);
-  return now;
 }
