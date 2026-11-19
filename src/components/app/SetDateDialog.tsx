@@ -21,14 +21,30 @@ export function SetDateDialog({
   current,
   onSet,
   children,
+  open: openProp,
+  onOpenChange,
 }: {
   colonyId: string;
   current: { cycle: number; day: number } | undefined;
   onSet: () => void;
-  children: ReactNode;
+  /** The button that opens the dialog. Leave it out and pass `open` to open it from elsewhere, such as a menu. */
+  children?: ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
-  const [open, setOpen] = useState(false);
   const [value, setValue] = useState(current ?? { cycle: 1, day: 1 });
+  const [ownOpen, setOwnOpen] = useState(false);
+  const open = openProp ?? ownOpen;
+  const setOpen = (o: boolean) => {
+    setOwnOpen(o);
+    onOpenChange?.(o);
+  };
+  // Opened from outside: start from the current date, as the trigger does.
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) setValue(current ?? { cycle: 1, day: 1 });
+  }
   const [saving, setSaving] = useState(false);
   const invalidate = useInvalidate();
 
@@ -51,7 +67,7 @@ export function SetDateDialog({
         if (o) setValue(current ?? { cycle: 1, day: 1 });
       }}
     >
-      <DialogTrigger asChild>{children}</DialogTrigger>
+      {children && <DialogTrigger asChild>{children}</DialogTrigger>}
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="font-display text-2xl font-bold tracking-tight">Set the date</DialogTitle>

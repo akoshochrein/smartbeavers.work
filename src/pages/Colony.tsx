@@ -12,8 +12,7 @@ import { FactionPicker } from "@/components/app/FactionPicker";
 import { ModGoods } from "@/components/app/ModGoods";
 import { goodsFor, type FactionKey } from "@/shared/goods";
 import { metricFor } from "@/shared/ladders";
-import { WeatherCard } from "@/components/app/WeatherCard";
-import { GameClockCard, useDateVersion } from "@/components/app/GameClockCard";
+import { TimeWeatherBlock, useDateVersion } from "@/components/app/TimeWeatherBlock";
 import { useGameClock, useGameDate } from "@/lib/clock";
 import { SignalMeter } from "@/components/SignalMeter";
 import {
@@ -168,18 +167,17 @@ function ColonyDashboard({ colony, onChange }: { colony: Colony; onChange: (c: C
                 <TrackerSections
                   time={
                     (clock || weather) && (
-                      <div className="space-y-6">
-                        {clock && <GameClockCard colonyId={colony.id} feed={modFeed} auto={!clockSetUp} date={date} onDateSet={() => setDateSets((n) => n + 1)} />}
-                        {weather && (
-                          <WeatherCard
-                            colonyId={colony.id}
-                            feed={modFeed}
-                            auto={!weatherTracker}
-                            clockFrom={date?.first_day_at ? Date.parse(date.first_day_at) : undefined}
-                            dayVersion={dateVersion}
-                          />
-                        )}
-                      </div>
+                      <TimeWeatherBlock
+                        colonyId={colony.id}
+                        feed={modFeed}
+                        date={date}
+                        clock={!!clock}
+                        weather={!!weather}
+                        clockAuto={!clockSetUp}
+                        weatherAuto={!weatherTracker}
+                        dayVersion={dateVersion}
+                        onDateSet={() => setDateSets((n) => n + 1)}
+                      />
                     )
                   }
                   population={numbers.length > 0 && <TileGrid>{numbers.map(tile)}</TileGrid>}
@@ -222,7 +220,10 @@ function TrackerSections({ time, population, goods }: { time: ReactNode; populat
   if (!time || !rest) return <div className={time ? "max-w-2xl" : undefined}>{time ? <Section title="Time and weather">{time}</Section> : rest}</div>;
   return (
     <div className="grid gap-8 xl:grid-cols-[26rem_minmax(0,1fr)] xl:items-start">
-      <Section title="Time and weather">{time}</Section>
+      {/* Pinned under the status band; scrolls inside itself if it is taller than the window. */}
+      <div className="xl:sticky xl:top-32 xl:max-h-[calc(100dvh-9rem)] xl:overflow-y-auto">
+        <Section title="Time and weather">{time}</Section>
+      </div>
       {rest}
     </div>
   );

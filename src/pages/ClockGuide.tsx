@@ -25,7 +25,7 @@ import { supabase } from "@/lib/supabase";
 import { timeAgo } from "@/lib/time";
 import { useColony } from "@/lib/useColony";
 import { useColonyFeed } from "@/lib/useColonyFeed";
-import { useDateVersion } from "@/components/app/GameClockCard";
+import { useDateVersion } from "@/components/app/TimeWeatherBlock";
 import { CLOCK_ADAPTER, formatGameDate } from "@/shared/clock";
 import { webhookUrl } from "@/shared/webhook";
 import { BackLink } from "./TrackerNew";
