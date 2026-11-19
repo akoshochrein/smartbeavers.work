@@ -14,7 +14,8 @@
 //   }
 //
 // `readings` holds only what changed since the mod's last request. The mod sends at most every
-// 15 seconds, and goods at most once a minute. Without it, or with it
+// 15 seconds, goods at most once a minute, and a change of day, cycle or weather straight away
+// (so each game day arrives as its own reading). Without it, or with it
 // empty, the request is a heartbeat: it says the game is running and nothing else.
 // Goods are named by the game's own ids ("Log", "TreatedPlank"; see gameId in
 // src/shared/goods.ts) and their value is how full storage is, 0 to 100.

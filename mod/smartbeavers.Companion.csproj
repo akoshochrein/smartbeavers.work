@@ -87,4 +87,25 @@
     <Message Importance="high" Text="Installed to $(ModsDir)/$(ModFolder)" />
   </Target>
 
+  <!--
+    dotnet build -c Release -t:Release
+    builds the mod and zips it for a GitHub Release: bin/smartbeavers.Companion-<version>.zip,
+    holding one folder to unpack into Documents/Timberborn/Mods. It contains the mod's own
+    files only.
+  -->
+  <Target Name="Release" DependsOnTargets="Build">
+    <PropertyGroup>
+      <StageDir>$(MSBuildProjectDirectory)/bin/stage</StageDir>
+      <ZipPath>$(MSBuildProjectDirectory)/bin/$(ModFolder)-$(Version).zip</ZipPath>
+    </PropertyGroup>
+    <RemoveDir Directories="$(StageDir)" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(StageDir)/$(ModFolder)" />
+    <Copy SourceFiles="@(ModFile)" DestinationFiles="@(ModFile->'$(StageDir)/$(ModFolder)/%(RelativeDir)%(Filename)%(Extension)')" />
+    <Copy SourceFiles="README.md;../LICENSE" DestinationFolder="$(StageDir)/$(ModFolder)" />
+    <Delete Files="$(ZipPath)" />
+    <ZipDirectory SourceDirectory="$(StageDir)" DestinationFile="$(ZipPath)" />
+    <RemoveDir Directories="$(StageDir)" />
+    <Message Importance="high" Text="Release zip: $(ZipPath)" />
+  </Target>
+
 </Project>

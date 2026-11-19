@@ -16,6 +16,9 @@ namespace Smartbeavers.Companion;
 /// - Nothing is sent for a save that isn't paired.
 /// - A snapshot holds only what changed since the last one that arrived, and goes out at most
 ///   every 15 seconds. The first one after loading holds everything.
+/// - A new day, a new cycle or a change of weather doesn't wait for the 15 seconds: the site
+///   counts game days by these changes, and at high game speed a day can pass faster than that.
+///   Such a snapshot goes out as soon as 3 seconds after the previous one.
 /// - Storage is looked at once a minute. A large colony's goods wobble by a point all the time,
 ///   and reporting each wobble stored thousands of readings an hour that no chart can show.
 /// - With nothing to say, a heartbeat goes out once a minute so the site knows the game is running.
@@ -33,6 +36,7 @@ public class Reporter(Pairing pairing, GameReader gameReader) : IUpdatableSingle
 
     const float CheckEvery = 1f;
     const float SnapshotEvery = 15f;
+    const float DateOrWeatherEvery = 3f;
     const float GoodsEvery = 60f;
     const float HeartbeatEvery = 60f;
     const float WaitAfterFailure = 30f;
@@ -50,6 +54,8 @@ public class Reporter(Pairing pairing, GameReader gameReader) : IUpdatableSingle
     int _pairingVersion = -1;
     float _nextCheck;
     float _nextSend;
+    float _notBefore;
+    float _lastSend = float.NegativeInfinity;
     float _lastArrived = float.NegativeInfinity;
 
     /// <summary>When the site last accepted a request, or null if it hasn't yet since loading.</summary>
@@ -68,6 +74,7 @@ public class Reporter(Pairing pairing, GameReader gameReader) : IUpdatableSingle
             _pairingVersion = pairing.Version;
             _received.Clear();
             _nextSend = 0f;
+            _notBefore = 0f;
             _nextGoods = 0f;
             _lastArrived = float.NegativeInfinity;
             LastSentAt = null;
@@ -91,14 +98,16 @@ public class Reporter(Pairing pairing, GameReader gameReader) : IUpdatableSingle
             Finish(outcome, now);
         }
 
-        if (pairing.Address is null || now < _nextCheck || now < _nextSend)
+        if (pairing.Address is null || now < _nextCheck || now < _notBefore)
         {
             return;
         }
 
         _nextCheck = now + CheckEvery;
 
-        var withGoods = now >= _nextGoods;
+        // Between regular snapshots the mod still looks, but only acts on the date and the weather.
+        var regular = now >= _nextSend;
+        var withGoods = regular && now >= _nextGoods;
         var changed = new Dictionary<string, int>();
         foreach (var reading in gameReader.Read(withGoods))
         {
@@ -108,9 +117,14 @@ public class Reporter(Pairing pairing, GameReader gameReader) : IUpdatableSingle
             }
         }
 
-        if (changed.Count > 0 || now - _lastArrived >= HeartbeatEvery)
+        var dateOrWeatherChanged = changed.ContainsKey("day") || changed.ContainsKey("cycle") || changed.ContainsKey(GameReader.WeatherName);
+        var due = regular
+            ? changed.Count > 0 || now - _lastArrived >= HeartbeatEvery
+            : dateOrWeatherChanged && now - _lastSend >= DateOrWeatherEvery;
+        if (due)
         {
             _inFlightHasGoods = withGoods;
+            _lastSend = now;
             Send(pairing.Address, changed, pairing.Version);
         }
     }
@@ -176,7 +190,7 @@ public class Reporter(Pairing pairing, GameReader gameReader) : IUpdatableSingle
             return;
         }
 
-        _nextSend = now + (outcome.Status is null ? WaitAfterFailure : WaitAfterRefusal);
+        _notBefore = now + (outcome.Status is null ? WaitAfterFailure : WaitAfterRefusal);
         SetProblem(outcome.Status switch
         {
             null => "The site couldn't be reached. The mod keeps trying.",
