@@ -75,9 +75,13 @@ pnpm dev                                   # http://localhost:5173
 
 Then:
 
-- `pnpm db:seed` fills the local database with a realistic colony: the player
-  `test-beaver@example.com`, a population tracker, a weather tracker, a game clock and about
-  four months of simulated signals. It only ever writes to a local Supabase.
+- `pnpm db:seed` fills the local database with two realistic colonies for the player
+  `test-beaver@example.com`, each with about four months of simulated history. One uses only
+  adapters: a population tracker, a weather tracker and a game clock. The other started the
+  same way and then switched to the companion mod, so its charts run from adapter signals
+  into readings, and it has free beds, bots and storage that only the mod reports. The player
+  also gets a public profile; a colony still only shows among the live colonies within an hour
+  of its last signal or reading. The seed only ever writes to a local Supabase.
 - Sign in with that address and the password `test-beaver`, or create a new account on the sign-in page.
 - Supabase Studio: http://127.0.0.1:54323
 - After changing SQL: `pnpm db:reset && pnpm db:types`. A reset empties the database, so run

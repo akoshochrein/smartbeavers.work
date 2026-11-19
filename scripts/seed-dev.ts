@@ -1,5 +1,9 @@
-// Fills the LOCAL Supabase with a realistic colony: a test player, a colony, a population tracker,
-// a weather tracker, a game clock and ~4 months of signal history simulated from Timberborn's rules.
+// Fills the LOCAL Supabase with two realistic colonies for a test player, simulated from
+// Timberborn's rules over ~4 months:
+//   - one that only uses HTTP Adapters: a population tracker, a weather tracker and a game clock;
+//   - one that started the same way and then switched to the companion mod, so its history is
+//     adapter signals followed by readings, with free beds, bots and storage only the mod reports.
+// The player also gets a public profile, so both colonies can show among the live colonies.
 //
 //   pnpm db:seed            (run `pnpm db:start` first)
 //
@@ -32,6 +36,17 @@ if (!SECRET) {
 const EMAIL = "test-beaver@example.com";
 const PASSWORD = "test-beaver";
 const COLONY = "Folktails on Plains";
+const MOD_COLONY = "Iron Teeth in the Canyon";
+/** The play session from which the second colony's player uses the companion mod instead of adapters. */
+const MOD_FROM_SESSION = 14;
+/** Goods the mod colony reports storage for: [name, typical fill %, how much it swings]. */
+const MOD_GOODS: [string, number, number][] = [
+  ["Water", 70, 6],
+  ["Logs", 45, 4],
+  ["Planks", 30, 3],
+  ["Berries", 55, 5],
+  ["Gears", 20, 2],
+];
 const POP_STEPS = [20, 40, 60, 80, 100, 120, 140, 160, 180, 200];
 const COLONY_AGE_DAYS = 120; // real days since the colony was started
 const TRACKING_FROM_SESSION = 3; // the player sets up the stations and the clock a few sessions in
@@ -97,13 +112,31 @@ function secondsPerGameDay(population: number): number {
 
 // ---------------------------------------------------------------------------------------------
 type Signal = { adapter_name: string; state: boolean; received_at: string };
+type ReadingRow = { metric: string; value: number; received_at: string };
 
-function simulate(now: number) {
+const WEATHER_VALUE: Record<Weather, number> = { Temperate: 0, Drought: 1, Badtide: 2 };
+const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
+
+/**
+ * Plays the colony from its start until now. With `modFromSession`, the player switches to the
+ * companion mod at that session: from then on there are no adapter signals, only readings.
+ */
+function simulate(now: number, modFromSession?: number) {
   const from = now - COLONY_AGE_DAYS * 86_400_000;
   const sessions = buildSessions(from, now);
   const seasons = buildSeasons(10_000);
   const signals: Signal[] = [];
   const counters = new Map(POP_STEPS.map((s) => [s, false]));
+  // What the mod reported, and when it was reporting. A reading is kept only when the value changed.
+  const readings: ReadingRow[] = [];
+  const modSessions: Session[] = [];
+  const reported = new Map<string, number>();
+  const report = (metric: string, value: number, at: string) => {
+    if (reported.get(metric) === value) return;
+    reported.set(metric, value);
+    readings.push({ metric, value, received_at: at });
+  };
+  const goods = new Map(MOD_GOODS.map(([name, level]) => [name, level]));
 
   let gameDay = 0;
   let population = 12;
@@ -115,6 +148,9 @@ function simulate(now: number) {
   sessions.forEach((session, i) => {
     trackingWeather ||= i + 1 >= TRACKING_FROM_SESSION;
     if (trackingWeather && !anchor) anchor = { at: session.start, ...date };
+    const mod = modFromSession !== undefined && i + 1 >= modFromSession;
+    if (mod) modSessions.push(session);
+    let hour = 0;
     let t = session.start;
     while (t < session.end) {
       // advance one game hour
@@ -133,7 +169,7 @@ function simulate(now: number) {
         seasonIndex++;
         const after = seasons[seasonIndex].weather;
         newCycle ||= after === "Temperate";
-        if (trackingWeather) {
+        if (trackingWeather && !mod) {
           signals.push({ adapter_name: `Weather${before}`, state: false, received_at: at });
           signals.push({ adapter_name: `Weather${after}`, state: true, received_at: new Date(t + 1000).toISOString() });
         }
@@ -142,7 +178,7 @@ function simulate(now: number) {
       // a new game day: the Chronometer switches on, the calendar moves on
       if (midnight) {
         date = newCycle ? { cycle: date.cycle + 1, day: 1 } : { cycle: date.cycle, day: date.day + 1 };
-        if (trackingWeather) signals.push({ adapter_name: "GameDay", state: true, received_at: new Date(t + 2000).toISOString() });
+        if (trackingWeather && !mod) signals.push({ adapter_name: "GameDay", state: true, received_at: new Date(t + 2000).toISOString() });
       }
 
       // population: grows towards housing capacity, suffers in bad weather, births/deaths jitter
@@ -153,12 +189,40 @@ function simulate(now: number) {
       population += (growth * (capacity - population * (weather === "Temperate" ? 1 : 0))) / 24 + gauss() * 0.35;
       population = Math.max(6, population);
 
-      for (const step of POP_STEPS) {
-        const on = Math.round(population) >= step;
-        if (on !== counters.get(step)) {
-          counters.set(step, on);
-          signals.push({ adapter_name: `Pop${step}`, state: on, received_at: at });
+      if (!mod) {
+        for (const step of POP_STEPS) {
+          const on = Math.round(population) >= step;
+          if (on !== counters.get(step)) {
+            counters.set(step, on);
+            signals.push({ adapter_name: `Pop${step}`, state: on, received_at: at });
+          }
         }
+        continue;
+      }
+
+      // The mod: the date and the weather as soon as they change, numbers at most every other
+      // game hour (it sends no more than one snapshot every 15 seconds).
+      report("Weather", WEATHER_VALUE[weather], at);
+      report("Cycle", date.cycle, at);
+      report("Day", date.day, at);
+      for (const [name, typical, swing] of MOD_GOODS) {
+        // Water drains in a drought and is unusable in a badtide; everything else just wanders.
+        const pull = name === "Water" && weather !== "Temperate" ? -0.25 : (typical - goods.get(name)!) * 0.02;
+        goods.set(name, clamp(goods.get(name)! + pull + gauss() * swing * 0.15, 0, 100));
+      }
+      if (hour++ % 2 === 0) {
+        const total = Math.round(population);
+        const bots = Math.min(Math.floor(cycle / 10), Math.floor(total / 8));
+        const kits = Math.round((total - bots) * 0.15);
+        const adults = total - bots - kits;
+        report("Adults", adults, at);
+        report("Children", kits, at);
+        report("Bots", bots, at);
+        // Worked out by the site when readings arrive through /mod; here they are stored directly.
+        report("Beavers", adults + kits, at);
+        report("Pop", total, at);
+        report("FreeBeds", Math.max(0, Math.round((capacity - total) * 0.12 + 3)), at);
+        for (const [name] of MOD_GOODS) report(name, Math.round(goods.get(name)!), at);
       }
     }
   });
@@ -174,7 +238,7 @@ function simulate(now: number) {
       `cycle ${Math.floor(i / 2) + 1}: temperate ${tDays}${hDays !== null ? `, ${h.weather.toLowerCase()} ${hDays}` : ""}`,
     );
   }
-  return { sessions, signals, cycles: Math.floor(seasonIndex / 2) + 1, population: Math.round(population), gameDay, date, anchor: anchor!, recentCycles };
+  return { sessions, signals, readings, modSessions, cycles: Math.floor(seasonIndex / 2) + 1, population: Math.round(population), gameDay, date, anchor: anchor!, recentCycles };
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -188,6 +252,80 @@ async function api(path: string, init: RequestInit = {}) {
   return text ? JSON.parse(text) : null;
 }
 
+/** Finds the test player's colony of this name, or creates it. */
+async function findOrCreateColony(userId: string, name: string, faction: string) {
+  const [existing] = await api(`/rest/v1/colonies?owner_id=eq.${userId}&name=eq.${encodeURIComponent(name)}&select=*`);
+  if (existing) return existing;
+  const [created] = await api(`/rest/v1/colonies`, {
+    method: "POST",
+    headers: { Prefer: "return=representation" },
+    body: JSON.stringify({ name, owner_id: userId, faction }),
+  });
+  return created;
+}
+
+/** Replaces everything a colony has received with one simulated history, and sets up its trackers. */
+async function fill(colonyId: string, sim: ReturnType<typeof simulate>) {
+  // trackers
+  await api(`/rest/v1/ladders?colony_id=eq.${colonyId}&metric=eq.Pop`, { method: "DELETE" });
+  await api(`/rest/v1/ladders`, { method: "POST", body: JSON.stringify({ colony_id: colonyId, metric: "Pop", comparison: "gte" }) });
+  await api(`/rest/v1/weather_trackers`, {
+    method: "POST",
+    headers: { Prefer: "resolution=ignore-duplicates" },
+    body: JSON.stringify({ colony_id: colonyId }),
+  });
+
+  // history
+  for (const table of ["game_clocks", "adapter_events", "adapter_states", "readings", "reading_metrics", "mod_sessions", "mod_requests", "pinned_metrics"]) {
+    await api(`/rest/v1/${table}?colony_id=eq.${colonyId}`, { method: "DELETE" });
+  }
+  const insert = async (table: string, rows: object[]) => {
+    for (let i = 0; i < rows.length; i += 1000) await api(`/rest/v1/${table}`, { method: "POST", body: JSON.stringify(rows.slice(i, i + 1000)) });
+  };
+  await insert("adapter_events", sim.signals.map((s) => ({ ...s, colony_id: colonyId })));
+
+  const latest = new Map<string, Signal>();
+  for (const s of sim.signals) latest.set(s.adapter_name, s);
+  await insert("adapter_states", [...latest.values()].map((s) => ({ colony_id: colonyId, name: s.adapter_name, state: s.state, updated_at: s.received_at })));
+
+  await insert("readings", sim.readings.map((r) => ({ ...r, colony_id: colonyId })));
+  await insert("mod_sessions", sim.modSessions.map((m) => ({ colony_id: colonyId, started_at: new Date(m.start).toISOString(), last_seen_at: new Date(m.end).toISOString() })));
+
+  await api(`/rest/v1/game_clocks`, {
+    method: "POST",
+    body: JSON.stringify({
+      colony_id: colonyId,
+      anchor_at: new Date(sim.anchor.at).toISOString(),
+      anchor_cycle: sim.anchor.cycle,
+      anchor_day: sim.anchor.day,
+    }),
+  });
+}
+
+/** Prints what was seeded and checks the database works out the same game date as the simulation. */
+async function summarise(name: string, colonyId: string, sim: ReturnType<typeof simulate>) {
+  const [date] = await api(`/rest/v1/rpc/game_date`, { method: "POST", body: JSON.stringify({ p_colony: colonyId }) });
+  const weatherSignals = sim.signals.filter((s) => s.adapter_name.startsWith("Weather"));
+  const daySignals = sim.signals.filter((s) => s.adapter_name === "GameDay");
+  const playHours = sim.sessions.reduce((h, s) => h + (s.end - s.start) / 3_600_000, 0);
+  console.log(`Seeded "${name}" for ${EMAIL} (colony ${colonyId})`);
+  console.log(`  ${sim.sessions.length} play sessions, ${playHours.toFixed(0)} h of play over ${COLONY_AGE_DAYS} days`);
+  console.log(`  ${sim.gameDay.toFixed(0)} game days, ${sim.cycles} weather cycles, population now ~${sim.population}`);
+  console.log(
+    `  ${sim.signals.length} signals: ${weatherSignals.length} weather, ${daySignals.length} game days, ${sim.signals.length - weatherSignals.length - daySignals.length} population`,
+  );
+  if (sim.modSessions.length) {
+    console.log(`  companion mod from session ${sim.sessions.length - sim.modSessions.length + 1}: ${sim.readings.length} readings in ${sim.modSessions.length} sessions`);
+  }
+  console.log(`  clock set up at cycle ${sim.anchor.cycle}, day ${sim.anchor.day}`);
+  const match = date.cycle === sim.date.cycle && date.day === sim.date.day;
+  console.log(
+    `  game date: simulated cycle ${sim.date.cycle}, day ${sim.date.day}; database says cycle ${date.cycle}, day ${date.day} ${match ? "(match)" : "(MISMATCH)"}`,
+  );
+  if (!match) process.exitCode = 1;
+  console.log(`  recent cycles (game days): ${sim.recentCycles.join("; ")}`);
+}
+
 async function main() {
   // player
   const users = await api(`/auth/v1/admin/users?per_page=1000`);
@@ -196,76 +334,29 @@ async function main() {
     ? await api(`/auth/v1/admin/users/${user.id}`, { method: "PUT", body: JSON.stringify({ password: PASSWORD }) })
     : await api(`/auth/v1/admin/users`, { method: "POST", body: JSON.stringify({ email: EMAIL, password: PASSWORD, email_confirm: true }) });
 
-  // colony
-  let [colony] = await api(`/rest/v1/colonies?owner_id=eq.${user.id}&name=eq.${encodeURIComponent(COLONY)}&select=*`);
-  colony ??= (
-    await api(`/rest/v1/colonies`, {
-      method: "POST",
-      headers: { Prefer: "return=representation" },
-      body: JSON.stringify({ name: COLONY, owner_id: user.id, faction: "folktails" }),
-    })
-  )[0];
-
-  // trackers
-  await api(`/rest/v1/ladders?colony_id=eq.${colony.id}&metric=eq.Pop`, { method: "DELETE" });
-  await api(`/rest/v1/ladders`, {
-    method: "POST",
-    body: JSON.stringify({ colony_id: colony.id, metric: "Pop", comparison: "gte" }),
-  });
-  await api(`/rest/v1/weather_trackers`, {
+  // A public profile, so the colonies can appear among the live colonies. An existing one is left alone.
+  await api(`/rest/v1/profiles`, {
     method: "POST",
     headers: { Prefer: "resolution=ignore-duplicates" },
-    body: JSON.stringify({ colony_id: colony.id }),
+    body: JSON.stringify({ user_id: user.id, handle: "test-beaver", is_public: true }),
   });
-
-  // history
-  await api(`/rest/v1/game_clocks?colony_id=eq.${colony.id}`, { method: "DELETE" });
-  await api(`/rest/v1/adapter_events?colony_id=eq.${colony.id}`, { method: "DELETE" });
-  await api(`/rest/v1/adapter_states?colony_id=eq.${colony.id}`, { method: "DELETE" });
 
   const now = Date.now();
+
+  // The colony with adapters only.
+  const colony = await findOrCreateColony(user.id, COLONY, "folktails");
   const sim = simulate(now);
-  const rows = sim.signals.map((s) => ({ ...s, colony_id: colony.id }));
-  for (let i = 0; i < rows.length; i += 1000) {
-    await api(`/rest/v1/adapter_events`, { method: "POST", body: JSON.stringify(rows.slice(i, i + 1000)) });
-  }
+  await fill(colony.id, sim);
+  await summarise(COLONY, colony.id, sim);
 
-  const latest = new Map<string, Signal>();
-  for (const s of sim.signals) latest.set(s.adapter_name, s);
-  await api(`/rest/v1/adapter_states`, {
-    method: "POST",
-    body: JSON.stringify(
-      [...latest.values()].map((s) => ({ colony_id: colony.id, name: s.adapter_name, state: s.state, updated_at: s.received_at })),
-    ),
-  });
+  // The colony that switched to the companion mod. A different roll of the dice, same rules.
+  seed = 20261119;
+  const modColony = await findOrCreateColony(user.id, MOD_COLONY, "iron_teeth");
+  const modSim = simulate(now, MOD_FROM_SESSION);
+  await fill(modColony.id, modSim);
+  await api(`/rest/v1/pinned_metrics`, { method: "POST", body: JSON.stringify({ colony_id: modColony.id, metric: "Water" }) });
+  await summarise(MOD_COLONY, modColony.id, modSim);
 
-  await api(`/rest/v1/game_clocks`, {
-    method: "POST",
-    body: JSON.stringify({
-      colony_id: colony.id,
-      anchor_at: new Date(sim.anchor.at).toISOString(),
-      anchor_cycle: sim.anchor.cycle,
-      anchor_day: sim.anchor.day,
-    }),
-  });
-  const [date] = await api(`/rest/v1/rpc/game_date`, { method: "POST", body: JSON.stringify({ p_colony: colony.id }) });
-
-  const weatherSignals = sim.signals.filter((s) => s.adapter_name.startsWith("Weather"));
-  const daySignals = sim.signals.filter((s) => s.adapter_name === "GameDay");
-  const playHours = sim.sessions.reduce((h, s) => h + (s.end - s.start) / 3_600_000, 0);
-  console.log(`Seeded "${COLONY}" for ${EMAIL} (colony ${colony.id})`);
-  console.log(`  ${sim.sessions.length} play sessions, ${playHours.toFixed(0)} h of play over ${COLONY_AGE_DAYS} days`);
-  console.log(`  ${sim.gameDay.toFixed(0)} game days, ${sim.cycles} weather cycles, population now ~${sim.population}`);
-  console.log(
-    `  ${sim.signals.length} signals: ${weatherSignals.length} weather, ${daySignals.length} game days, ${sim.signals.length - weatherSignals.length - daySignals.length} population`,
-  );
-  console.log(`  clock set up at cycle ${sim.anchor.cycle}, day ${sim.anchor.day}`);
-  const match = date.cycle === sim.date.cycle && date.day === sim.date.day;
-  console.log(
-    `  game date: simulated cycle ${sim.date.cycle}, day ${sim.date.day}; database says cycle ${date.cycle}, day ${date.day} ${match ? "(match)" : "(MISMATCH)"}`,
-  );
-  if (!match) process.exitCode = 1;
-  console.log(`  recent cycles (game days): ${sim.recentCycles.join("; ")}`);
   console.log(`Sign in at http://localhost:5173/login as ${EMAIL} with the password "${PASSWORD}".`);
 }
 
