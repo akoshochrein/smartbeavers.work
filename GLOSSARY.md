@@ -74,5 +74,8 @@ term itself in prose.
 | Handle         | A player's unique public name, 3 to 20 characters                                  | |
 | Picture        | A player's profile image                                                           | `avatar`, `avatars` bucket |
 | Public profile | A profile the player has chosen to show. Needed to appear among the live colonies            | `is_public` |
-| Live colonies  | The public list of recently played colonies whose players have a public profile | `colony_ladder()`. The page is at `/live`. Avoid "ladder" and "leaderboard" in prose |
+| Live colonies  | The public page of colonies whose players have a public profile: the live ones first, then the recently played | `colony_ladder()`. The page is at `/live`. Avoid "ladder" and "leaderboard" in prose |
+| Recently played | A listed colony that is not live but was heard from in the last 7 days | |
+| Public colony  | A colony whose player switched on showing its page to everyone. Needs a public profile, and is chosen per colony | |
+| Public colony page | The read-only view of a public colony that anyone can open from the live colonies page: its status band, time and weather, population and goods, and nothing about its signals or settings | |
 | Live           | A colony that sent a signal recently. The window differs by place today: 5 minutes on a tracker card, 10 minutes on the colony page's header and on the dashboard, 1 hour for the live colonies list | |
