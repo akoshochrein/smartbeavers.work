@@ -24,7 +24,8 @@ a save is paired the mod makes no network requests at all.
 
 It sends what changed at most every 15 seconds, storage at most once a minute, and a short
 "still running" message once a minute when nothing did. A new day or a change of weather is
-sent straight away, so days aren't missed at high game speed. If the site can't be reached, the game carries on as normal and the
+sent straight away, so days aren't missed at high game speed. When you leave a save it says
+so, and the site stops showing the colony as live. If the site can't be reached, the game carries on as normal and the
 mod tries again later.
 
 ## Install

@@ -27,7 +27,7 @@
     <Nullable>enable</Nullable>
     <RootNamespace>Smartbeavers.Companion</RootNamespace>
     <AssemblyName>smartbeavers.Companion</AssemblyName>
-    <Version>0.1.0</Version>
+    <Version>0.1.1</Version>
     <DebugType>none</DebugType>
     <GenerateDependencyFile>false</GenerateDependencyFile>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>

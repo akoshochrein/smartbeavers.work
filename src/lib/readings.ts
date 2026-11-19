@@ -87,23 +87,57 @@ export function usePinnedMetrics(colonyId: string) {
   return [data, setPinned] as const;
 }
 
-/** How long after its last request the mod still counts as reporting. The database uses the same five minutes. */
+/** How long after its last request the mod still counts as reporting, unless it said goodbye. The database uses the same five minutes. */
 const REPORTING_MS = 5 * 60_000;
 
+/** The companion mod's latest session for a colony. */
+export type ModStatus = {
+  /** When the mod was last heard from (ms since epoch). */
+  lastSeen: number;
+  /** When it stops counting as reporting: when it said goodbye, or five minutes after it was last heard from. */
+  until: number;
+};
+
 /**
- * When the companion mod was last heard from for this colony: undefined while loading, null if
- * never. Checked every minute, because a heartbeat changes nothing a page would otherwise notice.
+ * The companion mod's latest session for this colony: undefined while loading, null if it has
+ * never reported. Kept current through Realtime (a heartbeat, a goodbye), with a check every
+ * minute as a fallback and a re-render every 20 seconds so "reporting" lapses on time.
  */
-export function useModLastSeen(colonyId: string, version: number): number | null | undefined {
-  return useQuery({
-    queryKey: ["mod-last-seen", colonyId, version],
+export function useModStatus(colonyId: string): ModStatus | null | undefined {
+  const client = useQueryClient();
+  const queryKey = useMemo(() => ["mod-status", colonyId] as const, [colonyId]);
+  const [, tick] = useState(0);
+  const { data } = useQuery({
+    queryKey,
     refetchInterval: 60_000,
-    placeholderData: (prev) => prev,
-    queryFn: async () => {
-      const rows = unwrap(await supabase.from("mod_sessions").select("last_seen_at").eq("colony_id", colonyId).order("last_seen_at", { ascending: false }).limit(1));
-      return rows?.[0] ? Date.parse(rows[0].last_seen_at) : null;
+    queryFn: async (): Promise<ModStatus | null> => {
+      const rows = unwrap(
+        await supabase.from("mod_sessions").select("last_seen_at, ended_at").eq("colony_id", colonyId).order("last_seen_at", { ascending: false }).limit(1),
+      );
+      const row = rows?.[0];
+      if (!row) return null;
+      const lastSeen = Date.parse(row.last_seen_at);
+      return { lastSeen, until: row.ended_at ? Date.parse(row.ended_at) : lastSeen + REPORTING_MS };
     },
-  }).data;
+  });
+
+  useEffect(() => {
+    const channel = supabase
+      .channel(`colony-mod:${colonyId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "mod_sessions", filter: `colony_id=eq.${colonyId}` }, () => {
+        client.invalidateQueries({ queryKey });
+        // Whether each reading counts as live depends on the session too.
+        client.invalidateQueries({ queryKey: key(colonyId) });
+      })
+      .subscribe();
+    const timer = setInterval(() => tick((n) => n + 1), 20_000);
+    return () => {
+      supabase.removeChannel(channel);
+      clearInterval(timer);
+    };
+  }, [colonyId, client, queryKey]);
+
+  return data;
 }
 
-export const isReporting = (lastSeen: number | null | undefined, now = Date.now()) => !!lastSeen && now - lastSeen < REPORTING_MS;
+export const isReporting = (status: ModStatus | null | undefined, now = Date.now()) => !!status && now < status.until;

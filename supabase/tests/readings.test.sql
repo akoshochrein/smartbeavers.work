@@ -9,7 +9,7 @@
 --   "adapter +30 Pop30 on"        an adapter signal
 --   "... carried"                 a value already in place when that stretch began
 begin;
-select plan(43);
+select plan(47);
 
 create temp table base on commit drop as select date_trunc('minute', now()) - interval '10 days' as t;
 
@@ -209,6 +209,23 @@ select is(public.record_readings(repeat('b', 48), '{"Adults": 99}'), true, 'a re
 select is(
   (select count(*)::int from public.readings where colony_id = '00000000-0000-0000-0000-0000000000c2' and value = 99),
   0, 'and what it carried is dropped');
+
+-- The mod says goodbye when the save is unloaded: the session ends there and then, not five
+-- minutes later.
+update public.mod_requests set count = 0 where colony_id = '00000000-0000-0000-0000-0000000000c2';
+select public.record_readings(repeat('b', 48), '{}');
+select is((select bool_and(reporting) from public.latest_readings where colony_id = '00000000-0000-0000-0000-0000000000c2'), true,
+  'while the game runs the colony is being reported for');
+select is(public.end_mod_session(repeat('f', 48)), false, 'a goodbye with an unknown token is refused');
+select public.end_mod_session(repeat('b', 48));
+select is((select bool_or(reporting) from public.latest_readings where colony_id = '00000000-0000-0000-0000-0000000000c2'), false,
+  'after a goodbye the colony is no longer being reported for, straight away');
+select public.record_readings(repeat('b', 48), '{}');
+select is(
+  (select bool_and(reporting)::text || ' ' || (select count(*) from public.mod_sessions where colony_id = '00000000-0000-0000-0000-0000000000c2')
+     from public.latest_readings where colony_id = '00000000-0000-0000-0000-0000000000c2'),
+  'true 2',
+  'loading the save again carries the same session on');
 
 -- The mod also says which faction the save is. It sets the colony's faction and nothing else.
 update public.mod_requests set count = 0 where colony_id = '00000000-0000-0000-0000-0000000000c2';  -- back under the limit

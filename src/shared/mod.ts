@@ -13,6 +13,9 @@
 //     }
 //   }
 //
+// When the save is unloaded the mod says goodbye with { "v": 1, "bye": true }, so the site knows
+// at once that the game stopped instead of waiting five minutes for silence.
+//
 // `readings` holds only what changed since the mod's last request. The mod sends at most every
 // 15 seconds, goods at most once a minute, and a change of day, cycle or weather straight away
 // (so each game day arrives as its own reading). Without it, or with it
@@ -49,7 +52,9 @@ export const weatherFromValue = (v: number): Weather | undefined => WEATHERS[v]?
 const GOOD_METRICS = new Map(GOODS.map((g) => [g.gameId, g.prefix]));
 const FACTION_KEYS = new Set<string>(FACTIONS.map((f) => f.key));
 
-export type Snapshot = { ok: true; readings: Record<string, number>; faction: FactionKey | null } | { ok: false; error: string };
+export type Snapshot =
+  | { ok: true; readings: Record<string, number>; faction: FactionKey | null; bye: boolean }
+  | { ok: false; error: string };
 
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
 const wholeNumber = (v: unknown, min: number, max: number): v is number => typeof v === "number" && Number.isInteger(v) && v >= min && v <= max;
@@ -87,5 +92,5 @@ export function parseSnapshot(body: unknown): Snapshot {
   }
 
   const faction = typeof body.faction === "string" && FACTION_KEYS.has(body.faction) ? (body.faction as FactionKey) : null;
-  return { ok: true, readings: byMetric, faction };
+  return { ok: true, readings: byMetric, faction, bye: body.bye === true };
 }

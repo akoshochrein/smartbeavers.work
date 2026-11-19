@@ -39,7 +39,7 @@ import { formatTime, timeAgo } from "@/lib/time";
 import { useColony, useLadders, useWeatherTracker } from "@/lib/useColony";
 import { useRecentSignals } from "@/lib/history";
 import { withModSignals } from "@/lib/modSignals";
-import { isReporting, useColonyReadings, useModLastSeen, usePinnedMetrics } from "@/lib/readings";
+import { isReporting, useColonyReadings, useModStatus, usePinnedMetrics, type ModStatus } from "@/lib/readings";
 import { useColonyFeed, type ColonyFeed } from "@/lib/useColonyFeed";
 import { modUrl, webhookUrl } from "@/shared/webhook";
 
@@ -81,8 +81,9 @@ function ColonyDashboard({ colony, onChange }: { colony: Colony; onChange: (c: C
   const ladders = useLadders(colony.id);
   const readings = useColonyReadings(colony.id);
   const [pinned, setPinned] = usePinnedMetrics(colony.id);
-  const modLastSeen = useModLastSeen(colony.id, readings?.version ?? 0);
-  const modReporting = isReporting(modLastSeen);
+  const mod = useModStatus(colony.id);
+  const modLastSeen = mod?.lastSeen;
+  const modReporting = isReporting(mod);
   // Goods the mod reports storage for and the player hasn't set a tracker up for.
   const modGoods = goodsFor(colony.faction).filter((g) => readings?.byMetric.has(g.prefix) && !ladders?.some((l) => l.metric === g.prefix));
   // Trackers the mod feeds on its own: the default metrics and pinned goods it has reported,
@@ -206,7 +207,7 @@ function ColonyDashboard({ colony, onChange }: { colony: Colony; onChange: (c: C
           {readings && pinned && modGoods.length > 0 && <ModGoods goods={modGoods} readings={readings.byMetric} pinned={pinned} onPin={setPinned} />}
         </TabsContent>
         <TabsContent value="signals" className="pt-8">
-          <SignalsTab colony={colony} feed={feed} modLastSeen={modLastSeen} />
+          <SignalsTab colony={colony} feed={feed} mod={mod} />
         </TabsContent>
         <TabsContent value="settings" className="pt-8">
           <SettingsTab colony={colony} onChange={onChange} />
@@ -268,7 +269,7 @@ function NoTrackers({ colonyId }: { colonyId: string }) {
   );
 }
 
-function SignalsTab({ colony, feed, modLastSeen }: { colony: Colony; feed: ColonyFeed; modLastSeen: number | null | undefined }) {
+function SignalsTab({ colony, feed, mod }: { colony: Colony; feed: ColonyFeed; mod: ModStatus | null | undefined }) {
   const origin = window.location.origin;
   const states = [...feed.states.values()].sort((a, b) => a.name.localeCompare(b.name));
   const events = useRecentSignals(colony.id, feed.live);
@@ -300,13 +301,13 @@ function SignalsTab({ colony, feed, modLastSeen }: { colony: Colony; feed: Colon
           </div>
           <CopyField label="Address for the companion mod" what="Mod address" value={modUrl(origin, colony.webhook_token)} />
           <p className="flex items-center gap-2 text-sm text-ink-soft">
-            <StatusDot state={modLastSeen ? true : undefined} live={isReporting(modLastSeen)} />
-            {modLastSeen === undefined
+            <StatusDot state={mod ? true : undefined} live={isReporting(mod)} />
+            {mod === undefined
               ? " "
-              : isReporting(modLastSeen)
+              : isReporting(mod)
                 ? "The mod is reporting right now."
-                : modLastSeen
-                  ? `The mod last reported ${timeAgo(modLastSeen)}.`
+                : mod
+                  ? `The mod last reported ${timeAgo(mod.lastSeen)}.`
                   : "The mod hasn't reported for this colony yet."}
           </p>
           <p className="max-w-md text-sm leading-relaxed text-ink-soft">

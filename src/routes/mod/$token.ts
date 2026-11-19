@@ -27,6 +27,15 @@ async function record(request: Request) {
   const snapshot = parseSnapshot(body);
   if (!snapshot.ok) return json({ error: snapshot.error }, 400);
 
+  if (snapshot.bye) {
+    const { data: known, error } = await adminClient().rpc("end_mod_session", { p_token: token });
+    if (error) {
+      console.error("end_mod_session failed", error);
+      return json({ error: "failed to end the session" }, 500);
+    }
+    return new Response(null, { status: known ? 204 : 404 });
+  }
+
   const { data: known, error } = await adminClient().rpc("record_readings", {
     p_token: token,
     p_readings: snapshot.readings,

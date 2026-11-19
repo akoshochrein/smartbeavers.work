@@ -139,14 +139,14 @@ isOneToOne: true
                   ]
                 },"mod_sessions": {
                   Row: {
-                    "colony_id": string,"id": number,"last_seen_at": string,"started_at": string
+                    "colony_id": string,"ended_at": string | null,"id": number,"last_seen_at": string,"started_at": string,"session_end": string | null
                   }
-                  ComputedFields: never
+                  ComputedFields: "session_end"
                   Insert: {
-                    "colony_id": string,"id"?: never,"last_seen_at"?: string,"started_at"?: string
+                    "colony_id": string,"ended_at"?: string | null,"id"?: never,"last_seen_at"?: string,"started_at"?: string
                   }
                   Update: {
-                    "colony_id"?: string,"id"?: never,"last_seen_at"?: string,"started_at"?: string
+                    "colony_id"?: string,"ended_at"?: string | null,"id"?: never,"last_seen_at"?: string,"started_at"?: string
                   }
                   Relationships: [
                     {
@@ -190,6 +190,26 @@ isOneToOne: false
                   }
                   Relationships: [
                     
+                  ]
+                },"reading_metrics": {
+                  Row: {
+                    "colony_id": string,"first_at": string,"metric": string,"received_at": string,"value": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "colony_id": string,"first_at": string,"metric": string,"received_at": string,"value": number
+                  }
+                  Update: {
+                    "colony_id"?: string,"first_at"?: string,"metric"?: string,"received_at"?: string,"value"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "reading_metrics_colony_id_fkey"
+      columns: ["colony_id"]
+isOneToOne: false
+      referencedRelation: "colonies"
+      referencedColumns: ["id"]
+    }
                   ]
                 },"readings": {
                   Row: {
@@ -247,23 +267,15 @@ isOneToOne: true
                     "colony_id": string,"metric": string,"received_at": string,"reporting": boolean | null,"value": number
                   }
                   ComputedFields: never
-                  Relationships: [
+                  Insert: {
+                           "colony_id"?: string | null,"metric"?: string | null,"received_at"?: string | null,"reporting"?: never,"value"?: number | null
+                         }
+                        Update: {
+                           "colony_id"?: string | null,"metric"?: string | null,"received_at"?: string | null,"reporting"?: never,"value"?: number | null
+                         }
+                        Relationships: [
                     {
-      foreignKeyName: "readings_colony_id_fkey"
-      columns: ["colony_id"]
-isOneToOne: false
-      referencedRelation: "colonies"
-      referencedColumns: ["id"]
-    }
-                  ]
-                },"mod_stretches": {
-                  Row: {
-                    "colony_id": string,"from_at": string | null,"metric": string,"to_at": string | null
-                  }
-                  ComputedFields: never
-                  Relationships: [
-                    {
-      foreignKeyName: "mod_sessions_colony_id_fkey"
+      foreignKeyName: "reading_metrics_colony_id_fkey"
       columns: ["colony_id"]
 isOneToOne: false
       referencedRelation: "colonies"
@@ -282,6 +294,9 @@ isOneToOne: false
 { Args: Record<PropertyKey, never>; Returns: {
               "avatar_path": string,"colony_name": string,"cycle": number,"cycle_started_at": string,"day": number,"faction": string,"handle": string,"key": string,"last_signal_at": string,"pop_comparison": string,"pop_reading": number,"pop_steps": Json,"profile_updated_at": string,"weather": string
             }[]
+                           },
+"end_mod_session":
+{ Args: { "p_token": string }; Returns: boolean
                            },
 "game_date":
 { Args: { "p_colony": string }; Returns: {
@@ -302,6 +317,9 @@ isOneToOne: false
                            },
 "rotate_webhook_token":
 { Args: { "p_colony": string }; Returns: string
+                           },
+"session_end":
+{ Args: { "s": Omit<Database["public"]['Tables']["mod_sessions"]['Row'], Database["public"]['Tables']["mod_sessions"]['ComputedFields']> }; Returns: string
                            },
 "signal_counts":
 { Args: { "p_adapter": string,"p_bounds": (string)[],"p_colony": string }; Returns: {

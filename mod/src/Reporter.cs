@@ -29,9 +29,9 @@ namespace Smartbeavers.Companion;
 /// picked up on the main thread again in the next frame. A failed or slow request never holds
 /// the game up.
 /// </summary>
-public class Reporter(Pairing pairing, GameReader gameReader) : IUpdatableSingleton
+public class Reporter(Pairing pairing, GameReader gameReader) : IUpdatableSingleton, IUnloadableSingleton
 {
-    public const string ModVersion = "0.1.0";
+    public const string ModVersion = "0.1.1";
     const int ContractVersion = 1;
 
     const float CheckEvery = 1f;
@@ -127,6 +127,22 @@ public class Reporter(Pairing pairing, GameReader gameReader) : IUpdatableSingle
             _lastSend = now;
             Send(pairing.Address, changed, pairing.Version);
         }
+    }
+
+    /// <summary>
+    /// The save is being unloaded (back to the menu, another save, or quitting): tell the site the
+    /// game stopped, so it doesn't show the colony as live for five more minutes. Sent without
+    /// waiting for an answer; if it doesn't arrive, the site works it out from the silence.
+    /// </summary>
+    public void Unload()
+    {
+        if (pairing.Address is null || LastSentAt is null)
+        {
+            return;
+        }
+
+        var body = new StringContent("{\"v\":" + ContractVersion + ",\"mod\":\"" + ModVersion + "\",\"bye\":true}", Encoding.UTF8, "application/json");
+        Http.PostAsync(pairing.Address, body).ContinueWith(task => { _ = task.Exception; }, TaskScheduler.Default);
     }
 
     void Send(Uri address, Dictionary<string, int> changed, int forPairing)

@@ -33,7 +33,7 @@ term itself in prose.
 | Mod address   | The address the companion mod reports to, shown on the colony's Signals tab. It carries the colony's token | `/mod/<token>` |
 | Pinned good   | A good whose storage reading the player chose to show as a card on the colony's page | `pinned_metrics` |
 | Heartbeat     | A request from the companion mod that carries no readings and only says the game is running | |
-| Reporting     | The companion mod has sent something for a colony in the last 5 minutes. While it is reporting, its readings are the colony's values; after it stops, adapters take over only once they report something newer | `mod_sessions` |
+| Reporting     | The companion mod has sent something for a colony in the last 5 minutes and hasn't said the save was closed. While it is reporting, its readings are the colony's values; after it stops, adapters take over only once they report something newer | `mod_sessions` |
 
 ## Trackers
 
