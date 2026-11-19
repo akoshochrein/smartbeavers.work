@@ -1,24 +1,22 @@
 import { AnimatePresence, motion } from "motion/react";
 import { ChevronRight } from "lucide-react";
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { StatusDot } from "@/components/app/StatusDot";
 import { ValueChart } from "@/components/ValueChart";
 import { useGameDayStarts } from "@/lib/clock";
-import { CHART_BUCKET_SECONDS, useTrackerHistory } from "@/lib/history";
+import { useTracker, type TrackerLike } from "@/lib/useTracker";
 import type { Reading } from "@/lib/readings";
-import type { Ladder } from "@/lib/supabase";
 import { timeAgo } from "@/lib/time";
 import { HISTORY_DAYS, type ColonyFeed } from "@/lib/useColonyFeed";
-import { describeValue, discoverSteps, exactValue, formatValue, latestValue, metricFor, trackerHistory, valueSuffix, type Step } from "@/shared/ladders";
+import { describeValue, formatValue, metricFor, valueSuffix, type Step } from "@/shared/ladders";
 import { GoodIcon } from "@/components/app/GoodIcon";
 
 const LIVE_MS = 5 * 60_000;
 /** With a game clock, the chart shows this many game days (the same window as the weather strip). */
 const GAME_DAY_WINDOW = 180;
 
-/** What a tile needs to know about its tracker. A tracker the mod feeds on its own has no row behind it. */
-export type TrackerLike = Pick<Ladder, "id" | "colony_id" | "metric" | "comparison">;
+export type { TrackerLike };
 
 /**
  * One number tracker on the colony page: its name, value and when it last changed. Opening it
@@ -56,29 +54,8 @@ export function TrackerTile({
   const now = useNow(30_000);
   const panelId = useId();
 
-  const steps = useMemo(() => discoverSteps(ladder, feed.states.values()), [ladder, feed.states]);
-  // The mod's number is the value while the mod is reporting. When it isn't, the newer of the
-  // two is: counters that have switched since the mod's last number take over, silent ones don't.
-  const fromSteps = latestValue(steps);
-  const newestStep = steps.reduce((t, s) => Math.max(t, s.at), 0);
-  const exact = !!reading && (reading.reporting || newestStep <= reading.at);
-  const value = exact ? exactValue(reading.value, reading.at) : fromSteps;
-  const names = useMemo(() => steps.map((s) => s.name), [steps]);
-  // Game days: the chart spans the clock's recent day signals. Real time: the last HISTORY_DAYS.
   const dayStarts = useGameDayStarts(ladder.colony_id, GAME_DAY_WINDOW, clock && open, dayVersion);
-  const gameDays = clock && !!dayStarts?.length;
-  // Fixed once known, so a new game day doesn't reload the history; the chart trims to the window.
-  const [since, setSince] = useState<number>();
-  if (gameDays && since === undefined) setSince(dayStarts[0]);
-  const bucket = since === undefined ? CHART_BUCKET_SECONDS : Math.max(1, Math.round((Date.now() - since) / 1000 / 360));
-  const ready = open && (names.length > 0 || !!reading) && (!clock || dayStarts !== undefined) && (!gameDays || since !== undefined);
-  const rows = useTrackerHistory(ladder.colony_id, ladder.metric, names, bucket, feed.live, {
-    enabled: ready,
-    sinceMs: gameDays ? since : undefined,
-    reporting: !!reading?.reporting,
-    version: readingsVersion,
-  });
-  const history = useMemo(() => (rows ? trackerHistory(ladder, rows) : []), [ladder, rows]);
+  const { steps, value, history, gameDays } = useTracker(ladder, feed, reading, { history: open, clock, dayStarts, readingsVersion });
 
   // A reading's time is when the number last changed, which can be long ago in a quiet colony:
   // what makes it live is the mod still reporting.
@@ -148,7 +125,7 @@ export function TrackerTile({
           ) : history.length > 0 ? (
             <>
               <div className="mb-2 text-sm text-ink-soft">
-                {!gameDays ? `Last ${HISTORY_DAYS} days` : dayStarts.length >= GAME_DAY_WINDOW ? `Last ${GAME_DAY_WINDOW} game days` : "Since the game clock started"}
+                {!gameDays ? `Last ${HISTORY_DAYS} days` : dayStarts!.length >= GAME_DAY_WINDOW ? `Last ${GAME_DAY_WINDOW} game days` : "Since the game clock started"}
               </div>
               <ValueChart points={history} now={now} unit={metric.unit} suffix={suffix} domain={resource ? [0, 100] : undefined} dayStarts={gameDays ? dayStarts : undefined} />
             </>

@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { CopyField } from "@/components/app/CopyField";
 import { StatusBand } from "@/components/app/StatusBand";
 import { StatusDot } from "@/components/app/StatusDot";
+import { POPULATION_BLOCK_METRICS, PopulationBlock } from "@/components/app/PopulationBlock";
 import { TrackerTile } from "@/components/app/TrackerTile";
 import { ExportButton } from "@/components/app/ExportButton";
 import { exportColony } from "@/lib/export";
@@ -162,7 +163,9 @@ function ColonyDashboard({ colony, onChange }: { colony: Colony; onChange: (c: C
               );
               const trackers = [...autoTrackers.map((l) => ({ ...l, auto: true })), ...ladders.map((l) => ({ ...l, auto: false }))];
               const goods = trackers.filter((l) => metricFor(l.metric).kind === "resource");
-              const numbers = trackers.filter((l) => metricFor(l.metric).kind !== "resource");
+              // With a population to show, the block covers population and bots; other numbers stay tiles.
+              const hasPopulation = trackers.some((l) => l.metric === "Pop");
+              const numbers = trackers.filter((l) => metricFor(l.metric).kind !== "resource" && !(hasPopulation && POPULATION_BLOCK_METRICS.includes(l.metric)));
               return (
                 <TrackerSections
                   time={
@@ -180,7 +183,14 @@ function ColonyDashboard({ colony, onChange }: { colony: Colony; onChange: (c: C
                       />
                     )
                   }
-                  population={numbers.length > 0 && <TileGrid>{numbers.map(tile)}</TileGrid>}
+                  population={
+                    (hasPopulation || numbers.length > 0) && (
+                      <div className="space-y-4">
+                        {hasPopulation && <PopulationBlock colonyId={colony.id} feed={feed} readings={readings} ladders={ladders} clock={!!clock} dayVersion={dateVersion} />}
+                        {numbers.length > 0 && <TileGrid>{numbers.map(tile)}</TileGrid>}
+                      </div>
+                    )
+                  }
                   goods={
                     (goods.length > 0 || modGoods.length > 0) && (
                       <>
