@@ -5,7 +5,7 @@ import type { Database } from "@/shared/database.types";
 /**
  * Supabase client with the secret key. Server routes only: it bypasses row level security,
  * so every caller must check for itself what the request is allowed to do.
- * Env comes from wrangler.jsonc + .dev.vars (types: `pnpm cf-typegen`).
+ * Env comes from wrangler.jsonc + .dev.vars (types are kept by hand in env.d.ts).
  */
 export const adminClient = () =>
   createClient<Database>(env.SUPABASE_URL, env.SUPABASE_SECRET_KEY, {

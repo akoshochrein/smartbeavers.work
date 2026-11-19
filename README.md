@@ -41,13 +41,15 @@ the game.
                        │ fetch (levers, adapters)                     │  Supabase    │
                  ┌─────┴──────────────────┐   auth, data, realtime    │  auth + PG   │
                  │ Browser                │◀─────────────────────────▶│  + realtime  │
-                 └────────────────────────┘                           └──────────────┘
+                 └────────────────────────┘                           │  + storage   │
+                                                                      └──────────────┘
 ```
 
 - **The game's HTTP API only listens on the player's own machine**, so switching levers happens
   from the browser (`src/lib/timberborn.ts`). The server never calls the game.
-- **HTTP Adapters can call any URL.** Each colony gets a secret link; the server records each
-  call and the dashboard updates live through Supabase Realtime.
+- **HTTP Adapters can call any URL.** Each colony gets two adapter links, one for on and one
+  for off, that share a secret token. The server records each signal and the dashboard updates
+  live through Supabase Realtime.
 - **The game only sends on/off.** Numbers are rebuilt from several counters at different
   thresholds: an adapter named `Pop30` switching on means the population just reached 30
   (`src/shared/ladders.ts`).
@@ -58,11 +60,12 @@ the game.
 | -------- | ------------------------------------------------------------- |
 | Frontend | React 19, TanStack Router + Query, Tailwind CSS v4, shadcn/ui |
 | Backend  | TanStack Start server routes on a Cloudflare Worker           |
-| Data     | Supabase (Postgres + row level security, email + password sign-in, Realtime) |
+| Data     | Supabase (Postgres + row level security, email + password sign-in, Realtime, Storage for profile pictures) |
 
 ## Run it locally
 
-You need Node, [pnpm](https://pnpm.io) and Docker (for the local Supabase).
+You need Node 22.18 or newer, [pnpm](https://pnpm.io) 11 and Docker (for the local Supabase).
+The seed script is TypeScript that Node runs directly, which older Node versions can't do.
 
 ```sh
 pnpm install
@@ -80,15 +83,18 @@ Then:
   four months of simulated signals. It only ever writes to a local Supabase.
 - Sign in with that address and the password `test-beaver`, or create a new account on the sign-in page.
 - Supabase Studio: http://127.0.0.1:54323
-- After changing SQL: `pnpm db:reset && pnpm db:types`
+- After changing SQL: `pnpm db:reset && pnpm db:types`. A reset empties the database, so run
+  `pnpm db:seed` again afterwards.
 
-Send a signal without the game (the token is in the colony's Settings tab):
+Send a signal without the game (the token is part of the adapter links on the colony's
+Signals tab):
 
 ```sh
 curl -X POST "http://localhost:5173/hook/<token>/on/Pop30"
 ```
 
-`pnpm build` builds the app and type-checks it. There are no automated tests yet.
+`pnpm build` builds the app and type-checks `src/`; `pnpm typecheck` runs the type check on
+its own. Neither covers `scripts/`. There are no automated tests yet.
 
 ## Layout
 
@@ -99,7 +105,8 @@ src/
   components/        Shared interface pieces; components/ui is shadcn/ui
   lib/               Browser-side data: Supabase client, TanStack Query hooks, the game's API
   server/            Server-only code: the Supabase client with the secret key
-  shared/            Used by both: tracker maths, goods list, weather, generated DB types
+  shared/            Used by both: tracker maths, goods list, weather, game clock, adapter
+                     link format, generated DB types. site.ts (who runs the site) is browser-only
   router.tsx         Router + TanStack Query client
   start.ts           Pages render in the browser only (sign-in lives there)
   server.ts          Server entry: adds security headers
@@ -121,7 +128,9 @@ account. Both have free tiers that are enough for this.
    The Supabase CLI targets the local database unless you pass `--remote`.
 2. **Sign-in.** Players sign in with an email address and a password. In the Supabase dashboard
    under Auth → Sign In / Providers → Email, turn off "Confirm email" so new accounts work straight
-   away and no email is sent, and set the minimum password length to 8.
+   away and no email is sent, and set the minimum password length to 8. Because no email is
+   sent, there is no self-service password reset: the sign-in page sends players to your contact
+   page, and you reset passwords and change email addresses yourself in the Supabase dashboard.
 3. **Settings.** Two files hold your deployment's settings. Neither is committed.
    ```sh
    cp .env.production.example .env.production   # Supabase URL + publishable key, and who runs the site
@@ -146,7 +155,8 @@ account. Both have free tiers that are enough for this.
 
 `pnpm preview` builds in production mode, so it talks to whatever `.env.production` points at.
 
-After adding a server variable or secret, also add it to `src/server/env.d.ts`.
+After adding a server variable or secret, also add it to `src/server/env.d.ts`. After adding
+a browser variable (`VITE_*`), also add it to `src/vite-env.d.ts`.
 
 ## Known limits
 
@@ -155,6 +165,13 @@ After adding a server variable or secret, also add it to `src/server/env.d.ts`.
   Firefox allows it, Safari blocks it.
 - **Rate limiting.** The database caps signals per colony, but there is no network-level limit
   on `/hook/*`. A Cloudflare rate-limiting rule is worth adding on a public deployment.
+- **The game's API switches off when a save is loaded.** Players have to press "Start API" in
+  the game after every load before the site can read or switch levers.
+- **Password resets are manual.** No email is ever sent, so a player who forgets their password
+  has to contact the operator, who resets it in the Supabase dashboard. The same goes for
+  changing an email address.
+- **Signals are kept forever.** Nothing prunes old signals; charts show at most the last 180
+  days, but the rows stay in the database.
 - **Game data is checked by hand.** Building options and goods come from the game and its
   wiki; a game update can make a label wrong.
 
