@@ -21,6 +21,7 @@ import { Route as AppAccountRouteImport } from './routes/_app.account'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as ApiAccountRouteImport } from './routes/api/account'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
+import { Route as ModTokenRouteImport } from './routes/mod/$token'
 import { Route as AppColoniesIdIndexRouteImport } from './routes/_app.colonies.$id.index'
 import { Route as HookTokenSignalSplatRouteImport } from './routes/hook/$token/$signal/$'
 import { Route as AppColoniesIdTrackersLadderIdRouteImport } from './routes/_app.colonies.$id.trackers.$ladderId'
@@ -87,6 +88,11 @@ const ApiHealthRoute = ApiHealthRouteImport.update({
   path: '/api/health',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ModTokenRoute = ModTokenRouteImport.update({
+  id: '/mod/$token',
+  path: '/mod/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppColoniesIdIndexRoute = AppColoniesIdIndexRouteImport.update({
   id: '/colonies/$id/',
   path: '/colonies/$id/',
@@ -134,6 +140,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AppDashboardRoute
   '/api/account': typeof ApiAccountRoute
   '/api/health': typeof ApiHealthRoute
+  '/mod/$token': typeof ModTokenRoute
   '/hook/$token/$signal/$': typeof HookTokenSignalSplatRoute
   '/colonies/$id/': typeof AppColoniesIdIndexRoute
   '/colonies/$id/trackers/$ladderId': typeof AppColoniesIdTrackersLadderIdRoute
@@ -153,6 +160,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AppDashboardRoute
   '/api/account': typeof ApiAccountRoute
   '/api/health': typeof ApiHealthRoute
+  '/mod/$token': typeof ModTokenRoute
   '/hook/$token/$signal/$': typeof HookTokenSignalSplatRoute
   '/colonies/$id': typeof AppColoniesIdIndexRoute
   '/colonies/$id/trackers/$ladderId': typeof AppColoniesIdTrackersLadderIdRoute
@@ -174,6 +182,7 @@ export interface FileRoutesById {
   '/_app/dashboard': typeof AppDashboardRoute
   '/api/account': typeof ApiAccountRoute
   '/api/health': typeof ApiHealthRoute
+  '/mod/$token': typeof ModTokenRoute
   '/hook/$token/$signal/$': typeof HookTokenSignalSplatRoute
   '/_app/colonies/$id/': typeof AppColoniesIdIndexRoute
   '/_app/colonies/$id/trackers/$ladderId': typeof AppColoniesIdTrackersLadderIdRoute
@@ -195,6 +204,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/api/account'
     | '/api/health'
+    | '/mod/$token'
     | '/hook/$token/$signal/$'
     | '/colonies/$id/'
     | '/colonies/$id/trackers/$ladderId'
@@ -214,6 +224,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/api/account'
     | '/api/health'
+    | '/mod/$token'
     | '/hook/$token/$signal/$'
     | '/colonies/$id'
     | '/colonies/$id/trackers/$ladderId'
@@ -234,6 +245,7 @@ export interface FileRouteTypes {
     | '/_app/dashboard'
     | '/api/account'
     | '/api/health'
+    | '/mod/$token'
     | '/hook/$token/$signal/$'
     | '/_app/colonies/$id/'
     | '/_app/colonies/$id/trackers/$ladderId'
@@ -253,6 +265,7 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   ApiAccountRoute: typeof ApiAccountRoute
   ApiHealthRoute: typeof ApiHealthRoute
+  ModTokenRoute: typeof ModTokenRoute
   HookTokenSignalSplatRoute: typeof HookTokenSignalSplatRoute
 }
 
@@ -342,6 +355,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/mod/$token': {
+      id: '/mod/$token'
+      path: '/mod/$token'
+      fullPath: '/mod/$token'
+      preLoaderRoute: typeof ModTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_app/colonies/$id/': {
       id: '/_app/colonies/$id/'
       path: '/colonies/$id'
@@ -420,6 +440,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   ApiAccountRoute: ApiAccountRoute,
   ApiHealthRoute: ApiHealthRoute,
+  ModTokenRoute: ModTokenRoute,
   HookTokenSignalSplatRoute: HookTokenSignalSplatRoute,
 }
 export const routeTree = rootRouteImport

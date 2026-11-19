@@ -117,6 +117,46 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"mod_requests": {
+                  Row: {
+                    "colony_id": string,"count": number,"minute": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "colony_id": string,"count": number,"minute": string
+                  }
+                  Update: {
+                    "colony_id"?: string,"count"?: number,"minute"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "mod_requests_colony_id_fkey"
+      columns: ["colony_id"]
+isOneToOne: true
+      referencedRelation: "colonies"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"mod_sessions": {
+                  Row: {
+                    "colony_id": string,"id": number,"last_seen_at": string,"started_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "colony_id": string,"id"?: never,"last_seen_at"?: string,"started_at"?: string
+                  }
+                  Update: {
+                    "colony_id"?: string,"id"?: never,"last_seen_at"?: string,"started_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "mod_sessions_colony_id_fkey"
+      columns: ["colony_id"]
+isOneToOne: false
+      referencedRelation: "colonies"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"profiles": {
                   Row: {
                     "avatar_path": string | null,"handle": string | null,"is_public": boolean,"updated_at": string,"user_id": string
@@ -130,6 +170,26 @@ isOneToOne: false
                   }
                   Relationships: [
                     
+                  ]
+                },"readings": {
+                  Row: {
+                    "colony_id": string,"id": number,"metric": string,"received_at": string,"value": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "colony_id": string,"id"?: never,"metric": string,"received_at"?: string,"value": number
+                  }
+                  Update: {
+                    "colony_id"?: string,"id"?: never,"metric"?: string,"received_at"?: string,"value"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "readings_colony_id_fkey"
+      columns: ["colony_id"]
+isOneToOne: false
+      referencedRelation: "colonies"
+      referencedColumns: ["id"]
+    }
                   ]
                 },"weather_trackers": {
                   Row: {
@@ -154,7 +214,21 @@ isOneToOne: true
                 }
           }
           Views: {
-            [_ in never]: never
+            "latest_readings": {
+                  Row: {
+                    "colony_id": string,"metric": string,"received_at": string,"reporting": boolean | null,"value": number
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    {
+      foreignKeyName: "readings_colony_id_fkey"
+      columns: ["colony_id"]
+isOneToOne: false
+      referencedRelation: "colonies"
+      referencedColumns: ["id"]
+    }
+                  ]
+                }
           }
           Functions: {
             "adapter_history":
@@ -178,12 +252,23 @@ isOneToOne: true
 "record_adapter_event":
 { Args: { "p_adapter": string,"p_state": boolean,"p_token": string }; Returns: boolean
                            },
+"record_readings":
+{ Args: { "p_readings": Json,"p_token": string }; Returns: boolean
+                           },
 "rotate_webhook_token":
 { Args: { "p_colony": string }; Returns: string
                            },
 "signal_counts":
 { Args: { "p_adapter": string,"p_bounds": (string)[],"p_colony": string }; Returns: {
               "idx": number,"n": number
+            }[]
+                           },
+"store_reading":
+{ Args: { "p_colony": string,"p_metric": string,"p_value": number }; Returns: undefined
+                           },
+"tracker_history":
+{ Args: { "p_adapters": (string)[],"p_bucket_seconds"?: number,"p_colony": string,"p_metric": string,"p_since": string }; Returns: {
+              "adapter_name": string,"at": string,"carried": boolean,"source": string,"state": boolean,"value": number
             }[]
                            },
 "weather_history":

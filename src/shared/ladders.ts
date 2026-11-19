@@ -117,8 +117,12 @@ export type Value =
   /**
    * reached / below: the latest signal was the value crossing `bound`, so `value` was exact then.
    * atLeast / under: all we know is which side of `bound` the value is on.
+   * exact: a reading from the companion mod, which reports the number itself. `at` is when it last changed.
    */
-  | { kind: "reached" | "below" | "atLeast" | "under"; value: number; bound: number; at: number };
+  | { kind: "reached" | "below" | "atLeast" | "under" | "exact"; value: number; bound: number; at: number };
+
+/** A reading from the companion mod as a value. */
+export const exactValue = (value: number, at: number): Exclude<Value, { kind: "waiting" }> => ({ kind: "exact", value, bound: value, at });
 
 /**
  * The latest value the signals pin down. Normally that's the most recent signal: a counter that
@@ -154,8 +158,9 @@ export function formatValue(v: Value, suffix = ""): string {
   return `${v.value.toLocaleString()}${suffix}`;
 }
 
-/** "Reached 30", "Dropped below 30", "At least 30", "Under 30". */
+/** "Reached 30", "Dropped below 30", "At least 30", "Under 30", or "Last changed" for a reading. */
 export function describeValue(v: Exclude<Value, { kind: "waiting" }>, suffix = ""): string {
+  if (v.kind === "exact") return "Last changed";
   const n = `${v.bound.toLocaleString()}${suffix}`;
   if (v.kind === "reached") return `Reached ${n}`;
   if (v.kind === "below") return `Dropped below ${n}`;
@@ -180,6 +185,41 @@ export function ladderHistory(
     steps.set(e.adapter_name, { bound: lowerBound(threshold, c), state: e.state, at: t });
     const value = latestValue([...steps.values()]);
     if (value.kind !== "waiting") points.push({ t, value });
+  }
+  return points;
+}
+
+/** One row of the `tracker_history` database function: a reading from the mod, or an adapter signal. */
+export type TrackerHistoryRow = { source: string; at: string; value: number | null; adapter_name: string | null; state: boolean | null };
+
+/**
+ * Turns merged history (oldest first) into the value after each row. The database has already
+ * chosen the source for every moment, so this only does the arithmetic: a reading is the number
+ * itself, and adapter signals are replayed into a number as in ladderHistory.
+ */
+export function trackerHistory(ladder: LadderLike, rows: TrackerHistoryRow[]): HistoryPoint[] {
+  const c = ladder.comparison as Comparison;
+  const steps = new Map<string, { bound: number; state: boolean; at: number }>();
+  const points: HistoryPoint[] = [];
+  let lastAdapterAt: number | undefined;
+  for (const r of rows) {
+    const t = Date.parse(r.at);
+    if (r.source === "mod") {
+      if (r.value !== null) points.push({ t, value: exactValue(r.value, t) });
+      lastAdapterAt = undefined;
+      continue;
+    }
+    if (r.adapter_name === null || r.state === null) continue;
+    const threshold = thresholdOf(ladder.metric, r.adapter_name);
+    if (threshold === undefined) continue;
+    steps.set(r.adapter_name, { bound: lowerBound(threshold, c), state: r.state, at: t });
+    const value = latestValue([...steps.values()]);
+    if (value.kind === "waiting") continue;
+    // Several adapters reported for the same moment (their states when the adapters took over):
+    // only the value with all of them counted is real.
+    if (lastAdapterAt === t) points.pop();
+    points.push({ t, value });
+    lastAdapterAt = t;
   }
   return points;
 }

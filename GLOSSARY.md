@@ -23,6 +23,16 @@ term itself in prose.
 | Signal        | One adapter call received by the site                                               | `adapter_events`. Avoid "event", "webhook" |
 | Adapter state | The latest on/off value for one adapter name                                        | `adapter_states` |
 
+## The companion mod
+
+| Term          | Meaning                                                                             | In code / avoid |
+| ------------- | ----------------------------------------------------------------------------------- | --------------- |
+| Companion mod | The Timberborn mod that reads a colony's values in the game and reports them to the site, so nothing has to be built in the game | Avoid "plugin" |
+| Reading       | One value the companion mod reported for a colony, such as a population of 34. Exact, unlike a number rebuilt from signals | `readings` |
+| Pairing       | Entering a colony's token in the companion mod for one save, so that save reports to that colony | |
+| Heartbeat     | A request from the companion mod that carries no readings and only says the game is running | |
+| Reporting     | The companion mod has sent something for a colony in the last 5 minutes. While it is reporting, its readings are the colony's values; when it stops, adapters take over | `mod_sessions` |
+
 ## Trackers
 
 | Term            | Meaning                                                                           | In code / avoid |

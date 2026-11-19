@@ -14,10 +14,12 @@ Thanks for wanting to help. smartbeavers is a small hobby project, so the proces
 1. Fork the repository and create a branch.
 2. Set the project up locally (see [README.md](README.md#run-it-locally)).
 3. Make your change. Keep it focused: one topic per pull request.
-4. Run `pnpm build`. It builds the app and type-checks `src/`, and it must pass. `pnpm typecheck`
+4. If you changed anything under `supabase/`, run `pnpm test:db`. It needs the local Supabase
+   running and leaves its data alone. CI does not run it.
+5. Run `pnpm build`. It builds the app and type-checks `src/`, and it must pass. `pnpm typecheck`
    runs the type check alone. Neither covers `scripts/`, so run `pnpm db:seed` if you changed
    the seed script.
-5. Open a pull request that says what changed and why. Add a screenshot for anything visible.
+6. Open a pull request that says what changed and why. Add a screenshot for anything visible.
 
 ## Things to know
 

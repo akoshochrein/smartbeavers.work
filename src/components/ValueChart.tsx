@@ -176,7 +176,7 @@ export function ValueChart({
             {formatValue(hovered.value, suffix)} {unit}
           </div>
           <div className="text-sage">
-            {hovered.value.kind !== "reached" && `${describeValue(hovered.value, suffix)} · `}
+            {hovered.value.kind !== "reached" && hovered.value.kind !== "exact" && `${describeValue(hovered.value, suffix)} · `}
             {axis.label(hovered.t)}
           </div>
         </div>

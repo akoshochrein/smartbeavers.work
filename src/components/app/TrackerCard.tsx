@@ -6,25 +6,38 @@ import { ValueChart } from "@/components/ValueChart";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGameDayStarts } from "@/lib/clock";
-import { CHART_BUCKET_SECONDS, useAdapterHistory } from "@/lib/history";
+import { CHART_BUCKET_SECONDS, useTrackerHistory } from "@/lib/history";
+import type { Reading } from "@/lib/readings";
 import type { Ladder } from "@/lib/supabase";
 import { timeAgo } from "@/lib/time";
 import { HISTORY_DAYS, type ColonyFeed } from "@/lib/useColonyFeed";
-import { describeValue, discoverSteps, formatValue, ladderHistory, latestValue, metricFor, valueSuffix, type Step } from "@/shared/ladders";
+import { describeValue, discoverSteps, exactValue, formatValue, latestValue, metricFor, trackerHistory, valueSuffix, type Step } from "@/shared/ladders";
 import { GoodIcon } from "@/components/app/GoodIcon";
 
 const LIVE_MS = 5 * 60_000;
 /** With a game clock, the chart shows this many game days (the same window as the weather strip). */
 const GAME_DAY_WINDOW = 180;
 
+/** What a card needs to know about its tracker. A tracker the mod feeds on its own has no row behind it. */
+export type TrackerLike = Pick<Ladder, "id" | "colony_id" | "metric" | "comparison">;
+
 export function TrackerCard({
   ladder,
   feed,
+  reading,
+  readingsVersion = 0,
+  auto = false,
   clock = false,
   dayVersion,
 }: {
-  ladder: Ladder;
+  ladder: TrackerLike;
   feed: ColonyFeed;
+  /** The companion mod's latest value for this metric, if it has ever reported one. */
+  reading?: Reading;
+  /** Changes when a new reading arrives, so the history loads again. */
+  readingsVersion?: number;
+  /** Shown because the mod reports this metric, not because the player set a tracker up. */
+  auto?: boolean;
   /** The colony has a game clock: chart in game days instead of real time. */
   clock?: boolean;
   dayVersion?: number;
@@ -34,7 +47,11 @@ export function TrackerCard({
   const now = useNow(30_000);
 
   const steps = useMemo(() => discoverSteps(ladder, feed.states.values()), [ladder, feed.states]);
-  const value = latestValue(steps);
+  // The mod's number is the value while the mod is reporting. When it isn't, the adapters'
+  // answer is, and with no adapters the mod's last number is the best there is.
+  const fromSteps = latestValue(steps);
+  const exact = !!reading && (reading.reporting || fromSteps.kind === "waiting");
+  const value = exact ? exactValue(reading.value, reading.at) : fromSteps;
   const names = useMemo(() => steps.map((s) => s.name), [steps]);
   // Game days: the chart spans the clock's recent day signals. Real time: the last HISTORY_DAYS.
   const dayStarts = useGameDayStarts(ladder.colony_id, GAME_DAY_WINDOW, clock, dayVersion);
@@ -43,20 +60,29 @@ export function TrackerCard({
   const [since, setSince] = useState<number>();
   if (gameDays && since === undefined) setSince(dayStarts[0]);
   const bucket = since === undefined ? CHART_BUCKET_SECONDS : Math.max(1, Math.round((Date.now() - since) / 1000 / 360));
-  const ready = names.length > 0 && (!clock || dayStarts !== undefined) && (!gameDays || since !== undefined);
-  const events = useAdapterHistory(ladder.colony_id, names, bucket, feed.live, ready, gameDays ? since : undefined);
-  const history = useMemo(() => (events ? ladderHistory(ladder, events) : []), [ladder, events]);
+  const ready = (names.length > 0 || !!reading) && (!clock || dayStarts !== undefined) && (!gameDays || since !== undefined);
+  const rows = useTrackerHistory(ladder.colony_id, ladder.metric, names, bucket, feed.live, {
+    enabled: ready,
+    sinceMs: gameDays ? since : undefined,
+    reporting: !!reading?.reporting,
+    version: readingsVersion,
+  });
+  const history = useMemo(() => (rows ? trackerHistory(ladder, rows) : []), [ladder, rows]);
 
-  const live = value.kind !== "waiting" && now - value.at < LIVE_MS;
+  // A reading's time is when the number last changed, which can be long ago in a quiet colony:
+  // what makes it live is the mod still reporting.
+  const live = value.kind === "exact" ? !!reading?.reporting : value.kind !== "waiting" && now - value.at < LIVE_MS;
 
   return (
     <article className="rounded-2xl border bg-paper p-5 sm:p-6">
       <header className="flex items-center gap-3">
         {metric.kind === "resource" && <GoodIcon good={metric.prefix} className="size-7" />}
         <h2 className="text-xl font-semibold">{metric.label}</h2>
-        <Button asChild variant="ghost" size="sm" className="ml-auto text-cobalt-deep hover:text-cobalt-deep">
-          <Link to="/colonies/$id/trackers/$ladderId" params={{ id: ladder.colony_id, ladderId: ladder.id }}>Setup guide</Link>
-        </Button>
+        {!auto && (
+          <Button asChild variant="ghost" size="sm" className="ml-auto text-cobalt-deep hover:text-cobalt-deep">
+            <Link to="/colonies/$id/trackers/$ladderId" params={{ id: ladder.colony_id, ladderId: ladder.id }}>Setup guide</Link>
+          </Button>
+        )}
       </header>
 
       <div className="mt-4 min-h-[6.5rem]">
@@ -103,7 +129,7 @@ export function TrackerCard({
         )}
       </div>
 
-      {steps.length > 0 && !feed.loading && <CounterNote steps={steps} prefix={metric.prefix} suffix={suffix} />}
+      {steps.length > 0 && !feed.loading && value.kind !== "exact" && <CounterNote steps={steps} prefix={metric.prefix} suffix={suffix} />}
 
       {history.length > 0 && (
         <div className="mt-6 border-t pt-4">

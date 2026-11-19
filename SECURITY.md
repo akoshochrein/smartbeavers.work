@@ -26,6 +26,8 @@ Knowing the design helps when looking for holes in it:
   - `rotate_webhook_token()` lets a signed-in owner replace their colony's adapter links.
   - `record_adapter_event()` records a signal and enforces the limits. Only the server can
     call it.
+  - `record_readings()` and `store_reading()` do the same for readings from the companion
+    mod, which arrive at `/mod/<token>` with the colony's token. Only the server can call them.
   - `enforce_colony_limit()` is a trigger and can't be called directly.
 - **What visitors who aren't signed in can read.** Only what `colony_ladder()` returns, and
   only for players who made their profile public, for colonies that sent a signal in the last

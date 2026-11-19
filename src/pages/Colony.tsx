@@ -37,6 +37,7 @@ import { supabase, type Colony } from "@/lib/supabase";
 import { formatTime, timeAgo } from "@/lib/time";
 import { useColony, useLadders, useWeatherTracker } from "@/lib/useColony";
 import { useRecentSignals } from "@/lib/history";
+import { useColonyReadings } from "@/lib/readings";
 import { useColonyFeed, type ColonyFeed } from "@/lib/useColonyFeed";
 import { webhookUrl } from "@/shared/webhook";
 
@@ -44,6 +45,8 @@ export const COLONY_TABS = ["trackers", "signals", "settings"] as const;
 export type ColonyTab = (typeof COLONY_TABS)[number];
 const ROUTE = "/_app/colonies/$id/";
 const LIVE_MS = 10 * 60_000;
+/** Metrics that get a card as soon as the companion mod reports them, with no tracker set up. */
+const MOD_METRICS = ["Pop"];
 
 export function ColonyPage() {
   const { id } = useParams({ from: ROUTE });
@@ -74,6 +77,14 @@ export function ColonyPage() {
 function ColonyDashboard({ colony, onChange }: { colony: Colony; onChange: (c: Colony) => void }) {
   const feed = useColonyFeed(colony.id);
   const ladders = useLadders(colony.id);
+  const readings = useColonyReadings(colony.id);
+  // Trackers the mod feeds on its own: a default metric it has reported and the player hasn't set up.
+  const autoTrackers = MOD_METRICS.filter((m) => readings?.byMetric.has(m) && !ladders?.some((l) => l.metric === m)).map((metric) => ({
+    id: `mod-${metric}`,
+    colony_id: colony.id,
+    metric,
+    comparison: "gte",
+  }));
   const [weather] = useWeatherTracker(colony.id);
   const [clock] = useGameClock(colony.id);
   const dateVersion = useDateVersion(feed);
@@ -127,9 +138,9 @@ function ColonyDashboard({ colony, onChange }: { colony: Colony; onChange: (c: C
         </TabsList>
 
         <TabsContent value="trackers" className="pt-8">
-          {ladders === undefined || weather === undefined || clock === undefined ? (
+          {ladders === undefined || readings === undefined || weather === undefined || clock === undefined ? (
             <Skeleton className="h-80 w-full rounded-2xl" />
-          ) : ladders.length === 0 && !weather && !clock ? (
+          ) : ladders.length === 0 && autoTrackers.length === 0 && !weather && !clock ? (
             <NoTrackers colonyId={colony.id} />
           ) : (
             <TrackerColumns
@@ -151,7 +162,21 @@ function ColonyDashboard({ colony, onChange }: { colony: Colony; onChange: (c: C
                     />
                   ),
                 },
-                ...ladders.map((l) => ({ key: l.id, weight: 1.4, node: <TrackerCard ladder={l} feed={feed} clock={!!clock} dayVersion={dateVersion} /> })),
+                ...[...autoTrackers.map((l) => ({ ...l, auto: true })), ...ladders.map((l) => ({ ...l, auto: false }))].map((l) => ({
+                  key: l.id,
+                  weight: 1.4,
+                  node: (
+                    <TrackerCard
+                      ladder={l}
+                      feed={feed}
+                      reading={readings.byMetric.get(l.metric)}
+                      readingsVersion={readings.version}
+                      auto={l.auto}
+                      clock={!!clock}
+                      dayVersion={dateVersion}
+                    />
+                  ),
+                })),
               ].filter((c) => !!c)}
             />
           )}

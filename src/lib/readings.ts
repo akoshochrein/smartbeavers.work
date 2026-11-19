@@ -1,0 +1,60 @@
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
+import { unwrap } from "./queries";
+import { supabase } from "./supabase";
+
+/** The companion mod's latest value for one metric. */
+export type Reading = {
+  value: number;
+  /** When the value last changed (ms since epoch). */
+  at: number;
+  /** The mod is reporting right now, so this is the colony's value. Otherwise adapters, if any, take over. */
+  reporting: boolean;
+};
+
+export type ColonyReadings = {
+  /** Latest reading per metric. Empty for a colony the mod has never reported for. */
+  byMetric: Map<string, Reading>;
+  /** Goes up each time a new reading arrives, for anything that has to load again. */
+  version: number;
+};
+
+const key = (colonyId: string) => ["latest-readings", colonyId] as const;
+
+/**
+ * The mod's latest readings for a colony (database view `latest_readings`), kept current: new
+ * readings arrive through Realtime, and a check every minute notices when the mod stops reporting.
+ * undefined while loading.
+ */
+export function useColonyReadings(colonyId: string): ColonyReadings | undefined {
+  const client = useQueryClient();
+  const [version, setVersion] = useState(0);
+  const { data } = useQuery({
+    queryKey: key(colonyId),
+    refetchInterval: 60_000,
+    queryFn: async () => unwrap(await supabase.from("latest_readings").select("metric, value, received_at, reporting").eq("colony_id", colonyId)) ?? [],
+  });
+
+  useEffect(() => {
+    const channel = supabase
+      .channel(`colony-readings:${colonyId}`)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "readings", filter: `colony_id=eq.${colonyId}` }, () => {
+        setVersion((v) => v + 1);
+        client.invalidateQueries({ queryKey: key(colonyId) });
+      })
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [colonyId, client]);
+
+  return useMemo(() => {
+    if (!data) return undefined;
+    const byMetric = new Map<string, Reading>();
+    for (const r of data) {
+      if (r.metric === null || r.value === null || r.received_at === null) continue;
+      byMetric.set(r.metric, { value: r.value, at: Date.parse(r.received_at), reporting: !!r.reporting });
+    }
+    return { byMetric, version };
+  }, [data, version]);
+}

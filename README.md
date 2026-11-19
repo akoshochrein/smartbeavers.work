@@ -90,14 +90,28 @@ Signals tab):
 curl -X POST "http://localhost:5173/hook/<token>/on/Pop30"
 ```
 
+Send a reading the way the companion mod does (the same token; the body is described in
+`src/shared/mod.ts`):
+
+```sh
+curl -X POST "http://localhost:5173/mod/<token>" \
+  -H "content-type: application/json" \
+  -d '{"v":1,"readings":{"adults":31,"kits":6,"bots":4}}'
+```
+
+A "Population" card appears on the colony's page with the exact number. The companion mod
+itself doesn't exist yet; this route is the site's half of it.
+
 `pnpm build` builds the app and type-checks `src/`; `pnpm typecheck` runs the type check on
-its own. Neither covers `scripts/`. There are no automated tests yet.
+its own. Neither covers `scripts/`. `pnpm test:db` runs the database tests in `supabase/tests`
+against the local Supabase, inside a transaction that is rolled back. They cover how readings
+and adapter signals are merged; nothing else has automated tests yet.
 
 ## Layout
 
 ```
 src/
-  routes/            One file per URL. api/ and hook/ are server routes; _app.* needs sign-in
+  routes/            One file per URL. api/, hook/ and mod/ are server routes; _app.* needs sign-in
   pages/             The page components the routes render
   components/        Shared interface pieces; components/ui is shadcn/ui
   lib/               Browser-side data: Supabase client, TanStack Query hooks
@@ -108,6 +122,7 @@ src/
   start.ts           Pages render in the browser only (sign-in lives there)
   server.ts          Server entry: adds security headers
 supabase/migrations  The database: tables, row level security, functions
+supabase/tests       Database tests (pgTAP), run with pnpm test:db
 scripts/seed-dev.ts  Local demo data
 ```
 

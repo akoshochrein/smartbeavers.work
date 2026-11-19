@@ -1,8 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { unwrap } from "./queries";
 import { supabase, type AdapterEvent } from "./supabase";
 import { HISTORY_DAYS } from "./useColonyFeed";
+import type { TrackerHistoryRow } from "@/shared/ladders";
 
 export type HistoryEvent = { adapter_name: string; state: boolean; received_at: string; carried?: boolean };
 
@@ -95,4 +96,51 @@ export function useWeatherSlots(colonyId: string, adapters: string[], bucketSeco
         await supabase.rpc("weather_history", { p_colony: colonyId, p_adapters: key.split("\n"), p_since: historySince(), p_bucket_seconds: bucketSeconds }),
       ) ?? [],
   }).data;
+}
+
+/**
+ * History for one number tracker from both sources, merged by the `tracker_history` database
+ * function: the mod's readings while it was reporting, adapter signals for the rest. Loads again
+ * when `version` changes (a new reading arrived). While the mod isn't reporting, live adapter
+ * signals are appended as they arrive; while it is, they don't count.
+ */
+export function useTrackerHistory(
+  colonyId: string,
+  metric: string,
+  adapters: string[],
+  bucketSeconds: number,
+  live: AdapterEvent[],
+  options: { enabled: boolean; sinceMs?: number; reporting: boolean; version: number },
+): TrackerHistoryRow[] | undefined {
+  const { enabled, sinceMs, reporting, version } = options;
+  const key = adapters.join("\n");
+  const { data: loaded } = useQuery({
+    queryKey: ["tracker-history", colonyId, metric, key, bucketSeconds, sinceMs ?? null, version],
+    enabled,
+    placeholderData: keepPreviousData,
+    queryFn: async () => {
+      const names = key ? key.split("\n") : [];
+      const since = sinceMs === undefined ? historySince() : new Date(sinceMs).toISOString();
+      const rows: TrackerHistoryRow[] = [];
+      for (;;) {
+        const page = unwrap(
+          await supabase
+            .rpc("tracker_history", { p_colony: colonyId, p_metric: metric, p_adapters: names, p_since: since, p_bucket_seconds: bucketSeconds })
+            .range(rows.length, rows.length + PAGE_SIZE - 1),
+        );
+        rows.push(...(page ?? []));
+        if (!page || page.length < PAGE_SIZE) return rows;
+      }
+    },
+  });
+
+  return useMemo(() => {
+    if (!loaded || reporting) return loaded;
+    const names = new Set(key.split("\n"));
+    const last = loaded.length ? Date.parse(loaded[loaded.length - 1].at) : 0;
+    // Compare parsed times: the database function and Realtime don't format timestamps identically.
+    const fresh = live.filter((e) => names.has(e.adapter_name) && Date.parse(e.received_at) > last);
+    if (!fresh.length) return loaded;
+    return [...loaded, ...fresh.map((e) => ({ source: "adapter", at: e.received_at, value: null, adapter_name: e.adapter_name, state: e.state }))];
+  }, [loaded, key, live, reporting]);
 }
