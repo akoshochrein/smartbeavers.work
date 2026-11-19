@@ -13,7 +13,8 @@
 //     }
 //   }
 //
-// `readings` holds only what changed since the mod's last request. Without it, or with it
+// `readings` holds only what changed since the mod's last request. The mod sends at most every
+// 15 seconds, and goods at most once a minute. Without it, or with it
 // empty, the request is a heartbeat: it says the game is running and nothing else.
 // Goods are named by the game's own ids ("Log", "TreatedPlank"; see gameId in
 // src/shared/goods.ts) and their value is how full storage is, 0 to 100.

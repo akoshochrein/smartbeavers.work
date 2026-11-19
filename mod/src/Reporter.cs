@@ -16,6 +16,8 @@ namespace Smartbeavers.Companion;
 /// - Nothing is sent for a save that isn't paired.
 /// - A snapshot holds only what changed since the last one that arrived, and goes out at most
 ///   every 15 seconds. The first one after loading holds everything.
+/// - Storage is looked at once a minute. A large colony's goods wobble by a point all the time,
+///   and reporting each wobble stored thousands of readings an hour that no chart can show.
 /// - With nothing to say, a heartbeat goes out once a minute so the site knows the game is running.
 /// - If the site can't be reached, the snapshot is dropped. The next one is worked out from what
 ///   the site last received, so nothing is lost and nothing queues up.
@@ -31,6 +33,7 @@ public class Reporter(Pairing pairing, GameReader gameReader) : IUpdatableSingle
 
     const float CheckEvery = 1f;
     const float SnapshotEvery = 15f;
+    const float GoodsEvery = 60f;
     const float HeartbeatEvery = 60f;
     const float WaitAfterFailure = 30f;
     const float WaitAfterRefusal = 120f;
@@ -42,6 +45,8 @@ public class Reporter(Pairing pairing, GameReader gameReader) : IUpdatableSingle
     readonly object _outcomeLock = new();
     Outcome? _outcome;
     Dictionary<string, int>? _inFlight;
+    bool _inFlightHasGoods;
+    float _nextGoods;
     int _pairingVersion = -1;
     float _nextCheck;
     float _nextSend;
@@ -63,6 +68,7 @@ public class Reporter(Pairing pairing, GameReader gameReader) : IUpdatableSingle
             _pairingVersion = pairing.Version;
             _received.Clear();
             _nextSend = 0f;
+            _nextGoods = 0f;
             _lastArrived = float.NegativeInfinity;
             LastSentAt = null;
             Problem = null;
@@ -92,8 +98,9 @@ public class Reporter(Pairing pairing, GameReader gameReader) : IUpdatableSingle
 
         _nextCheck = now + CheckEvery;
 
+        var withGoods = now >= _nextGoods;
         var changed = new Dictionary<string, int>();
-        foreach (var reading in gameReader.Read())
+        foreach (var reading in gameReader.Read(withGoods))
         {
             if (!_received.TryGetValue(reading.Key, out var known) || known != reading.Value)
             {
@@ -103,6 +110,7 @@ public class Reporter(Pairing pairing, GameReader gameReader) : IUpdatableSingle
 
         if (changed.Count > 0 || now - _lastArrived >= HeartbeatEvery)
         {
+            _inFlightHasGoods = withGoods;
             Send(pairing.Address, changed, pairing.Version);
         }
     }
@@ -149,6 +157,18 @@ public class Reporter(Pairing pairing, GameReader gameReader) : IUpdatableSingle
                 _received[reading.Key] = reading.Value;
             }
 
+            // Goods wait a minute from a snapshot that carried them. One that failed doesn't count,
+            // so they go out again with the next snapshot that gets through.
+            if (_inFlightHasGoods)
+            {
+                _nextGoods = now + GoodsEvery;
+            }
+
+            if (LastSentAt is null)
+            {
+                Debug.Log("[smartbeavers] Connected: the site accepted the first report.");
+            }
+
             _lastArrived = now;
             _nextSend = now + SnapshotEvery;
             LastSentAt = DateTime.UtcNow;
@@ -170,7 +190,7 @@ public class Reporter(Pairing pairing, GameReader gameReader) : IUpdatableSingle
     {
         if (problem != Problem)
         {
-            Debug.Log(problem is null ? "[smartbeavers] Reporting to the site." : $"[smartbeavers] {problem}{(detail is null ? "" : $" ({detail})")}");
+            Debug.Log(problem is null ? "[smartbeavers] Reporting to the site again." : $"[smartbeavers] {problem}{(detail is null ? "" : $" ({detail})")}");
         }
 
         Problem = problem;

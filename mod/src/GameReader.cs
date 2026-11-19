@@ -29,8 +29,11 @@ public class GameReader(
     public const string GoodPrefix = "goods.";
     public const string WeatherName = "weather";
 
-    /// <summary>Every reading and its current value. Weather is a number here: see <see cref="WeatherWord"/>.</summary>
-    public Dictionary<string, int> Read()
+    /// <summary>
+    /// Every reading and its current value. Weather is a number here: see <see cref="WeatherWord"/>.
+    /// Goods are left out unless asked for: there are dozens and they are reported less often.
+    /// </summary>
+    public Dictionary<string, int> Read(bool withGoods)
     {
         var population = populationService.GlobalPopulationData;
         var readings = new Dictionary<string, int>
@@ -43,6 +46,11 @@ public class GameReader(
             ["day"] = gameCycleService.CycleDay,
             [WeatherName] = Weather(),
         };
+
+        if (!withGoods)
+        {
+            return readings;
+        }
 
         foreach (var goodId in goodService.Goods)
         {

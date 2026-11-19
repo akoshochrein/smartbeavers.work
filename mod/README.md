@@ -22,8 +22,8 @@ All of these are totals for the whole settlement. Nothing about districts, nothi
 saves, nothing about you or your computer beyond what any request to a website carries. Until
 a save is paired the mod makes no network requests at all.
 
-It sends what changed at most every 15 seconds, and a short "still running" message once a
-minute when nothing did. If the site can't be reached, the game carries on as normal and the
+It sends what changed at most every 15 seconds, storage at most once a minute, and a short
+"still running" message once a minute when nothing did. If the site can't be reached, the game carries on as normal and the
 mod tries again later.
 
 ## Install
