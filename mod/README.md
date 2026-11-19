@@ -75,6 +75,17 @@ them and don't put them in the mod's folder.
 
 CI does not build the mod, because it has no copy of the game.
 
+To make a release, set the version in `manifest.json`, `smartbeavers.Companion.csproj` and
+`src/Reporter.cs`, then:
+
+```sh
+dotnet build -c Release -t:Release
+```
+
+That also writes `bin/smartbeavers.Companion-<version>.zip`, which holds one folder to unpack
+into `Documents/Timberborn/Mods`. Attach it to a GitHub Release tagged `mod-v<version>` and say
+which game version it was built against.
+
 ## How it is put together
 
 | File                 | What it does                                                                 |
