@@ -61,7 +61,7 @@ export function NewColonyDialog({ children }: { children: ReactNode }) {
               onChange={(e) => setName(e.target.value)}
             />
             <p className="text-sm text-ink-soft">
-              Keep it friendly: with a public profile, colony names show on the colony ladder. The{" "}
+              Keep it friendly: with a public profile, colony names show in the live colonies list. The{" "}
               <Link to="/terms" className="text-cobalt-deep underline-offset-4 hover:underline">
                 terms
               </Link>{" "}

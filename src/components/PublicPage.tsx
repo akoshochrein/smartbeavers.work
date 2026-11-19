@@ -14,7 +14,7 @@ export function SiteFooter() {
         <nav aria-label="About this site" className="flex flex-wrap gap-x-5 gap-y-2">
           {(
             [
-              ["/ladder", "Colony ladder"],
+              ["/live", "Live colonies"],
               ["/contact", "Contact"],
               ["/privacy", "Privacy"],
               ["/terms", "Terms"],

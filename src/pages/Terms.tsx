@@ -45,7 +45,7 @@ export function Terms() {
           <h2>Public profiles and names</h2>
           <p>
             Your profile is private unless you switch on "Public profile". If you do, your handle, your picture, the
-            names of your colonies and their game date, weather and population are shown on the colony ladder, which anyone can see.
+            names of your colonies and their game date, weather and population are shown in the live colonies list, which anyone can see.
             You can switch it off again at any time.
           </p>
           <p>Handles, colony names and profile pictures must be fit for anyone to read. They must not be:</p>
@@ -58,7 +58,7 @@ export function Terms() {
           <p>
             This applies whether or not your profile is public. We may rename or remove a handle, colony name or
             picture, make a profile private, or close the account, if these rules are broken. If you see something on
-            the ladder that shouldn't be there, tell us through the <Link to="/contact">contact page</Link>.
+            the live colonies list that shouldn't be there, tell us through the <Link to="/contact">contact page</Link>.
           </p>
         </section>
 

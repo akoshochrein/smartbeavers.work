@@ -69,8 +69,8 @@ function Sidebar() {
         {colonies?.length === 0 && <p className="px-3 py-2 text-sm text-sage">No colonies yet.</p>}
       </nav>
       <div className="px-3 pb-3">
-        <Link to="/ladder" className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-[15px] text-sage transition-colors hover:bg-pine-soft hover:text-mist">
-          <Trophy className="size-4" /> Colony ladder
+        <Link to="/live" className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-[15px] text-sage transition-colors hover:bg-pine-soft hover:text-mist">
+          <Trophy className="size-4" /> Live colonies
         </Link>
       </div>
       <AccountMenu />
@@ -138,8 +138,8 @@ function MobileBar() {
             <Link to="/dashboard">All colonies</Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link to="/ladder">
-              <Trophy /> Colony ladder
+            <Link to="/live">
+              <Trophy /> Live colonies
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>

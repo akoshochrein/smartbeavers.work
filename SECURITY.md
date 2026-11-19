@@ -29,10 +29,10 @@ Knowing the design helps when looking for holes in it:
   - `enforce_colony_limit()` is a trigger and can't be called directly.
 - **What visitors who aren't signed in can read.** Only what `colony_ladder()` returns, and
   only for players who made their profile public, for colonies that sent a signal in the last
-  hour. Per colony that is: the player's handle and picture, the colony's name and faction,
+  hour. Per colony that is: the player's handle and picture and when their profile last changed, the colony's name and faction,
   the exact time of its last signal, its game date, the exact time its current cycle started,
   its current weather, and its population counters (each counter's number, whether it is on,
-  and the exact time it last switched). The ladder page shows less than this, but the function
+  and the exact time it last switched). The live colonies page shows less than this, but the function
   returns it to anyone who asks. Colonies are identified by an opaque key, not their id.
 - **Profile pictures** are in a private storage bucket. Owners can read and write their own.
   One extra policy lets anyone read a picture while its owner's profile is public;

@@ -20,19 +20,19 @@ export function Ladder() {
 
   return (
     <PublicPage
-      title="Colony ladder"
+      title="Live colonies"
       intro="Colonies being played right now. The colony that most recently started a new cycle is on top, so the order shifts each time temperate weather returns somewhere. A colony is listed while its game has sent a signal in the last hour, and only if its player made their profile public."
     >
       <div className="mt-10">
         {isError ? (
-          <p className="text-ink-soft">The ladder couldn't be loaded. Try again in a moment.</p>
+          <p className="text-ink-soft">The list couldn't be loaded. Try again in a moment.</p>
         ) : entries === undefined ? (
           <div className="space-y-3" aria-busy="true">
             {[0, 1, 2].map((i) => <Skeleton key={i} className="h-20 w-full rounded-2xl" />)}
           </div>
         ) : entries.length === 0 ? (
           <div className="max-w-2xl rounded-2xl border border-dashed border-ink/20 p-8">
-            <h2 className="text-2xl font-bold tracking-tight">No colonies on the ladder right now</h2>
+            <h2 className="text-2xl font-bold tracking-tight">No live colonies right now</h2>
             <p className="mt-3 leading-relaxed text-ink-soft">
               Colonies appear here while they're being played. Check back later, or put yours here.
             </p>
