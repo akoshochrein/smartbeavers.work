@@ -9,7 +9,7 @@ if (!url || !key) {
 }
 
 export const supabase = createClient<Database>(url, key, {
-  auth: { flowType: "pkce", detectSessionInUrl: true, persistSession: true },
+  auth: { persistSession: true },
 });
 
 export type Colony = Database["public"]["Tables"]["colonies"]["Row"];
