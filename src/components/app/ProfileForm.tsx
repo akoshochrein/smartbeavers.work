@@ -167,9 +167,10 @@ export function ProfileForm({ userId, email }: { userId: string; email: string }
               <li>your handle and picture, and when you last changed your profile</li>
               <li>your picture's address, which contains your account's internal id</li>
               <li>the names and factions of your colonies</li>
-              <li>each colony's game date and weather, where you track them</li>
+              <li>each colony's game date and weather, and how many game days that weather has lasted, where you track them</li>
               <li>each population counter's number, whether it's on, exactly when it last switched, and whether the counters mean "at least" or "more than"; or the exact population, if the companion mod reports it</li>
-              <li>exactly when each colony was last heard from, and when its current cycle started</li>
+              <li>exactly when each colony was last heard from</li>
+              <li>whether a colony's own page is public, and its address if so</li>
             </ul>
           </div>
           <div>
@@ -177,14 +178,13 @@ export function ProfileForm({ userId, email }: { userId: string; email: string }
             <ul className="mt-1.5 list-disc space-y-1 pl-5 text-ink-soft">
               <li>your email address</li>
               <li>your adapter links</li>
-              <li>the rest of your signals and history</li>
-              <li>every other tracker</li>
+              <li>the rest of your signals and history, and every other tracker, unless you also make that colony's page public in its settings</li>
             </ul>
           </div>
         </div>
         <p className="mt-4 text-sm leading-relaxed text-ink-soft">
-          A colony is listed only while it has been heard from in the last hour. Switch this off and your colonies leave
-          the list straight away. Handles and colony names shown in public have to follow the{" "}
+          A colony is listed for 7 days after it was last heard from. Switch this off and your colonies leave the list
+          straight away. Handles and colony names shown in public have to follow the{" "}
           <Link to="/terms" className="text-cobalt-deep underline-offset-4 hover:underline">
             terms of use
           </Link>

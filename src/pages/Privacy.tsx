@@ -82,26 +82,64 @@ export function Privacy() {
               at, which contains your account's internal id;
             </li>
             <li>the name and faction of each of your colonies;</li>
-            <li>each colony's game date and current weather, where you track them;</li>
+            <li>each colony's game date and current weather, and how many game days that weather has lasted, where you track them;</li>
             <li>
               each colony's population counters, where you track population: each counter's number, whether it is on,
               the exact time it last switched, and whether the counters mean "at least" or "more than". If the
               companion mod reports for the colony, its exact population instead;
             </li>
             <li>
-              the exact time each colony last sent a signal or was last reported for by the companion mod, and the
-              exact time its current cycle started.
+              the exact time each colony last sent a signal or was last reported for by the companion mod;
             </li>
+            <li>whether each colony's own page is public and, if it is, the page's address (see the next section).</li>
           </ul>
           <p>
             The page shows these in a shorter form, such as "5 minutes ago", but the exact values are sent to the
             browser of everyone who opens it.
           </p>
           <p>
-            A colony is listed only while it has sent a signal, or the companion mod has reported for it, in the last hour. Your email address,
+            A colony is listed for 7 days after it last sent a signal or the companion mod last reported for it: as live for the first hour,
+            and as recently played after that. Your email address,
             adapter links, the rest of your signals and history, and your other trackers are never shown. We do this only with your consent (GDPR
             Art. 6(1)(a)), which you can withdraw at any time by switching the setting off; your colonies then leave
             the list straight away. What others copied while it was public is outside our control.
+          </p>
+        </section>
+
+        <section>
+          <h2>If you make a colony public</h2>
+          <p>
+            Each colony has its own switch, "Show this colony's page publicly", in its settings. It is off for every colony until
+            you switch it on, and it only works while your profile is public. While it is on, anyone can open a read-only page
+            of that colony, at an address made from your handle and the colony's name, without signing in. The page can read:
+          </p>
+          <ul>
+            <li>the colony's name and faction, and your handle and picture, as on the live colonies list;</li>
+            <li>its game date, whether the game is sending right now, and the exact time the colony was last heard from;</li>
+            <li>
+              its current weather, how many times each weather has started, and its recent weather periods and cycles with their
+              lengths in game days;
+            </li>
+            <li>
+              every number the colony tracks or the companion mod reports for it, such as population, adults, children, bots
+              and how full each good's storage is: the current value, and for numbers built from counters each counter's
+              number, whether it is on, and the order the counters last switched in;
+            </li>
+            <li>which goods you pinned;</li>
+            <li>the history of those numbers over the colony's last 180 game days.</li>
+          </ul>
+          <p>
+            History is placed in game days, not in real time: the page is told that something happened "12 game days ago", not
+            at what hour or on what date. The one real time it gets is when the colony was last heard from. A colony without a
+            game date shows no history at all on this page.
+          </p>
+          <p>
+            The page never gets your adapter links or the companion mod's address, the names of your adapters, your signals as
+            such, your settings or your email address. We ask search engines not to list these pages, though we cannot make
+            them comply. As with a public profile, we do this only with your consent (GDPR Art. 6(1)(a)). You withdraw it by
+            switching the colony's switch off, which closes the page at once, or by switching "Public profile" off, which closes
+            every such page of yours; the choice per colony is kept, so switching your profile back on opens them again. What
+            others copied while a page was public is outside our control.
           </p>
         </section>
 

@@ -18,12 +18,17 @@ Knowing the design helps when looking for holes in it:
   browser talks to Supabase directly with a public key, so every table has policies, and they
   are the most important code to review (`supabase/migrations`).
 - **Column grants** decide which columns a player can write. Players can only set a colony's
-  name and faction, a profile's handle, picture and public/private choice, and which goods
-  are pinned on a colony's page.
+  name, faction and whether its page is public, a profile's handle, picture and public/private
+  choice, and which goods are pinned on a colony's page.
   Everything else, such as the adapter token, changes only through database functions.
 - **A few database functions run with the owner's rights** (`security definer`) and so bypass
   row level security. Each is narrow, and each is worth reviewing:
   - `colony_ladder()` and `is_public_avatar()` can be called **without signing in**. See below.
+  - `public_colony()`, `public_colony_overview()` and `public_colony_history()` can be called
+    **without signing in** too, and answer only for a public colony. See below and
+    [ADR 0002](docs/adr/0002-public-colony-pages-read-through-functions.md).
+    `public_colony_id()`, which they use to turn a colony's key back into its id, can't be
+    called from outside.
   - `rotate_webhook_token()` lets a signed-in owner replace their colony's adapter links.
   - `record_adapter_event()` records a signal and enforces the limits. Only the server can
     call it.
@@ -34,15 +39,28 @@ Knowing the design helps when looking for holes in it:
     can't be called from outside. `retention_policy()` lets anyone read the limits it applies,
     and nothing else.
 - **What visitors who aren't signed in can read.** Only what `colony_ladder()` returns, and
-  only for players who made their profile public, for colonies heard from in the last hour (an adapter
-  signal, or a request from the companion mod). Per colony that is: the player's handle, picture and picture path (which contains the
+  only for players who made their profile public, for colonies heard from in the last 7 days (an adapter
+  signal, or a request from the companion mod): every one heard from in the last hour, and the 20 most
+  recently played of the rest. Per colony that is: the player's handle, picture and picture path (which contains the
   player's user id), when their profile last changed, the colony's name and faction, the exact
-  time of its last signal, its game date, the exact time its current cycle started, its current
-  weather, and its population: either the counters (each counter's number, whether it is on, and
+  time of its last signal, its game date, its current weather and how many game days it has
+  lasted, its population: either the counters (each counter's number, whether it is on, and
   the exact time it last switched, with the comparison they use) or the companion mod's exact
-  number. The live colonies page shows less than
+  number, and whether the colony's own page is public, with its address if so. The live colonies page shows less than
   this, but the function returns it to anyone who asks. Colonies are identified by an opaque
   key, not their id.
+- **What a public colony adds.** A player can switch one colony's page public (off by default,
+  per colony, and only effective while their profile is public). For such a colony the three
+  `public_colony*` functions return, to anyone: its name, faction, the player's handle and
+  picture path, the exact time it was last heard from, whether the game is sending now, its
+  game date, its weather with its periods and cycles in game days, how many times each weather
+  has started, and every number it tracks or the mod reports (current value; for counters each
+  counter's number, whether it is on, and the order they last switched in; whether a good is
+  pinned), with those numbers' history over the last 180 game days. History is placed in game
+  days, never in real time: the only timestamp returned is when the colony was last heard
+  from. They never return the token, a colony or owner id, or an adapter's name. An address
+  that matches no public colony gets the same empty answer as a private one. No table is
+  opened for this; the tests in `supabase/tests/public_colonies.test.sql` check the outputs.
 - **Profile pictures** are in a private storage bucket. Owners can read and write their own.
   One extra policy lets anyone read a picture while its owner's profile is public;
   `is_public_avatar()` answers that question with yes or no and nothing more. Making a profile

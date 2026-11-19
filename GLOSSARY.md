@@ -78,4 +78,4 @@ term itself in prose.
 | Recently played | A listed colony that is not live but was heard from in the last 7 days | |
 | Public colony  | A colony whose player switched on showing its page to everyone. Needs a public profile, and is chosen per colony | |
 | Public colony page | The read-only view of a public colony that anyone can open from the live colonies page: its status band, time and weather, population and goods, and nothing about its signals or settings | |
-| Live           | A colony that sent a signal recently. The window differs by place today: 5 minutes on a tracker card, 10 minutes on the colony page's header and on the dashboard, 1 hour for the live colonies list | |
+| Live           | A colony that sent a signal recently. The window differs by place today: 5 minutes on a tracker card, 10 minutes on the colony page's header and on the dashboard, 1 hour on the live colonies page and a public colony page | |

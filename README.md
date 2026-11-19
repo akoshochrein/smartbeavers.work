@@ -50,13 +50,19 @@ browser before it is uploaded, which also removes details stored inside the file
 where a photo was taken. Pictures are kept in a private storage bucket. Only their owner can
 see them, unless the profile is public.
 
-**Live colonies.** [`/live`](https://smartbeavers.work/live) lists colonies being played right
-now, and anyone can open it without signing in. It is opt-in: a colony appears only if its
-player made their profile public, which needs a handle, and only while it has been heard from
-in the last hour. The colony that most recently started a new cycle comes first. The page
-checks for changes every 20 seconds and shows at most 200 colonies.
-[SECURITY.md](SECURITY.md) lists exactly what a public profile makes readable. The local demo
-colonies only show up here within an hour of sending something.
+**Live colonies.** [`/live`](https://smartbeavers.work/live) shows how other players' colonies
+are doing, and anyone can open it without signing in. It is not a ranking. Colonies being
+played now (heard from in the last hour) come first, each as a strip in its faction's look;
+colonies played in the last 7 days follow as a table. It is opt-in: a colony appears only if
+its player made their profile public, which needs a handle. The page checks for changes every
+20 seconds.
+
+**Public colonies.** A player can also show one colony's own page to everyone, with a switch in
+that colony's settings. Its strip or row on the live colonies page then opens a read-only page
+at `/live/<handle>/<colony>` with the colony's status, weather, population and goods, measured
+in game days. [SECURITY.md](SECURITY.md) lists exactly what a public profile and a public
+colony make readable. The local demo colonies show up as live only within an hour of sending
+something.
 
 **The account page.** Players can change their password (at least 8 characters), download
 everything stored about them, and delete their account. The download is one JSON file, for
@@ -121,8 +127,8 @@ Then:
   adapters: a population tracker, a weather tracker and a game clock. The other started the
   same way and then switched to the companion mod, so its charts run from adapter signals
   into readings, and it has bots and storage that only the mod reports. The player
-  also gets a public profile; a colony still only shows among the live colonies within an hour
-  of its last signal or reading. The seed only ever writes to a local Supabase.
+  also gets a public profile; a colony shows as live within an hour of its last signal or
+  reading and as recently played for 7 days. The seed only ever writes to a local Supabase.
 - Sign in with that address and the password `test-beaver`, or create a new account on the sign-in page.
 - Supabase Studio: http://127.0.0.1:54323
 - After changing SQL: `pnpm db:reset && pnpm db:types`. A reset empties the database, so run

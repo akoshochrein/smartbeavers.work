@@ -46,7 +46,15 @@ export function Terms() {
           <p>
             Your profile is private unless you switch on "Public profile". If you do, your handle, your picture, the
             names of your colonies and their game date, weather and population are shown in the live colonies list, which anyone can see.
-            You can switch it off again at any time.
+            A colony stays on that list for 7 days after it was last played. You can switch it off again at any time.
+          </p>
+          <p>
+            Separately, you can show a colony's own page to everyone with "Show this colony's page publicly" in that colony's
+            settings. It is off for every colony until you switch it on, it is chosen per colony, and it needs a public profile.
+            Anyone can then open a read-only page of that colony showing its game date, its weather and how the weather has
+            changed, its recent cycles, its population over time and how full each good's storage is. It never shows your
+            adapter links, the companion mod's address, the names of your adapters or your settings. Switching it off closes the
+            page at once, and switching "Public profile" off closes every such page of yours.
           </p>
           <p>Handles, colony names and profile pictures must be fit for anyone to read. They must not be:</p>
           <ul>
@@ -58,7 +66,8 @@ export function Terms() {
           <p>
             This applies whether or not your profile is public. We may rename or remove a handle, colony name or
             picture, make a profile private, or close the account, if these rules are broken. If you see something on
-            the live colonies list that shouldn't be there, tell us through the <Link to="/contact">contact page</Link>.
+            the live colonies list or on a colony's public page that shouldn't be there, tell us through the{" "}
+            <Link to="/contact">contact page</Link>. We may also make a colony's page private.
           </p>
         </section>
 
