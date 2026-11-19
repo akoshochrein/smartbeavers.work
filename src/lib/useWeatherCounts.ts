@@ -11,19 +11,11 @@ export function useWeatherCounts(colonyId: string, version: number) {
     queryKey: ["weather-counts", colonyId, version],
     placeholderData: keepPreviousData,
     queryFn: async () => {
-      const entries = await Promise.all(
-        WEATHERS.map(async (w) => {
-          const { count, error } = await supabase
-            .from("colony_signals")
-            .select("id", { count: "exact", head: true })
-            .eq("colony_id", colonyId)
-            .eq("adapter_name", w.adapter)
-            .eq("state", true);
-          if (error) throw new Error(error.message);
-          return [w.key, count ?? 0] as const;
-        }),
-      );
-      return Object.fromEntries(entries) as Record<Weather, number>;
+      // Counted in the database: starts still in history plus the totals kept from deleted history.
+      const { data, error } = await supabase.rpc("weather_counts", { p_colony: colonyId });
+      if (error) throw new Error(error.message);
+      const byAdapter = new Map((data ?? []).map((r) => [r.adapter_name, r.n]));
+      return Object.fromEntries(WEATHERS.map((w) => [w.key, byAdapter.get(w.adapter) ?? 0])) as Record<Weather, number>;
     },
   }).data;
 }

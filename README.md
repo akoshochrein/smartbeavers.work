@@ -204,6 +204,35 @@ account. Both have free tiers that are enough for this.
    pnpm deploy
    ```
 
+### Retention
+
+To stay inside a free database, every colony's history is bounded: readings are thinned as they
+age, and old history is deleted. A job inside the database does this every night at 04:17 UTC.
+The reasons are in [docs/adr/0001-bounded-history-per-colony.md](docs/adr/0001-bounded-history-per-colony.md).
+
+The limits are one row of settings in the database. Your privacy page states them from that
+row, so it always describes what your copy really does.
+
+| Setting               | Default | Meaning                                                              |
+| --------------------- | ------- | -------------------------------------------------------------------- |
+| `full_detail_hours`   | 48      | Readings younger than this are kept in full                          |
+| `hourly_days`         | 30      | Until this age the last reading of each hour is kept, then of each day |
+| `keep_days`           | 180     | Readings, signals and mod sessions older than this are deleted       |
+| `silent_months`       | 12      | A colony not heard from for this long loses its history              |
+| `reading_gap_seconds` | 10      | A metric stores at most one reading per this many seconds            |
+| `readings_per_hour`   | 6000    | A colony stores at most this many readings per hour                  |
+
+An empty setting means no limit. On a machine with room to spare you can keep everything; run
+this in the Supabase SQL editor:
+
+```sql
+update public.retention_settings
+   set full_detail_hours = null, hourly_days = null, keep_days = null, silent_months = null;
+```
+
+Deleted history can't be brought back, and loosening a setting only affects what is stored
+from then on. To run the cleanup by hand: `select public.apply_retention();`
+
 | Value                           | Local dev    | Production            |
 | ------------------------------- | ------------ | --------------------- |
 | `VITE_SUPABASE_*` (browser)     | `.env.local` | `.env.production`     |
@@ -225,8 +254,8 @@ a browser variable (`VITE_*`), also add it to `src/vite-env.d.ts`.
 - **Password resets are manual.** No email is ever sent, so a player who forgets their password
   has to contact the operator, who resets it in the Supabase dashboard. The same goes for
   changing an email address.
-- **Signals are kept forever.** Nothing prunes old signals; charts show at most the last 180
-  days, but the rows stay in the database.
+- **History is not kept forever.** To fit in a free database, readings are thinned as they age
+  and everything older than 180 days is deleted. See [Retention](#retention).
 - **Game data is checked by hand.** Building options and goods come from the game and its
   wiki; a game update can make a label wrong.
 

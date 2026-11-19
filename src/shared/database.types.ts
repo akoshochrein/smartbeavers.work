@@ -119,14 +119,14 @@ isOneToOne: false
                   ]
                 },"mod_requests": {
                   Row: {
-                    "colony_id": string,"count": number,"minute": string
+                    "colony_id": string,"count": number,"hour": string | null,"minute": string,"readings": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "colony_id": string,"count": number,"minute": string
+                    "colony_id": string,"count": number,"hour"?: string | null,"minute": string,"readings"?: number
                   }
                   Update: {
-                    "colony_id"?: string,"count"?: number,"minute"?: string
+                    "colony_id"?: string,"count"?: number,"hour"?: string | null,"minute"?: string,"readings"?: number
                   }
                   Relationships: [
                     {
@@ -231,6 +231,40 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"retention_settings": {
+                  Row: {
+                    "full_detail_hours": number | null,"hourly_days": number | null,"id": boolean,"keep_days": number | null,"reading_gap_seconds": number | null,"readings_per_hour": number | null,"silent_months": number | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "full_detail_hours"?: number | null,"hourly_days"?: number | null,"id"?: boolean,"keep_days"?: number | null,"reading_gap_seconds"?: number | null,"readings_per_hour"?: number | null,"silent_months"?: number | null
+                  }
+                  Update: {
+                    "full_detail_hours"?: number | null,"hourly_days"?: number | null,"id"?: boolean,"keep_days"?: number | null,"reading_gap_seconds"?: number | null,"readings_per_hour"?: number | null,"silent_months"?: number | null
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"weather_totals": {
+                  Row: {
+                    "adapter_name": string,"colony_id": string,"starts": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "adapter_name": string,"colony_id": string,"starts"?: number
+                  }
+                  Update: {
+                    "adapter_name"?: string,"colony_id"?: string,"starts"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "weather_totals_colony_id_fkey"
+      columns: ["colony_id"]
+isOneToOne: false
+      referencedRelation: "colonies"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"weather_trackers": {
                   Row: {
                     "colony_id": string,"created_at": string
@@ -290,9 +324,17 @@ isOneToOne: false
               "adapter_name": string,"carried": boolean,"received_at": string,"state": boolean
             }[]
                            },
+"apply_retention":
+{ Args: Record<PropertyKey, never>; Returns: Json
+                           },
 "colony_ladder":
 { Args: Record<PropertyKey, never>; Returns: {
               "avatar_path": string,"colony_name": string,"cycle": number,"cycle_started_at": string,"day": number,"faction": string,"handle": string,"key": string,"last_signal_at": string,"pop_comparison": string,"pop_reading": number,"pop_steps": Json,"profile_updated_at": string,"weather": string
+            }[]
+                           },
+"date_as_of":
+{ Args: { "p_at": string,"p_colony": string }; Returns: {
+              "cycle": number,"day": number
             }[]
                            },
 "end_mod_session":
@@ -315,6 +357,22 @@ isOneToOne: false
 "record_readings":
 { Args: { "p_faction"?: string,"p_readings": Json,"p_token": string }; Returns: boolean
                            },
+"retention_policy":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "full_detail_hours": number | null,
+"hourly_days": number | null,
+"id": boolean,
+"keep_days": number | null,
+"reading_gap_seconds": number | null,
+"readings_per_hour": number | null,
+"silent_months": number | null
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "retention_settings"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
 "rotate_webhook_token":
 { Args: { "p_colony": string }; Returns: string
                            },
@@ -336,6 +394,11 @@ isOneToOne: false
                            },
 "weather_adapter":
 { Args: { "p_value": number }; Returns: string
+                           },
+"weather_counts":
+{ Args: { "p_colony": string }; Returns: {
+              "adapter_name": string,"n": number
+            }[]
                            },
 "weather_history":
 { Args: { "p_adapters": (string)[],"p_bucket_seconds": number,"p_colony": string,"p_since": string }; Returns: {

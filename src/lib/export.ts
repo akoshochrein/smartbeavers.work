@@ -13,7 +13,7 @@ function unwrap<T>(res: { data: T | null; error: { message: string } | null }): 
   return res.data;
 }
 
-/** Every signal ever recorded for the colony, oldest first. Throws rather than return part of it. */
+/** Every signal still stored for the colony, oldest first. Throws rather than return part of it. */
 async function allEvents(colonyId: string) {
   const events: { id: number; adapter_name: string; state: boolean; received_at: string }[] = [];
   let after = 0;
@@ -33,7 +33,7 @@ async function allEvents(colonyId: string) {
   }
 }
 
-/** Every reading the companion mod reported for the colony, oldest first. */
+/** Every reading still stored for the colony, oldest first. Older history is thinned and deleted (see docs/adr/0001). */
 async function allReadings(colonyId: string) {
   const readings: { id: number; metric: string; value: number; received_at: string }[] = [];
   let after = 0;

@@ -30,6 +30,9 @@ Knowing the design helps when looking for holes in it:
   - `record_readings()` and `store_reading()` do the same for readings from the companion
     mod, which arrive at `/mod/<token>` with the colony's token. Only the server can call them.
   - `enforce_colony_limit()` is a trigger and can't be called directly.
+  - `apply_retention()` thins and deletes old history. It runs nightly inside the database and
+    can't be called from outside. `retention_policy()` lets anyone read the limits it applies,
+    and nothing else.
 - **What visitors who aren't signed in can read.** Only what `colony_ladder()` returns, and
   only for players who made their profile public, for colonies heard from in the last hour (an adapter
   signal, or a request from the companion mod). Per colony that is: the player's handle, picture and picture path (which contains the
@@ -52,5 +55,5 @@ Knowing the design helps when looking for holes in it:
   against anything but a local Supabase.
 - **Account deletion** runs on the server with the secret key. Who is being deleted comes only
   from the caller's own sign-in token.
-- **Limits** in the database cap colonies per player, adapter names per colony and signals
-  per minute.
+- **Limits** in the database cap colonies per player, adapter names per colony, signals per
+  minute, requests from the mod per minute, and readings stored per metric and per colony.

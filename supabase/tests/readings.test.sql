@@ -166,6 +166,10 @@ select is(
 -- ---------------------------------------------------------------------------
 -- Taking readings in: record_readings(token, {metric: value})
 -- ---------------------------------------------------------------------------
+-- Every call in a test happens at the same instant, so the rule that a metric stores at most one
+-- reading per 10 seconds is switched off here. It has its own tests in retention.test.sql.
+update public.retention_settings set reading_gap_seconds = null;
+
 select is(public.record_readings(repeat('f', 48), '{"Adults": 1}'), false, 'an unknown token is refused');
 
 select is(public.record_readings(repeat('b', 48), '{"Adults": 30, "Children": 4}'), true, 'a known token is accepted');

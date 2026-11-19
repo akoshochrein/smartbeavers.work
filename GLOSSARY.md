@@ -51,6 +51,15 @@ term itself in prose.
 | Cycle           | A run of game days that starts when temperate weather starts                      | |
 | Game date       | The cycle and day, worked out from the game clock and the date the player set     | `game_date()` |
 
+## Keeping history
+
+| Term        | Meaning                                                                                 | In code / avoid |
+| ----------- | --------------------------------------------------------------------------------------- | --------------- |
+| History     | Everything a colony has received over time: its signals and its readings                | |
+| Retention   | How long history is kept before it is deleted                                           | Avoid "pruning" in prose |
+| Thinning    | Keeping fewer values from older stretches of history: every value at first, then one per hour, then one per day | Avoid "downsampling", "compaction" |
+| Totals      | Counts that are kept when the history behind them is deleted, such as how many times each weather has started | |
+
 ## Players and live colonies
 
 | Term           | Meaning                                                                            | In code / avoid |

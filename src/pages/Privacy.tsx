@@ -1,8 +1,10 @@
 import { Link } from "@tanstack/react-router";
 import { PublicPage, Prose } from "@/components/PublicPage";
+import { describeRetention, useRetentionPolicy } from "@/lib/retention";
 import { LEGAL_UPDATED, OPERATOR } from "@/shared/site";
 
 export function Privacy() {
+  const retention = useRetentionPolicy();
   const mail = OPERATOR.email ? <a href={`mailto:${OPERATOR.email}`}>{OPERATOR.email}</a> : <Link to="/contact">the contact page</Link>;
   return (
     <PublicPage
@@ -150,7 +152,20 @@ export function Privacy() {
         <section>
           <h2>How long we keep it</h2>
           <ul>
-            <li>Account, handle, picture, colonies and signal history: until you remove them or delete your account.</li>
+            <li>Account, handle, picture, colonies and trackers: until you remove them or delete your account.</li>
+            <li>
+              What your colonies send (signals and readings): not forever. To keep this site free, older history is
+              thinned and then deleted, the same way for every colony.
+              {retention ? (
+                <ul>
+                  {describeRetention(retention).map((line) => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ul>
+              ) : (
+                " The exact limits are loading."
+              )}
+            </li>
             <li>Technical logs: for a short period set by the hosting provider, typically days to a few weeks.</li>
             <li>Backups made by the database provider may hold deleted data for a short time before they expire.</li>
           </ul>

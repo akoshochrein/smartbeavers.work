@@ -459,8 +459,8 @@ function SettingsTab({ colony, onChange }: { colony: Colony; onChange: (c: Colon
           <div className="max-w-md">
             <h3 className="text-xl font-semibold">Export this colony</h3>
             <p className="mt-1 text-sm leading-relaxed text-ink-soft">
-              One JSON file with this colony's settings, trackers, full signal history and the companion mod's
-              readings. It includes the adapter links, so treat the file as private.
+              One JSON file with this colony's settings, trackers, and the signals and companion mod readings
+              still stored for it. It includes the adapter links, so treat the file as private.
             </p>
           </div>
           <ExportButton run={() => exportColony(colony)} className="sm:ml-auto" />

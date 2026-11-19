@@ -90,7 +90,7 @@ export function Account() {
         <div className="max-w-md">
           <h2 className="text-xl font-semibold">Export your data</h2>
           <p className="mt-1 text-sm leading-relaxed text-ink-soft">
-            One JSON file with your account details, handle and picture, and every colony: settings, trackers and the full signal history.
+            One JSON file with your account details, handle and picture, and every colony: settings, trackers and the history still stored for it.
             It includes your adapter links, so treat the file as private.
           </p>
         </div>
