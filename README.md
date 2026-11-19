@@ -28,6 +28,44 @@ smartbeavers is that code, ready-made, so ordinary players can use the building:
 The guiding rule: plain words, no jargon, and every setup step says exactly what to click in
 the game.
 
+## What's in it
+
+**Trackers and the game clock.** A colony's page shows one card per tracker. Number trackers
+rebuild a number from counters wired to adapters; the weather tracker follows three Weather
+Stations; the game clock counts days from a Chronometer whose adapter is named `GameDay`. The
+clock needs the date set once ("the game shows cycle 5, day 3 right now") and counts on from
+there; a new cycle starts when temperate weather starts, so the clock works together with the
+weather tracker. Once a colony has a game clock, its charts show the last 180 game days
+instead of the last 180 real days. With the companion mod, the weather, the cycle and the day
+come straight from the game and none of this has to be built or set.
+
+**Factions.** A colony is Folktails or Iron Teeth. The faction narrows the goods offered when
+adding a storage tracker to the ones that faction has, and it is shown among the live
+colonies. The player picks it in the colony's settings; the companion mod sets it from the
+save.
+
+**Profiles and pictures.** A player can choose a handle (3 to 20 characters, unique whatever
+the capitals) and a picture. The picture is cropped to a square and shrunk to 256 pixels in the
+browser before it is uploaded, which also removes details stored inside the file, such as
+where a photo was taken. Pictures are kept in a private storage bucket. Only their owner can
+see them, unless the profile is public.
+
+**Live colonies.** [`/live`](https://smartbeavers.work/live) lists colonies being played right
+now, and anyone can open it without signing in. It is opt-in: a colony appears only if its
+player made their profile public, which needs a handle, and only while it has been heard from
+in the last hour. The colony that most recently started a new cycle comes first. The page
+checks for changes every 20 seconds and shows at most 200 colonies.
+[SECURITY.md](SECURITY.md) lists exactly what a public profile makes readable. The local demo
+colonies only show up here within an hour of sending something.
+
+**The account page.** Players can change their password (at least 8 characters), download
+everything stored about them, and delete their account. The download is one JSON file, for
+the whole account or for one colony, built in the browser from what the player is allowed to
+read: colonies, trackers, every signal and reading, and the profile with its picture. It
+includes the adapter links, so it should be treated as private. Deleting an account removes
+the picture first and then the account, which takes its profile, colonies, trackers, signals
+and readings with it.
+
 ## How it fits together
 
 ```
