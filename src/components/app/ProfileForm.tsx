@@ -55,7 +55,7 @@ export function ProfileForm({ userId, email }: { userId: string; email: string }
     setBusy(undefined);
     if (error) return toast.error(`Couldn't change that: ${error}`);
     await Promise.all([refresh(), client.invalidateQueries({ queryKey: ["colony-ladder"] })]);
-    toast.success(next ? "Your profile is public. Your colonies can appear on the ladder." : "Your profile is private again");
+    toast.success(next ? "Your profile is public. Your colonies can appear among the live colonies." : "Your profile is private again");
   }
 
   async function pick(file: File | undefined) {
@@ -94,7 +94,7 @@ export function ProfileForm({ userId, email }: { userId: string; email: string }
             )}
           </div>
           <p className="mt-2 text-sm text-ink-soft">
-            Cropped to a square and shrunk before it's stored. {profile?.is_public ? "Shown next to your colonies on the ladder." : "Only you see it, unless you make your profile public."}
+            Cropped to a square and shrunk before it's stored. {profile?.is_public ? "Shown next to your colonies in the live colonies list." : "Only you see it, unless you make your profile public."}
           </p>
           <input
             ref={fileInput}
@@ -143,9 +143,9 @@ export function ProfileForm({ userId, email }: { userId: string; email: string }
               Public profile
             </Label>
             <p id="public-profile-help" className="mt-1 text-sm leading-relaxed text-ink-soft">
-              Puts your colonies on the{" "}
-              <Link to="/ladder" className="text-cobalt-deep underline-offset-4 hover:underline">
-                colony ladder
+              Lists your colonies among the{" "}
+              <Link to="/live" className="text-cobalt-deep underline-offset-4 hover:underline">
+                live colonies
               </Link>
               , a page anyone can open without signing in.
             </p>
@@ -163,24 +163,26 @@ export function ProfileForm({ userId, email }: { userId: string; email: string }
           <div>
             <div className="font-medium">Anyone can see</div>
             <ul className="mt-1.5 list-disc space-y-1 pl-5 text-ink-soft">
-              <li>your handle and picture</li>
+              <li>your handle and picture, and when you last changed your profile</li>
               <li>the names and factions of your colonies</li>
-              <li>each colony's game date, weather and population, where you track them</li>
-              <li>roughly when each colony was last played</li>
+              <li>each colony's game date and weather, where you track them</li>
+              <li>each population counter's number, whether it's on, and exactly when it last switched</li>
+              <li>exactly when each colony last sent a signal, and when its current cycle started</li>
             </ul>
           </div>
           <div>
             <div className="font-medium">Stays private</div>
             <ul className="mt-1.5 list-disc space-y-1 pl-5 text-ink-soft">
               <li>your email address</li>
-              <li>your adapter links, signals and history</li>
+              <li>your adapter links</li>
+              <li>the rest of your signals and history</li>
               <li>every other tracker</li>
             </ul>
           </div>
         </div>
         <p className="mt-4 text-sm leading-relaxed text-ink-soft">
           A colony is listed only while it has sent a signal in the last hour. Switch this off and your colonies leave
-          the ladder straight away. Handles and colony names shown in public have to follow the{" "}
+          the list straight away. Handles and colony names shown in public have to follow the{" "}
           <Link to="/terms" className="text-cobalt-deep underline-offset-4 hover:underline">
             terms of use
           </Link>

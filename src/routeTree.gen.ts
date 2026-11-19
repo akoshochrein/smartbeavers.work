@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as LadderRouteImport } from './routes/ladder'
+import { Route as LiveRouteImport } from './routes/live'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as TermsRouteImport } from './routes/terms'
@@ -44,6 +45,11 @@ const ContactRoute = ContactRouteImport.update({
 const LadderRoute = LadderRouteImport.update({
   id: '/ladder',
   path: '/ladder',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LiveRoute = LiveRouteImport.update({
+  id: '/live',
+  path: '/live',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -120,6 +126,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/contact': typeof ContactRoute
   '/ladder': typeof LadderRoute
+  '/live': typeof LiveRoute
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
@@ -138,6 +145,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/contact': typeof ContactRoute
   '/ladder': typeof LadderRoute
+  '/live': typeof LiveRoute
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
@@ -158,6 +166,7 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/contact': typeof ContactRoute
   '/ladder': typeof LadderRoute
+  '/live': typeof LiveRoute
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
@@ -178,6 +187,7 @@ export interface FileRouteTypes {
     | '/'
     | '/contact'
     | '/ladder'
+    | '/live'
     | '/login'
     | '/privacy'
     | '/terms'
@@ -196,6 +206,7 @@ export interface FileRouteTypes {
     | '/'
     | '/contact'
     | '/ladder'
+    | '/live'
     | '/login'
     | '/privacy'
     | '/terms'
@@ -215,6 +226,7 @@ export interface FileRouteTypes {
     | '/_app'
     | '/contact'
     | '/ladder'
+    | '/live'
     | '/login'
     | '/privacy'
     | '/terms'
@@ -235,6 +247,7 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   ContactRoute: typeof ContactRoute
   LadderRoute: typeof LadderRoute
+  LiveRoute: typeof LiveRoute
   LoginRoute: typeof LoginRoute
   PrivacyRoute: typeof PrivacyRoute
   TermsRoute: typeof TermsRoute
@@ -271,6 +284,13 @@ declare module '@tanstack/react-router' {
       path: '/ladder'
       fullPath: '/ladder'
       preLoaderRoute: typeof LadderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/live': {
+      id: '/live'
+      path: '/live'
+      fullPath: '/live'
+      preLoaderRoute: typeof LiveRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -394,6 +414,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   ContactRoute: ContactRoute,
   LadderRoute: LadderRoute,
+  LiveRoute: LiveRoute,
   LoginRoute: LoginRoute,
   PrivacyRoute: PrivacyRoute,
   TermsRoute: TermsRoute,

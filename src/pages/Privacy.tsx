@@ -69,19 +69,27 @@ export function Privacy() {
           <h2>If you make your profile public</h2>
           <p>
             Your profile is private by default. If you switch on "Public profile" on your account page, the following
-            is shown on the colony ladder, a page anyone can open without signing in:
+            can be read on the live colonies page, which anyone can open without signing in:
           </p>
           <ul>
-            <li>your handle and profile picture;</li>
+            <li>your handle and profile picture, and the time you last changed your profile;</li>
             <li>the name and faction of each of your colonies;</li>
-            <li>each colony's game date, weather and population, where you track them;</li>
-            <li>roughly when each colony last sent a signal.</li>
+            <li>each colony's game date and current weather, where you track them;</li>
+            <li>
+              each colony's population counters, where you track population: each counter's number, whether it is on,
+              and the exact time it last switched;
+            </li>
+            <li>the exact time each colony last sent a signal, and the exact time its current cycle started.</li>
           </ul>
           <p>
+            The page shows these in a shorter form, such as "5 minutes ago", but the exact values are sent to the
+            browser of everyone who opens it.
+          </p>
+          <p>
             A colony is listed only while it has sent a signal in the last hour. Your email address,
-            adapter links, signal history and other trackers are never shown. We do this only with your consent (GDPR
+            adapter links, the rest of your signals and history, and your other trackers are never shown. We do this only with your consent (GDPR
             Art. 6(1)(a)), which you can withdraw at any time by switching the setting off; your colonies then leave
-            the ladder straight away. What others copied while it was public is outside our control.
+            the list straight away. What others copied while it was public is outside our control.
           </p>
         </section>
 
