@@ -32,17 +32,29 @@ export function SiteFooter() {
 }
 
 /** Header, title and footer for plain reading pages: contact, privacy, terms. */
-export function PublicPage({ title, intro, children }: { title: string; intro?: ReactNode; children: ReactNode }) {
+export function PublicPage({
+  title,
+  intro,
+  children,
+  wide = false,
+}: {
+  title: string;
+  intro?: ReactNode;
+  children: ReactNode;
+  /** For pages made of wide strips or panes instead of a column of text. */
+  wide?: boolean;
+}) {
+  const width = wide ? "max-w-7xl" : "max-w-5xl";
   const { session } = useAuth();
   return (
     <div className="flex min-h-dvh flex-col bg-mist">
-      <header className="mx-auto flex w-full max-w-5xl items-center px-5 py-5 sm:px-8">
+      <header className={`mx-auto flex w-full items-center px-5 py-5 sm:px-8 ${width}`}>
         <Logo />
         <Button asChild variant="outline" className="ml-auto bg-paper">
           <Link to={session ? "/dashboard" : "/login"}>{session ? "Your colonies" : "Sign in"}</Link>
         </Button>
       </header>
-      <main className="mx-auto w-full max-w-5xl flex-1 px-5 pt-10 pb-20 sm:px-8 sm:pt-16">
+      <main className={`mx-auto w-full flex-1 px-5 pt-10 pb-20 sm:px-8 sm:pt-16 ${width}`}>
         <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-cobalt-deep hover:underline">
           <ArrowLeft className="size-4" /> Home
         </Link>

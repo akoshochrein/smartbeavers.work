@@ -15,9 +15,9 @@ export type LadderEntry = {
   faction: string | null;
   lastSignalAt: number;
   date: { cycle: number; day: number } | null;
-  /** When the colony's current cycle started (temperate weather began). Null if it doesn't track weather. */
-  cycleStartedAt: number | null;
   weather: Weather | null;
+  /** Game days the current weather has lasted. Null without a game clock running since it started. */
+  weatherDays: number | null;
   population: Exclude<Value, { kind: "waiting" }> | null;
 };
 
@@ -34,8 +34,8 @@ type Row = {
   last_signal_at: string;
   cycle: number | null;
   day: number | null;
-  cycle_started_at: string | null;
   weather: Weather | null;
+  weather_days: number | null;
   pop_comparison: string | null;
   pop_steps: PopStep[] | null;
   /** The companion mod's exact population, when that is the number to show. */
@@ -56,16 +56,19 @@ function toEntry(r: Row): LadderEntry {
     faction: r.faction,
     lastSignalAt: Date.parse(r.last_signal_at),
     date: r.cycle != null && r.day != null ? { cycle: r.cycle, day: r.day } : null,
-    cycleStartedAt: r.cycle_started_at ? Date.parse(r.cycle_started_at) : null,
     weather: r.weather,
+    weatherDays: r.weather_days,
     population: pop.kind === "waiting" ? null : pop,
   };
 }
 
+/** A listed colony is live while it has been heard from in the last hour. */
+export const LIVE_MS = 60 * 60_000;
+
 /**
- * Colonies of public profiles heard from in the last hour, by an adapter signal or the companion mod. The colony that most
- * recently started a new cycle (temperate weather began) comes first; colonies that don't
- * track weather follow, most recently active first. Checked again every 20 seconds, so the order shifts as games are played.
+ * Colonies of public profiles heard from in the last 7 days, by an adapter signal or the
+ * companion mod, most recently heard from first: every live one, and the 20 most recently played
+ * of the rest. Checked again every 20 seconds, so nothing on the page goes stale.
  */
 export function useColonyLadder() {
   return useQuery({
@@ -74,9 +77,7 @@ export function useColonyLadder() {
     refetchInterval: 20_000,
     queryFn: async () => {
       const rows = (unwrap(await supabase.rpc("colony_ladder")) ?? []) as unknown as Row[];
-      return rows
-        .map(toEntry)
-        .sort((a, b) => (b.cycleStartedAt ?? 0) - (a.cycleStartedAt ?? 0) || b.lastSignalAt - a.lastSignalAt);
+      return rows.map(toEntry).sort((a, b) => b.lastSignalAt - a.lastSignalAt);
     },
   });
 }
