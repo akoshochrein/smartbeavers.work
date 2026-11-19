@@ -31,12 +31,13 @@ Knowing the design helps when looking for holes in it:
     mod, which arrive at `/mod/<token>` with the colony's token. Only the server can call them.
   - `enforce_colony_limit()` is a trigger and can't be called directly.
 - **What visitors who aren't signed in can read.** Only what `colony_ladder()` returns, and
-  only for players who made their profile public, for colonies that sent a signal in the last
-  hour. Per colony that is: the player's handle, picture and picture path (which contains the
+  only for players who made their profile public, for colonies heard from in the last hour (an adapter
+  signal, or a request from the companion mod). Per colony that is: the player's handle, picture and picture path (which contains the
   player's user id), when their profile last changed, the colony's name and faction, the exact
   time of its last signal, its game date, the exact time its current cycle started, its current
-  weather, and its population counters (each counter's number, whether it is on, and the exact
-  time it last switched) with the comparison they use. The live colonies page shows less than
+  weather, and its population: either the counters (each counter's number, whether it is on, and
+  the exact time it last switched, with the comparison they use) or the companion mod's exact
+  number. The live colonies page shows less than
   this, but the function returns it to anyone who asks. Colonies are identified by an opaque
   key, not their id.
 - **Profile pictures** are in a private storage bucket. Owners can read and write their own.

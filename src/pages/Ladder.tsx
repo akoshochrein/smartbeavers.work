@@ -21,7 +21,7 @@ export function Ladder() {
   return (
     <PublicPage
       title="Live colonies"
-      intro="Colonies being played right now. The colony that most recently started a new cycle is on top, so the order shifts each time temperate weather returns somewhere. A colony is listed while its game has sent a signal in the last hour, and only if its player made their profile public."
+      intro="Colonies being played right now. The colony that most recently started a new cycle is on top, so the order shifts each time temperate weather returns somewhere. A colony is listed while it has been heard from in the last hour, and only if its player made their profile public."
     >
       <div className="mt-10">
         {isError ? (

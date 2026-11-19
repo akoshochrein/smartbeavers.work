@@ -83,16 +83,20 @@ export function Privacy() {
             <li>each colony's game date and current weather, where you track them;</li>
             <li>
               each colony's population counters, where you track population: each counter's number, whether it is on,
-              the exact time it last switched, and whether the counters mean "at least" or "more than";
+              the exact time it last switched, and whether the counters mean "at least" or "more than". If the
+              companion mod reports for the colony, its exact population instead;
             </li>
-            <li>the exact time each colony last sent a signal, and the exact time its current cycle started.</li>
+            <li>
+              the exact time each colony last sent a signal or was last reported for by the companion mod, and the
+              exact time its current cycle started.
+            </li>
           </ul>
           <p>
             The page shows these in a shorter form, such as "5 minutes ago", but the exact values are sent to the
             browser of everyone who opens it.
           </p>
           <p>
-            A colony is listed only while it has sent a signal in the last hour. Your email address,
+            A colony is listed only while it has sent a signal, or the companion mod has reported for it, in the last hour. Your email address,
             adapter links, the rest of your signals and history, and your other trackers are never shown. We do this only with your consent (GDPR
             Art. 6(1)(a)), which you can withdraw at any time by switching the setting off; your colonies then leave
             the list straight away. What others copied while it was public is outside our control.

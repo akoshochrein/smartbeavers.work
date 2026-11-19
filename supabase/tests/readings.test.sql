@@ -9,7 +9,7 @@
 --   "adapter +30 Pop30 on"        an adapter signal
 --   "... carried"                 a value already in place when that stretch began
 begin;
-select plan(34);
+select plan(41);
 
 create temp table base on commit drop as select date_trunc('minute', now()) - interval '10 days' as t;
 
@@ -309,6 +309,59 @@ select is(
   (select cycle || ' ' || day || ' ' || cycles_tracked from public.game_date('00000000-0000-0000-0000-0000000000c4')),
   '7 12 true',
   'mod only: the date is the mod''s, with no clock to set');
+
+-- ---------------------------------------------------------------------------
+-- The public list of live colonies (colony_ladder) shows the same merged picture.
+-- By now "Merge" (c1) last heard from the mod 6 minutes ago, "Intake" (c2) is being reported
+-- for right now, and the other two were last active ten days ago.
+-- ---------------------------------------------------------------------------
+insert into public.profiles (user_id, handle, is_public) values ('00000000-0000-0000-0000-00000000000a', 'owner', true);
+insert into public.colonies (id, owner_id, name, webhook_token) values
+  ('00000000-0000-0000-0000-0000000000c5', '00000000-0000-0000-0000-00000000000a', 'Adapters', repeat('e', 48));
+insert into public.ladders (colony_id, metric) values ('00000000-0000-0000-0000-0000000000c5', 'Pop');
+insert into public.adapter_states (colony_id, name, state, updated_at)
+values ('00000000-0000-0000-0000-0000000000c5', 'Pop30', true, now() - interval '2 minutes');
+
+select results_eq(
+  $$ select colony_name from public.colony_ladder() where handle = 'owner' order by colony_name $$,
+  $$ values ('Adapters'), ('Intake'), ('Merge') $$,
+  'listed: colonies with a signal or a word from the mod in the last hour, and no others');
+
+select is(
+  (select pop_reading::text || ' ' || coalesce(jsonb_array_length(pop_steps)::text, 'no steps') from public.colony_ladder() where colony_name = 'Intake'),
+  '37 no steps',
+  'a colony only the mod reports for shows its exact population');
+
+select is(
+  (select coalesce(pop_reading::text, 'no reading') || ' ' || jsonb_array_length(pop_steps) from public.colony_ladder() where colony_name = 'Adapters'),
+  'no reading 1',
+  'a colony with only adapters is listed exactly as before');
+
+-- Intake also has population counters. The mod is reporting, so its number is the one shown.
+insert into public.ladders (colony_id, metric) values ('00000000-0000-0000-0000-0000000000c2', 'Pop');
+insert into public.adapter_states (colony_id, name, state, updated_at)
+values ('00000000-0000-0000-0000-0000000000c2', 'Pop20', true, now() - interval '30 minutes');
+select is((select pop_reading from public.colony_ladder() where colony_name = 'Intake'), 37,
+  'both sources: the mod''s population while it is reporting');
+
+insert into public.readings (colony_id, metric, value) values
+  ('00000000-0000-0000-0000-0000000000c2', 'Weather', 2),
+  ('00000000-0000-0000-0000-0000000000c2', 'Cycle', 9),
+  ('00000000-0000-0000-0000-0000000000c2', 'Day', 4);
+select is(
+  (select weather || ' ' || cycle || ' ' || day from public.colony_ladder() where colony_name = 'Intake'),
+  'badtide 9 4',
+  'weather and the game date come from the mod too');
+
+update public.mod_sessions set last_seen_at = now() - interval '10 minutes'
+ where colony_id = '00000000-0000-0000-0000-0000000000c2' and last_seen_at > now() - interval '5 minutes';
+select is(
+  (select coalesce(pop_reading::text, 'no reading') || ' ' || jsonb_array_length(pop_steps) from public.colony_ladder() where colony_name = 'Intake'),
+  'no reading 1',
+  'once the mod stops reporting, the population counters take over');
+
+select is((select pop_reading from public.colony_ladder() where colony_name = 'Merge'), 50,
+  'with no counters to take over, the mod''s last population stays');
 
 -- ---------------------------------------------------------------------------
 -- Pinned goods: which of the mod's storage readings a player shows on the colony page.

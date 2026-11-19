@@ -167,8 +167,8 @@ export function ProfileForm({ userId, email }: { userId: string; email: string }
               <li>your picture's address, which contains your account's internal id</li>
               <li>the names and factions of your colonies</li>
               <li>each colony's game date and weather, where you track them</li>
-              <li>each population counter's number, whether it's on, exactly when it last switched, and whether the counters mean "at least" or "more than"</li>
-              <li>exactly when each colony last sent a signal, and when its current cycle started</li>
+              <li>each population counter's number, whether it's on, exactly when it last switched, and whether the counters mean "at least" or "more than"; or the exact population, if the companion mod reports it</li>
+              <li>exactly when each colony was last heard from, and when its current cycle started</li>
             </ul>
           </div>
           <div>
@@ -182,7 +182,7 @@ export function ProfileForm({ userId, email }: { userId: string; email: string }
           </div>
         </div>
         <p className="mt-4 text-sm leading-relaxed text-ink-soft">
-          A colony is listed only while it has sent a signal in the last hour. Switch this off and your colonies leave
+          A colony is listed only while it has been heard from in the last hour. Switch this off and your colonies leave
           the list straight away. Handles and colony names shown in public have to follow the{" "}
           <Link to="/terms" className="text-cobalt-deep underline-offset-4 hover:underline">
             terms of use

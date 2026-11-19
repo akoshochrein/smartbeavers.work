@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { latestValue, lowerBound, type Comparison, type Value } from "@/shared/ladders";
+import { exactValue, latestValue, lowerBound, type Comparison, type Value } from "@/shared/ladders";
 import type { Weather } from "@/shared/weather";
 import { unwrap } from "./queries";
 import { supabase } from "./supabase";
@@ -38,13 +38,16 @@ type Row = {
   weather: Weather | null;
   pop_comparison: string | null;
   pop_steps: PopStep[] | null;
+  /** The companion mod's exact population, when that is the number to show. */
+  pop_reading: number | null;
 };
 
 function toEntry(r: Row): LadderEntry {
   const comparison = (r.pop_comparison ?? "gte") as Comparison;
-  const pop = latestValue(
-    (r.pop_steps ?? []).map((s) => ({ bound: lowerBound(s.threshold, comparison), state: s.state, at: Date.parse(s.updated_at) })),
-  );
+  const pop =
+    r.pop_reading != null
+      ? exactValue(r.pop_reading, Date.parse(r.last_signal_at))
+      : latestValue((r.pop_steps ?? []).map((s) => ({ bound: lowerBound(s.threshold, comparison), state: s.state, at: Date.parse(s.updated_at) })));
   return {
     key: r.key,
     handle: r.handle,
@@ -60,7 +63,7 @@ function toEntry(r: Row): LadderEntry {
 }
 
 /**
- * Colonies of public profiles that sent a signal in the last hour. The colony that most
+ * Colonies of public profiles heard from in the last hour, by an adapter signal or the companion mod. The colony that most
  * recently started a new cycle (temperate weather began) comes first; colonies that don't
  * track weather follow, most recently active first. Checked again every 20 seconds, so the order shifts as games are played.
  */
