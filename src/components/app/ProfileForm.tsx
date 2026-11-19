@@ -164,9 +164,10 @@ export function ProfileForm({ userId, email }: { userId: string; email: string }
             <div className="font-medium">Anyone can see</div>
             <ul className="mt-1.5 list-disc space-y-1 pl-5 text-ink-soft">
               <li>your handle and picture, and when you last changed your profile</li>
+              <li>your picture's address, which contains your account's internal id</li>
               <li>the names and factions of your colonies</li>
               <li>each colony's game date and weather, where you track them</li>
-              <li>each population counter's number, whether it's on, and exactly when it last switched</li>
+              <li>each population counter's number, whether it's on, exactly when it last switched, and whether the counters mean "at least" or "more than"</li>
               <li>exactly when each colony last sent a signal, and when its current cycle started</li>
             </ul>
           </div>
