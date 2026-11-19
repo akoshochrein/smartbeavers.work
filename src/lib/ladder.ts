@@ -4,7 +4,7 @@ import type { Weather } from "@/shared/weather";
 import { unwrap } from "./queries";
 import { supabase } from "./supabase";
 
-/** One colony on the public ladder. Anything the colony doesn't track is null. */
+/** One colony in the public list of live colonies. Anything the colony doesn't track is null. */
 export type LadderEntry = {
   /** Opaque and stable per colony: follows a row while the order changes. */
   key: string;

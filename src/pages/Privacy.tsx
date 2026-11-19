@@ -72,12 +72,15 @@ export function Privacy() {
             can be read on the live colonies page, which anyone can open without signing in:
           </p>
           <ul>
-            <li>your handle and profile picture, and the time you last changed your profile;</li>
+            <li>
+              your handle and picture, the time you last changed your profile, and the address your picture is stored
+              at, which contains your account's internal id;
+            </li>
             <li>the name and faction of each of your colonies;</li>
             <li>each colony's game date and current weather, where you track them;</li>
             <li>
               each colony's population counters, where you track population: each counter's number, whether it is on,
-              and the exact time it last switched;
+              the exact time it last switched, and whether the counters mean "at least" or "more than";
             </li>
             <li>the exact time each colony last sent a signal, and the exact time its current cycle started.</li>
           </ul>

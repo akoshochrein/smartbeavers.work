@@ -55,7 +55,7 @@ export async function saveHandle(handle: string | null): Promise<"ok" | "taken" 
   return error.code === "23505" ? "taken" : { error: error.message };
 }
 
-/** Shows or hides the player's colonies on the public ladder. Needs a handle to switch on. */
+/** Shows or hides the player's colonies in the public list of live colonies. Needs a handle to switch on. */
 export async function setProfilePublic(userId: string, isPublic: boolean): Promise<{ error?: string }> {
   const { error } = await supabase.from("profiles").update({ is_public: isPublic }).eq("user_id", userId);
   return error ? { error: error.message } : {};
