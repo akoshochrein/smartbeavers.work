@@ -12,7 +12,7 @@ export function StartApiNote({ className }: { className?: string }) {
       <Power className="mt-0.5 size-4 shrink-0" aria-hidden />
       <p>
         <strong className="font-bold">Start the API every time you load the game.</strong> Timberborn switches it off
-        when a save is loaded, and its buildings show "API stopped". Select any HTTP Adapter or HTTP Lever, press{" "}
+        when a save is loaded, and its buildings show "API stopped". Select any HTTP Adapter, press{" "}
         <strong className="font-bold">Start API</strong>, and confirm with{" "}
         <strong className="font-bold">I understand the risk</strong>. Nothing is sent until you do.
       </p>

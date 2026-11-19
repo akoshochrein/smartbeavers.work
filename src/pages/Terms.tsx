@@ -12,7 +12,7 @@ export function Terms() {
         <section>
           <h2>What this is</h2>
           <p>
-            smartbeavers is a free, fan-made companion for Timberborn's HTTP Lever and HTTP Adapter buildings, run by{" "}
+            smartbeavers is a free, fan-made companion for Timberborn's HTTP Adapter building, run by{" "}
             {OPERATOR.name || "a private individual"}. It is not affiliated with or endorsed by Mechanistry, the studio
             behind Timberborn. By creating an account or using the site you agree to these terms.
           </p>

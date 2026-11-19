@@ -4,26 +4,23 @@
 
 <h1 align="center">smartbeavers</h1>
 
-A web companion for Timberborn's **HTTP Lever** and
-**HTTP Adapter** automation buildings. It runs at [smartbeavers.work](https://smartbeavers.work),
+A web companion for Timberborn's **HTTP Adapter** automation building. It runs at [smartbeavers.work](https://smartbeavers.work),
 and you can host your own copy.
 
 Fan-made. Not affiliated with or endorsed by Mechanistry, the studio behind Timberborn.
 
 ## Why it exists
 
-Timberborn's HTTP buildings let a colony talk to the outside world: an HTTP Adapter calls a web
-address when a signal switches, and an HTTP Lever can be switched by a web request. Using them
-normally means writing and hosting your own code.
+Timberborn's HTTP Adapter lets a colony talk to the outside world: it calls a web address when
+a signal switches. Using it normally means writing and hosting your own code.
 
-smartbeavers is that code, ready-made, so ordinary players can use the buildings:
+smartbeavers is that code, ready-made, so ordinary players can use the building:
 
 - **See signals arrive.** Paste two links into an adapter and every on/off shows up live.
 - **Turn signals into numbers.** A few Population Counters or Resource Counters become a
   population count, free beds, or how full your water storage is, with history charts.
 - **Follow the weather and the game clock.** Which weather is on, how long droughts last,
   the current cycle and day.
-- **Switch levers from the browser.**
 
 The guiding rule: plain words, no jargon, and every setup step says exactly what to click in
 the game.
@@ -33,20 +30,20 @@ the game.
 ```
  Player's machine                                   Cloud
 ┌──────────────────────────┐              ┌───────────────────────────────┐
-│ Timberborn               │  webhooks    │ Cloudflare Worker             │
+│ Timberborn               │   signals    │ Cloudflare Worker             │
 │  HTTP Adapter ───────────┼─────────────▶│  /hook/:token/:on|off/:name   │──┐
 │                          │              │  + the web app                │  │ secret key
-│  HTTP API :8080 ◀────┐   │              └───────────────────────────────┘  ▼
-└──────────────────────┼───┘                                          ┌──────────────┐
-                       │ fetch (levers, adapters)                     │  Supabase    │
-                 ┌─────┴──────────────────┐   auth, data, realtime    │  auth + PG   │
+└──────────────────────────┘              └───────────────────────────────┘  ▼
+                                                                      ┌──────────────┐
+                                                                      │  Supabase    │
+                 ┌────────────────────────┐   auth, data, realtime    │  auth + PG   │
                  │ Browser                │◀─────────────────────────▶│  + realtime  │
                  └────────────────────────┘                           │  + storage   │
                                                                       └──────────────┘
 ```
 
-- **The game's HTTP API only listens on the player's own machine**, so switching levers happens
-  from the browser (`src/lib/timberborn.ts`). The server never calls the game.
+- **The site only receives.** The game calls the site; neither the server nor the browser
+  ever calls the game.
 - **HTTP Adapters can call any URL.** Each colony gets two adapter links, one for on and one
   for off, that share a secret token. The server records each signal and the dashboard updates
   live through Supabase Realtime.
@@ -103,7 +100,7 @@ src/
   routes/            One file per URL. api/ and hook/ are server routes; _app.* needs sign-in
   pages/             The page components the routes render
   components/        Shared interface pieces; components/ui is shadcn/ui
-  lib/               Browser-side data: Supabase client, TanStack Query hooks, the game's API
+  lib/               Browser-side data: Supabase client, TanStack Query hooks
   server/            Server-only code: the Supabase client with the secret key
   shared/            Used by both: tracker maths, goods list, weather, game clock, adapter
                      link format, generated DB types. site.ts (who runs the site) is browser-only
@@ -160,13 +157,10 @@ a browser variable (`VITE_*`), also add it to `src/vite-env.d.ts`.
 
 ## Known limits
 
-- **Browser access to the game.** Reading and switching levers needs the browser to reach
-  `localhost:8080` from an https site. Chrome and Edge ask for local network permission,
-  Firefox allows it, Safari blocks it.
 - **Rate limiting.** The database caps signals per colony, but there is no network-level limit
   on `/hook/*`. A Cloudflare rate-limiting rule is worth adding on a public deployment.
 - **The game's API switches off when a save is loaded.** Players have to press "Start API" in
-  the game after every load. Until they do, adapters send nothing and levers can't be reached.
+  the game after every load. Until they do, adapters send nothing.
 - **Password resets are manual.** No email is ever sent, so a player who forgets their password
   has to contact the operator, who resets it in the Supabase dashboard. The same goes for
   changing an email address.

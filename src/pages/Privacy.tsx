@@ -43,8 +43,8 @@ export function Privacy() {
               Only you can see it, unless you make your profile public.
             </li>
             <li>
-              <strong>Your colonies:</strong> the name you give each one, its faction, the game address you set, and the
-              secret links your adapters call.
+              <strong>Your colonies:</strong> the name you give each one, its faction, and the secret links your
+              adapters call.
             </li>
             <li>
               <strong>Signals:</strong> the name of each HTTP Adapter that calls your links, whether it switched on or
@@ -59,10 +59,6 @@ export function Privacy() {
               to investigate abuse.
             </li>
           </ul>
-          <p>
-            Switching levers happens directly between your browser and the game on your own computer. Those commands
-            never reach us.
-          </p>
         </section>
 
         <section>

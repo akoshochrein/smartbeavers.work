@@ -1,5 +1,5 @@
 import type { AuthError } from "@supabase/supabase-js";
-import { BarChart3, CloudSun, Radio, ToggleRight } from "lucide-react";
+import { BarChart3, CloudSun, Radio } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { Link, Navigate } from "@tanstack/react-router";
 import { Logo } from "@/components/brand/Logo";
@@ -10,7 +10,6 @@ import { MIN_PASSWORD_LENGTH, useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 
 const PERKS = [
-  { icon: ToggleRight, text: "Switch your HTTP Levers from the browser" },
   { icon: Radio, text: "See every HTTP Adapter signal as it happens" },
   { icon: BarChart3, text: "Track numbers like population or free beds" },
   { icon: CloudSun, text: "Know whether it's temperate, a drought or a badtide" },

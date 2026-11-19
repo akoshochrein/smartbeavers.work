@@ -18,7 +18,7 @@ Knowing the design helps when looking for holes in it:
   browser talks to Supabase directly with a public key, so every table has policies, and they
   are the most important code to review (`supabase/migrations`).
 - **Column grants** decide which columns a player can write. Players can only set a colony's
-  name, faction and game address, and a profile's handle, picture and public/private choice.
+  name and faction, and a profile's handle, picture and public/private choice.
   Everything else, such as the adapter token, changes only through database functions.
 - **A few database functions run with the owner's rights** (`security definer`) and so bypass
   row level security. Each is narrow, and each is worth reviewing:

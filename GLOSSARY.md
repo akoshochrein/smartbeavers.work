@@ -10,7 +10,6 @@ term itself in prose.
 | ------------ | ------------------------------------------------------------------------------------ | --------------- |
 | Colony       | One Timberborn save connected to the site                                            | `colonies` |
 | Faction      | Folktails or Iron Teeth. Narrows the goods offered for a colony                      | `folktails`, `iron_teeth` |
-| Game address | The URL of the player's running game, by default `http://localhost:8080`             | `api_base_url` |
 | Start API    | The in-game action needed after every save load. Until then adapters send nothing | |
 | Operator     | Whoever runs a deployment of the site                                                | `VITE_OPERATOR_*` |
 

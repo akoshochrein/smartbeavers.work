@@ -13,7 +13,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1.0" },
       { name: "theme-color", content: "#163A33" },
-      { name: "description", content: "Use Timberborn's HTTP Lever and HTTP Adapter without writing code." },
+      { name: "description", content: "Use Timberborn's HTTP Adapter without writing code." },
       { title: "smartbeavers" },
     ],
     links: [

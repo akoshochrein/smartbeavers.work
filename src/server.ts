@@ -2,7 +2,7 @@ import handler, { createServerEntry } from "@tanstack/react-start/server-entry";
 
 // Headers added to everything the server answers itself (pages and server routes).
 const SECURITY_HEADERS = {
-  // The colony pages can switch levers in someone's game: never allow them inside a frame.
+  // Signed-in pages show adapter links and account controls: never allow the site inside a frame.
   "X-Frame-Options": "DENY",
   "Content-Security-Policy": "frame-ancestors 'none'",
   "X-Content-Type-Options": "nosniff",

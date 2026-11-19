@@ -1,5 +1,5 @@
-import { CalendarClock, Plug, Plus, RefreshCw } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { CalendarClock, Plus } from "lucide-react";
+import { useRef, useState, type FormEvent, type ReactNode } from "react";
 import { Link, useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { CopyField } from "@/components/app/CopyField";
@@ -30,19 +30,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useColonies } from "@/lib/colonies";
 import { supabase, type Colony } from "@/lib/supabase";
 import { formatTime, timeAgo } from "@/lib/time";
-import { createGameClient, type Adapter, type GameClient, type Lever } from "@/lib/timberborn";
 import { useColony, useLadders, useWeatherTracker } from "@/lib/useColony";
 import { useRecentSignals } from "@/lib/history";
 import { useColonyFeed, type ColonyFeed } from "@/lib/useColonyFeed";
 import { webhookUrl } from "@/shared/webhook";
 
-export const COLONY_TABS = ["trackers", "signals", "levers", "settings"] as const;
+export const COLONY_TABS = ["trackers", "signals", "settings"] as const;
 export type ColonyTab = (typeof COLONY_TABS)[number];
 const ROUTE = "/_app/colonies/$id/";
 const LIVE_MS = 10 * 60_000;
@@ -120,7 +118,6 @@ function ColonyDashboard({ colony, onChange }: { colony: Colony; onChange: (c: C
           {[
             ["trackers", "Trackers"],
             ["signals", "Signals"],
-            ["levers", "Levers"],
             ["settings", "Settings"],
           ].map(([value, label]) => (
             <TabsTrigger key={value} value={value} className="flex-none px-1 pb-2 text-[15px] after:bg-cobalt">
@@ -161,9 +158,6 @@ function ColonyDashboard({ colony, onChange }: { colony: Colony; onChange: (c: C
         </TabsContent>
         <TabsContent value="signals" className="pt-8">
           <SignalsTab colony={colony} feed={feed} />
-        </TabsContent>
-        <TabsContent value="levers" className="pt-8">
-          <LeversTab colony={colony} />
         </TabsContent>
         <TabsContent value="settings" className="pt-8">
           <SettingsTab colony={colony} onChange={onChange} />
@@ -320,146 +314,18 @@ function SignalsTab({ colony, feed }: { colony: Colony; feed: ColonyFeed }) {
   );
 }
 
-/** Talks directly to the game on the player's machine (browser → localhost). */
-function LeversTab({ colony }: { colony: Colony }) {
-  const game = useMemo(() => createGameClient(colony.api_base_url), [colony.api_base_url]);
-  const [levers, setLevers] = useState<Lever[]>([]);
-  const [adapters, setAdapters] = useState<Adapter[]>([]);
-  const [error, setError] = useState<string>();
-  const [connected, setConnected] = useState(false);
-  const [busy, setBusy] = useState(false);
-
-  const refresh = useCallback(async () => {
-    try {
-      const [l, a] = await Promise.all([game.levers(), game.adapters()]);
-      setLevers(l);
-      setAdapters(a);
-      setConnected(true);
-      setError(undefined);
-    } catch (err) {
-      setConnected(false);
-      setError((err as Error).message);
-    }
-  }, [game]);
-
-  useEffect(() => {
-    if (!connected) return;
-    const t = setInterval(refresh, 2000);
-    return () => clearInterval(t);
-  }, [connected, refresh]);
-
-  return (
-    <div className="max-w-3xl">
-      <h2 className="text-2xl font-bold tracking-tight">Levers on this computer</h2>
-      <p className="mt-1 max-w-xl text-sm leading-relaxed text-ink-soft">
-        While Timberborn runs on this computer, you can switch its HTTP Levers from here. Your browser talks to{" "}
-        <code className="font-mono text-[13px] text-ink">{game.baseUrl}</code> directly, so this only works on the
-        machine running the game.
-      </p>
-      {!connected && <StartApiNote className="mt-4 max-w-xl" />}
-
-      {!connected && (
-        <div className="mt-6 flex flex-wrap items-center gap-3">
-          <Button
-            disabled={busy}
-            onClick={async () => {
-              setBusy(true);
-              await refresh();
-              setBusy(false);
-            }}
-          >
-            <Plug /> {busy ? "Connecting…" : "Connect to the game"}
-          </Button>
-          {error && (
-            <p role="alert" className="text-sm text-danger">
-              {error}
-            </p>
-          )}
-        </div>
-      )}
-
-      {connected && (
-        <div className="mt-6 grid gap-8 sm:grid-cols-2">
-          <section>
-            <div className="flex items-center">
-              <h3 className="text-xl font-semibold">HTTP Levers</h3>
-              <Button size="icon-sm" variant="ghost" className="ml-auto" onClick={refresh} aria-label="Refresh">
-                <RefreshCw />
-              </Button>
-            </div>
-            {levers.length === 0 ? (
-              <p className="mt-2 text-sm text-ink-soft">No HTTP Levers in this colony yet.</p>
-            ) : (
-              <ul className="mt-2 divide-y rounded-xl border bg-paper">
-                {levers.map((l) => (
-                  <LeverRow key={l.name} lever={l} game={game} onChanged={refresh} />
-                ))}
-              </ul>
-            )}
-          </section>
-          <section>
-            <h3 className="text-xl font-semibold">HTTP Adapters</h3>
-            {adapters.length === 0 ? (
-              <p className="mt-2 text-sm text-ink-soft">No HTTP Adapters in this colony yet.</p>
-            ) : (
-              <ul className="mt-2 divide-y rounded-xl border bg-paper">
-                {adapters.map((a) => (
-                  <li key={a.name} className="flex items-center gap-3 px-4 py-3 text-sm">
-                    <StatusDot state={a.state} />
-                    <span className="font-mono text-[13px]">{a.name}</span>
-                    <span className="ml-auto text-ink-soft">{a.state ? "On" : "Off"}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function LeverRow({ lever, game, onChanged }: { lever: Lever; game: GameClient; onChanged: () => void }) {
-  const [pending, setPending] = useState<boolean>();
-  const checked = pending ?? lever.state;
-
-  async function toggle(next: boolean) {
-    setPending(next);
-    try {
-      const result = await (next ? game.switchOn(lever.name) : game.switchOff(lever.name));
-      if (result === "sent") toast(`Sent to ${lever.name}. The game didn't confirm, so check it in-game.`);
-      onChanged();
-    } catch (err) {
-      toast.error((err as Error).message);
-    } finally {
-      setPending(undefined);
-    }
-  }
-
-  return (
-    <li className="flex items-center gap-3 px-4 py-3">
-      <label htmlFor={`lever-${lever.name}`} className="min-w-0 flex-1">
-        <span className="block truncate font-mono text-[13px]">{lever.name}</span>
-        {lever.springReturn && <span className="text-xs text-ink-soft">Springs back after a moment</span>}
-      </label>
-      <Switch id={`lever-${lever.name}`} checked={checked} disabled={pending !== undefined} onCheckedChange={toggle} />
-    </li>
-  );
-}
-
 function SettingsTab({ colony, onChange }: { colony: Colony; onChange: (c: Colony) => void }) {
   const navigate = useNavigate();
   const { reload } = useColonies();
   const [name, setName] = useState(colony.name);
-  const [apiUrl, setApiUrl] = useState(colony.api_base_url);
   const [faction, setFaction] = useState<FactionKey | undefined>((colony.faction as FactionKey | null) ?? undefined);
-  const dirty = name.trim() !== colony.name || apiUrl.trim() !== colony.api_base_url || (faction ?? null) !== colony.faction;
+  const dirty = name.trim() !== colony.name || (faction ?? null) !== colony.faction;
 
   async function save(e: FormEvent) {
     e.preventDefault();
     const { data, error } = await supabase
       .from("colonies")
-      .update({ name: name.trim(), api_base_url: apiUrl.trim(), faction: faction ?? null })
+      .update({ name: name.trim(), faction: faction ?? null })
       .eq("id", colony.id)
       .select()
       .single();
@@ -507,11 +373,6 @@ function SettingsTab({ colony, onChange }: { colony: Colony; onChange: (c: Colon
               ? "Decides which goods you're offered when you add a resource tracker. Trackers you already have stay."
               : "Not set yet, so you're offered both factions' goods. Pick one to narrow the list."}
           </p>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="api-url">Game address</Label>
-          <Input id="api-url" value={apiUrl} onChange={(e) => setApiUrl(e.target.value)} className="bg-paper font-mono text-[13px]" />
-          <p className="text-sm text-ink-soft">Only change this if you set a different port on an HTTP Lever in-game.</p>
         </div>
         <Button type="submit" disabled={!dirty}>
           Save changes

@@ -1,18 +1,12 @@
-import { BarChart3, CloudSun, Radio, ToggleRight } from "lucide-react";
+import { BarChart3, CloudSun, Radio } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Logo } from "@/components/brand/Logo";
 import { SiteFooter } from "@/components/PublicPage";
-import { AdapterDemo, LeverDemo } from "@/components/landing/Demos";
+import { AdapterDemo } from "@/components/landing/Demos";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 
 const FEATURES = [
-  {
-    icon: ToggleRight,
-    title: "Switch levers",
-    body: "Every HTTP Lever in your colony gets a switch in the browser. Handy for floodgates, work shifts or anything you've wired to a lever.",
-    where: "Works in a browser on the computer running the game.",
-  },
   {
     icon: Radio,
     title: "See every signal",
@@ -36,11 +30,7 @@ const FEATURES = [
 const QUESTIONS = [
   {
     q: "Do I need mods?",
-    a: "No. You only need the HTTP Lever and HTTP Adapter, which you unlock in the game's science tree.",
-  },
-  {
-    q: "Can I switch levers from my phone?",
-    a: "Not yet. The game only takes lever commands from the computer it's running on, so switching levers works in a browser on that computer. Signals and trackers work anywhere.",
+    a: "No. You only need the HTTP Adapter, which you unlock in the game's science tree.",
   },
   {
     q: "What do you store?",
@@ -69,11 +59,11 @@ export function Home() {
       <main className="mx-auto max-w-5xl px-5 sm:px-8">
         <section className="pt-10 pb-12 sm:pt-16">
           <h1 className="max-w-3xl text-[2.25rem] leading-[1.1] font-bold tracking-tight sm:text-[2.75rem]">
-            Use Timberborn's HTTP buildings without writing code
+            Use Timberborn's HTTP Adapter without writing code
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-relaxed text-ink-soft">
-            smartbeavers gives your HTTP Levers a switch in your browser and gives your HTTP Adapters a place to report
-            to. Set it up once, then check on your colony from any device.
+            smartbeavers gives your HTTP Adapters a place to report to. Set it up once, then check on your colony from
+            any device.
           </p>
           <div className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-3">
             <Button asChild size="lg" className="h-11 px-5 text-base">
@@ -86,20 +76,18 @@ export function Home() {
         </section>
 
         <section aria-labelledby="buildings" className="pb-20">
-          <h2 id="buildings" className="text-2xl font-bold tracking-tight sm:text-3xl">The two HTTP buildings</h2>
+          <h2 id="buildings" className="text-2xl font-bold tracking-tight sm:text-3xl">The HTTP Adapter</h2>
           <p className="mt-2 max-w-2xl text-ink-soft">
-            One lets the outside world switch something in your colony. The other tells the outside world when something
-            changed. Try them both.
+            Try it here before you build one.
           </p>
-          <div className="mt-8 grid gap-6 lg:grid-cols-2">
-            <LeverDemo />
+          <div className="mt-8 max-w-2xl">
             <AdapterDemo />
           </div>
         </section>
 
         <section aria-labelledby="features" className="border-t border-ink/10 py-20">
           <h2 id="features" className="text-2xl font-bold tracking-tight sm:text-3xl">What you can do</h2>
-          <ul className="mt-10 grid gap-x-12 gap-y-10 md:grid-cols-2">
+          <ul className="mt-10 grid gap-x-12 gap-y-10 md:grid-cols-2 lg:grid-cols-3">
             {FEATURES.map(({ icon: Icon, title, body, where }) => (
               <li key={title}>
                 <Icon className="size-6 text-cobalt-deep" strokeWidth={1.75} />
@@ -117,7 +105,7 @@ export function Home() {
             {[
               ["Create a colony", "Create an account and add a colony for your save. You'll get two links that belong to it."],
               ["Paste the links into your adapters", "In each HTTP Adapter, tick both boxes and paste the links. The game fills in the adapter's name."],
-              ["Watch it arrive", "Signals show up in your dashboard as they happen. Add trackers or switch levers whenever you like."],
+              ["Watch it arrive", "Signals show up in your dashboard as they happen. Add trackers whenever you like."],
             ].map(([title, body], i) => (
               <li key={title} className="flex gap-4">
                 <span className="grid size-9 shrink-0 place-items-center rounded-full bg-pine font-display text-base font-bold text-mist">
