@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { keys, unwrap } from "./queries";
 import { supabase, type Colony, type Ladder } from "./supabase";
+import { isRetired } from "@/shared/ladders";
 
 /** undefined = loading, null = not found / not yours. The setter updates the cached copy. */
 export function useColony(id: string | undefined) {
@@ -14,11 +15,12 @@ export function useColony(id: string | undefined) {
   return [data, setColony] as const;
 }
 
+/** The colony's number trackers, without any that follow a retired metric. */
 export function useLadders(colonyId: string | undefined): Ladder[] | undefined {
   return useQuery({
     queryKey: keys.ladders(colonyId ?? ""),
     enabled: !!colonyId,
-    queryFn: async () => unwrap(await supabase.from("ladders").select("*").eq("colony_id", colonyId!).order("created_at")) ?? [],
+    queryFn: async () => (unwrap(await supabase.from("ladders").select("*").eq("colony_id", colonyId!).order("created_at")) ?? []).filter((l) => !isRetired(l.metric)),
   }).data;
 }
 

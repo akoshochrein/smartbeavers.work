@@ -48,7 +48,7 @@ export type ColonyTab = (typeof COLONY_TABS)[number];
 const ROUTE = "/_app/colonies/$id/";
 const LIVE_MS = 10 * 60_000;
 /** Metrics that get a card as soon as the companion mod reports them, with no tracker set up. */
-const MOD_METRICS = ["Pop", "Bots", "FreeBeds"];
+const MOD_METRICS = ["Pop", "Bots"];
 
 export function ColonyPage() {
   const { id } = useParams({ from: ROUTE });
@@ -256,7 +256,7 @@ function NoTrackers({ colonyId }: { colonyId: string }) {
         <h2 className="text-2xl font-bold tracking-tight">Add your first tracker</h2>
         <p className="mt-3 leading-relaxed text-ink-soft">
           Follow the weather with three Weather Stations, keep the game's date with a Chronometer, or turn a few
-          counters into a number such as your population, free beds or how full your water storage is.
+          counters into a number such as your population, your bots or how full your water storage is.
         </p>
         <SignalMeter steps={[10, 20, 30, 40, 50].map((bound) => ({ bound, state: undefined }))} labels={false} size="sm" className="mt-5 max-w-xs" />
         <Button asChild className="mt-5">

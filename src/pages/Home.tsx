@@ -16,7 +16,7 @@ const FEATURES = [
   {
     icon: BarChart3,
     title: "Track numbers",
-    body: "Wire a few Population Counters to adapters and smartbeavers turns them into a number, like your population, free beds, vacancies or contaminated beavers.",
+    body: "Wire a few Population Counters to adapters and smartbeavers turns them into a number, like your population, bots, vacancies or contaminated beavers.",
     where: "Works anywhere, with 180 days of history.",
   },
   {

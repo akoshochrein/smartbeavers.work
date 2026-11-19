@@ -18,7 +18,7 @@ smartbeavers is that code, ready-made, so ordinary players can use the building:
 
 - **See signals arrive.** Paste two links into an adapter and every on/off shows up live.
 - **Turn signals into numbers.** A few Population Counters or Resource Counters become a
-  population count, free beds, or how full your water storage is, with history charts.
+  population count, a bot count, or how full your water storage is, with history charts.
 - **Follow the weather and the game clock.** Which weather is on, how long droughts last,
   the current cycle and day.
 - **Or skip the building.** Players who use mods can install the companion mod in
@@ -120,7 +120,7 @@ Then:
   `test-beaver@example.com`, each with about four months of simulated history. One uses only
   adapters: a population tracker, a weather tracker and a game clock. The other started the
   same way and then switched to the companion mod, so its charts run from adapter signals
-  into readings, and it has free beds, bots and storage that only the mod reports. The player
+  into readings, and it has bots and storage that only the mod reports. The player
   also gets a public profile; a colony still only shows among the live colonies within an hour
   of its last signal or reading. The seed only ever writes to a local Supabase.
 - Sign in with that address and the password `test-beaver`, or create a new account on the sign-in page.

@@ -37,7 +37,6 @@ const POPULATION: Omit<Metric, "kind">[] = [
   { prefix: "Children", label: "Children", unit: "children", counterSetting: "Children", group: "Population" },
   { prefix: "Bots", label: "Bots", unit: "bots", counterSetting: "Bots", group: "Population" },
   { prefix: "OccupiedBeds", label: "Occupied beds", unit: "occupied beds", counterSetting: "Occupied beds", group: "Housing" },
-  { prefix: "FreeBeds", label: "Free beds", unit: "free beds", counterSetting: "Free beds", group: "Housing" },
   { prefix: "Homeless", label: "Homeless", unit: "homeless", counterSetting: "Homeless", group: "Housing" },
   { prefix: "Jobs", label: "Jobs", unit: "jobs", counterSetting: "Jobs", group: "Work" },
   { prefix: "Employed", label: "Employed", unit: "employed", counterSetting: "Employed", group: "Work" },
@@ -64,10 +63,12 @@ export const RESOURCE_METRICS: Metric[] = GOODS.map((g) => ({
   kind: "resource",
 }));
 
-// Trackers created before the list matched the game: "Beds" counted free beds.
-const LEGACY: Metric[] = [{ prefix: "Beds", label: "Free beds", unit: "free beds", counterSetting: "Free beds", group: "Housing", kind: "population" }];
+// Free beds is no longer tracked: not offered, and trackers that follow it are not shown. The
+// names stay known so an export still labels them. "Beds" is the older prefix for the same thing.
+const RETIRED: Metric[] = ["FreeBeds", "Beds"].map((prefix) => ({ prefix, label: "Free beds", unit: "free beds", counterSetting: "Free beds", group: "Housing", kind: "population" }));
+export const isRetired = (prefix: string) => RETIRED.some((m) => m.prefix === prefix);
 
-const BY_PREFIX = new Map([...LEGACY, ...RESOURCE_METRICS, ...METRICS].map((m) => [m.prefix, m]));
+const BY_PREFIX = new Map([...RETIRED, ...RESOURCE_METRICS, ...METRICS].map((m) => [m.prefix, m]));
 
 export function metricFor(prefix: string): Metric {
   return BY_PREFIX.get(prefix) ?? { prefix, label: prefix, unit: "", counterSetting: prefix, group: "Population", kind: "population" };

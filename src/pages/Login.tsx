@@ -11,7 +11,7 @@ import { supabase } from "@/lib/supabase";
 
 const PERKS = [
   { icon: Radio, text: "See every HTTP Adapter signal as it happens" },
-  { icon: BarChart3, text: "Track numbers like population or free beds" },
+  { icon: BarChart3, text: "Track numbers like population or stored water" },
   { icon: CloudSun, text: "Know whether it's temperate, a drought or a badtide" },
 ];
 

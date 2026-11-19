@@ -2,7 +2,7 @@
 // Timberborn's rules over ~4 months:
 //   - one that only uses HTTP Adapters: a population tracker, a weather tracker and a game clock;
 //   - one that started the same way and then switched to the companion mod, so its history is
-//     adapter signals followed by readings, with free beds, bots and storage only the mod reports.
+//     adapter signals followed by readings, with bots and storage only the mod reports.
 // The player also gets a public profile, so both colonies can show among the live colonies.
 //
 //   pnpm db:seed            (run `pnpm db:start` first)
@@ -221,7 +221,6 @@ function simulate(now: number, modFromSession?: number) {
         // Worked out by the site when readings arrive through /mod; here they are stored directly.
         report("Beavers", adults + kits, at);
         report("Pop", total, at);
-        report("FreeBeds", Math.max(0, Math.round((capacity - total) * 0.12 + 3)), at);
         for (const [name] of MOD_GOODS) report(name, Math.round(goods.get(name)!), at);
       }
     }

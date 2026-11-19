@@ -46,8 +46,8 @@ term itself in prose.
 | Term            | Meaning                                                                           | In code / avoid |
 | --------------- | --------------------------------------------------------------------------------- | --------------- |
 | Tracker         | Anything that follows a resource or metric from the game. There are three kinds: number trackers, the weather tracker and the game clock | |
-| Number tracker  | A tracker that rebuilds a number, such as population, free beds or how full a storage is, from several counters | `ladders`, `ladderId`, `useLadders`. Avoid "ladder" for this |
-| Metric          | The start of the adapter names a number tracker follows, such as `Pop`, `FreeBeds` or `Water` | `ladders.metric`. Avoid "prefix" |
+| Number tracker  | A tracker that rebuilds a number, such as population, bots or how full a storage is, from several counters | `ladders`, `ladderId`, `useLadders`. Avoid "ladder" for this |
+| Metric          | The start of the adapter names a number tracker follows, such as `Pop`, `Bots` or `Water` | `ladders.metric`. Avoid "prefix" |
 | Counter         | An in-game Population Counter or Resource Counter                                 | |
 | Step            | One counter's adapter at one number, named `<Metric><n>`, for example `Pop30`     | Avoid "threshold" |
 | Weather tracker | A tracker that follows the weather through Weather Stations                       | `weather_trackers` |
