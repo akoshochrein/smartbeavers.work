@@ -8,7 +8,7 @@ import { isReporting, type ModStatus } from "@/lib/readings";
 import { formatTime, timeAgo } from "@/lib/time";
 import type { ColonyFeed } from "@/lib/useColonyFeed";
 import { clockStatus, formatGameDate } from "@/shared/clock";
-import { currentWeather, weatherInfo } from "@/shared/weather";
+import { currentWeather, weatherInfo, type Weather } from "@/shared/weather";
 
 /** "Still going" bound for day counts; a fixed value keeps the query from changing every tick. */
 const OPEN_END = Date.UTC(2100, 0, 1);
@@ -56,34 +56,67 @@ export function StatusBand({
         ? { live: false, text: `Paused or closed since ${formatTime(lastSeen, now)}` }
         : { live: false, text: "Nothing received yet. Connect an adapter or the companion mod to get started." };
 
-  const label = date ? formatGameDate(date.cycle, date.day) : undefined;
-  const loading = feed.loading || date === undefined || mod === undefined;
+  return (
+    <StatusBandView
+      date={date ? formatGameDate(date.cycle, date.day) : undefined}
+      weather={
+        weather.kind === "known"
+          ? {
+              weather: weather.weather,
+              note: weather.ended
+                ? `Ended ${timeAgo(weather.since, now)}`
+                : weatherDays
+                  ? `Day ${weatherDays} of this ${weatherInfo(weather.weather).label.toLowerCase()}`
+                  : `Started ${timeAgo(weather.since, now)}`,
+            }
+          : undefined
+      }
+      status={feed.loading || date === undefined || mod === undefined ? undefined : { ...status, heard: !!lastSeen }}
+    />
+  );
+}
 
+/**
+ * The status band itself, from values handed to it. The colony page fills it from the owner's
+ * data; the public colony page from what the colony makes public.
+ */
+export function StatusBandView({
+  date,
+  weather,
+  status,
+}: {
+  /** "Cycle 12, day 3". Left out for a colony with no game date. */
+  date: string | undefined;
+  /** The current weather and a note under it, such as "Day 4 of this drought". */
+  weather: { weather: Weather; note?: string } | undefined;
+  /** undefined while loading. `heard` is false for a colony nothing has ever been received for. */
+  status: { live: boolean; text: string; heard: boolean } | undefined;
+}) {
   return (
     <section aria-label="Colony status" className="mt-6 rounded-2xl bg-pine px-5 py-4 text-mist lg:sticky lg:top-3 lg:z-20 lg:px-6 lg:py-5 lg:shadow-sm">
       <div className="flex flex-col gap-x-8 gap-y-3 lg:flex-row lg:items-center">
-        {(label || weather.kind === "known") && (
+        {(date || weather) && (
           <div className="flex flex-wrap items-center gap-x-8 gap-y-3">
-            {label && (
+            {date && (
               <div className="flex items-center gap-3 font-display text-3xl leading-none font-bold tracking-tight lg:text-4xl">
                 <CalendarClock className="size-7 shrink-0 text-sage lg:size-8" strokeWidth={1.75} aria-hidden />
                 <span className="relative block h-[1.1em] overflow-hidden">
                   <AnimatePresence mode="popLayout" initial={false}>
                     <motion.span
-                      key={label}
+                      key={date}
                       initial={{ y: 28, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
                       exit={{ y: -28, opacity: 0 }}
                       transition={{ type: "spring", stiffness: 240, damping: 24 }}
                       className="block leading-[1.1] whitespace-nowrap"
                     >
-                      {label}
+                      {date}
                     </motion.span>
                   </AnimatePresence>
                 </span>
               </div>
             )}
-            {weather.kind === "known" && (
+            {weather && (
               <div className="flex items-center gap-3">
                 <AnimatePresence mode="popLayout" initial={false}>
                   <motion.div
@@ -98,22 +131,16 @@ export function StatusBand({
                 </AnimatePresence>
                 <div className="leading-tight">
                   <div className="font-display text-xl font-bold tracking-tight">{weatherInfo(weather.weather).label}</div>
-                  <div className="text-sm text-sage">
-                    {weather.ended
-                      ? `Ended ${timeAgo(weather.since, now)}`
-                      : weatherDays
-                        ? `Day ${weatherDays} of this ${weatherInfo(weather.weather).label.toLowerCase()}`
-                        : `Started ${timeAgo(weather.since, now)}`}
-                  </div>
+                  {weather.note && <div className="text-sm text-sage">{weather.note}</div>}
                 </div>
               </div>
             )}
           </div>
         )}
-        <p className={`flex min-h-5 items-center gap-2.5 text-sm lg:ml-auto ${status.live ? "font-medium" : "text-sage"}`}>
-          {!loading && (
+        <p className={`flex min-h-5 items-center gap-2.5 text-sm lg:ml-auto ${status?.live ? "font-medium" : "text-sage"}`}>
+          {status && (
             <>
-              <StatusDot state={lastSeen ? status.live : undefined} live={status.live} className={status.live ? undefined : lastSeen ? "bg-sage/50" : "border-sage"} />
+              <StatusDot state={status.heard ? status.live : undefined} live={status.live} className={status.live ? undefined : status.heard ? "bg-sage/50" : "border-sage"} />
               {status.text}
             </>
           )}

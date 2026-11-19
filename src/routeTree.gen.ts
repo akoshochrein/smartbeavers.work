@@ -22,6 +22,7 @@ import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as ApiAccountRouteImport } from './routes/api/account'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ModTokenRouteImport } from './routes/mod/$token'
+import { Route as LiveHandleColonyRouteImport } from './routes/live_.$handle.$colony'
 import { Route as AppColoniesIdIndexRouteImport } from './routes/_app.colonies.$id.index'
 import { Route as HookTokenSignalSplatRouteImport } from './routes/hook/$token/$signal/$'
 import { Route as AppColoniesIdTrackersLadderIdRouteImport } from './routes/_app.colonies.$id.trackers.$ladderId'
@@ -93,6 +94,11 @@ const ModTokenRoute = ModTokenRouteImport.update({
   path: '/mod/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LiveHandleColonyRoute = LiveHandleColonyRouteImport.update({
+  id: '/live_/$handle/$colony',
+  path: '/live/$handle/$colony',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppColoniesIdIndexRoute = AppColoniesIdIndexRouteImport.update({
   id: '/colonies/$id/',
   path: '/colonies/$id/',
@@ -141,6 +147,7 @@ export interface FileRoutesByFullPath {
   '/api/account': typeof ApiAccountRoute
   '/api/health': typeof ApiHealthRoute
   '/mod/$token': typeof ModTokenRoute
+  '/live/$handle/$colony': typeof LiveHandleColonyRoute
   '/hook/$token/$signal/$': typeof HookTokenSignalSplatRoute
   '/colonies/$id/': typeof AppColoniesIdIndexRoute
   '/colonies/$id/trackers/$ladderId': typeof AppColoniesIdTrackersLadderIdRoute
@@ -161,6 +168,7 @@ export interface FileRoutesByTo {
   '/api/account': typeof ApiAccountRoute
   '/api/health': typeof ApiHealthRoute
   '/mod/$token': typeof ModTokenRoute
+  '/live/$handle/$colony': typeof LiveHandleColonyRoute
   '/hook/$token/$signal/$': typeof HookTokenSignalSplatRoute
   '/colonies/$id': typeof AppColoniesIdIndexRoute
   '/colonies/$id/trackers/$ladderId': typeof AppColoniesIdTrackersLadderIdRoute
@@ -183,6 +191,7 @@ export interface FileRoutesById {
   '/api/account': typeof ApiAccountRoute
   '/api/health': typeof ApiHealthRoute
   '/mod/$token': typeof ModTokenRoute
+  '/live_/$handle/$colony': typeof LiveHandleColonyRoute
   '/hook/$token/$signal/$': typeof HookTokenSignalSplatRoute
   '/_app/colonies/$id/': typeof AppColoniesIdIndexRoute
   '/_app/colonies/$id/trackers/$ladderId': typeof AppColoniesIdTrackersLadderIdRoute
@@ -205,6 +214,7 @@ export interface FileRouteTypes {
     | '/api/account'
     | '/api/health'
     | '/mod/$token'
+    | '/live/$handle/$colony'
     | '/hook/$token/$signal/$'
     | '/colonies/$id/'
     | '/colonies/$id/trackers/$ladderId'
@@ -225,6 +235,7 @@ export interface FileRouteTypes {
     | '/api/account'
     | '/api/health'
     | '/mod/$token'
+    | '/live/$handle/$colony'
     | '/hook/$token/$signal/$'
     | '/colonies/$id'
     | '/colonies/$id/trackers/$ladderId'
@@ -246,6 +257,7 @@ export interface FileRouteTypes {
     | '/api/account'
     | '/api/health'
     | '/mod/$token'
+    | '/live_/$handle/$colony'
     | '/hook/$token/$signal/$'
     | '/_app/colonies/$id/'
     | '/_app/colonies/$id/trackers/$ladderId'
@@ -266,6 +278,7 @@ export interface RootRouteChildren {
   ApiAccountRoute: typeof ApiAccountRoute
   ApiHealthRoute: typeof ApiHealthRoute
   ModTokenRoute: typeof ModTokenRoute
+  LiveHandleColonyRoute: typeof LiveHandleColonyRoute
   HookTokenSignalSplatRoute: typeof HookTokenSignalSplatRoute
 }
 
@@ -362,6 +375,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ModTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/live_/$handle/$colony': {
+      id: '/live_/$handle/$colony'
+      path: '/live/$handle/$colony'
+      fullPath: '/live/$handle/$colony'
+      preLoaderRoute: typeof LiveHandleColonyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_app/colonies/$id/': {
       id: '/_app/colonies/$id/'
       path: '/colonies/$id'
@@ -441,6 +461,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAccountRoute: ApiAccountRoute,
   ApiHealthRoute: ApiHealthRoute,
   ModTokenRoute: ModTokenRoute,
+  LiveHandleColonyRoute: LiveHandleColonyRoute,
   HookTokenSignalSplatRoute: HookTokenSignalSplatRoute,
 }
 export const routeTree = rootRouteImport

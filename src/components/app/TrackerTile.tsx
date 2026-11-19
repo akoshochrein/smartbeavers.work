@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from "motion/react";
 import { ChevronRight, PinOff } from "lucide-react";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import { useTracker, type TrackerLike } from "@/lib/useTracker";
 import type { Reading } from "@/lib/readings";
 import { timeAgo } from "@/lib/time";
 import { HISTORY_DAYS, type ColonyFeed } from "@/lib/useColonyFeed";
-import { describeValue, formatValue, metricFor, valueSuffix, type Step } from "@/shared/ladders";
+import { describeValue, formatValue, metricFor, valueSuffix, type Metric, type Step, type Value } from "@/shared/ladders";
 import { GoodIcon } from "@/components/app/GoodIcon";
 
 const LIVE_MS = 5 * 60_000;
@@ -57,7 +57,6 @@ export function TrackerTile({
   const suffix = valueSuffix(metric);
   const resource = metric.kind === "resource";
   const now = useNow(30_000);
-  const panelId = useId();
 
   const dayStarts = useGameDayStarts(ladder.colony_id, GAME_DAY_WINDOW, clock && open, dayVersion);
   const { steps, value, history, gameDays } = useTracker(ladder, feed, reading, { history: open, clock, dayStarts, readingsVersion });
@@ -65,6 +64,95 @@ export function TrackerTile({
   // A reading's time is when the number last changed, which can be long ago in a quiet colony:
   // what makes it live is the mod still reporting.
   const live = value.kind === "exact" ? !!reading?.reporting : value.kind !== "waiting" && now - value.at < LIVE_MS;
+
+  return (
+    <TileShell
+      metric={metric}
+      value={value}
+      open={open}
+      onToggle={onToggle}
+      waiting={
+        <>
+          <StatusDot state={undefined} live={!feed.loading} className="size-2" /> {feed.loading ? " " : "Waiting for the first counter"}
+        </>
+      }
+      status={
+        value.kind !== "waiting" && (
+          <>
+            <StatusDot state live={live} className="size-2" />
+            {describeValue(value, suffix)} {timeAgo(value.at, now)}
+          </>
+        )
+      }
+    >
+        {value.kind === "waiting" ? (
+          <p className="max-w-md text-sm leading-relaxed text-ink-soft">
+            Name an adapter <span className="font-mono text-[13px]">{metric.prefix}</span> plus its counter's number, such as{" "}
+            <span className="font-mono text-[13px]">{metric.prefix}{resource ? 50 : 30}</span>. It shows up here the next time it switches on or off.
+          </p>
+        ) : history.length > 0 ? (
+          <>
+            <div className="mb-2 text-sm text-ink-soft">
+              {!gameDays ? `Last ${HISTORY_DAYS} days` : dayStarts!.length >= GAME_DAY_WINDOW ? `Last ${GAME_DAY_WINDOW} game days` : "Since the game clock started"}
+            </div>
+            <ValueChart points={history} now={now} unit={metric.unit} suffix={suffix} domain={resource ? [0, 100] : undefined} dayStarts={gameDays ? dayStarts : undefined} />
+          </>
+        ) : (
+          <div className="h-[150px] animate-pulse rounded-lg bg-mist-2/60" aria-hidden />
+        )}
+        {steps.length > 0 && value.kind !== "exact" && <CounterNote steps={steps} prefix={metric.prefix} suffix={suffix} />}
+        {onUnpin && (
+          <Button
+            variant="link"
+            size="sm"
+            className="mt-2 px-0 text-cobalt-deep"
+            onClick={async () => {
+              const error = await onUnpin();
+              if (error) toast.error(`Couldn't unpin ${metric.label}: ${error}`);
+            }}
+          >
+            <PinOff /> Unpin
+          </Button>
+        )}
+        {!auto && (
+          <p className="mt-3 text-sm">
+            <Link to="/colonies/$id/trackers/$ladderId" params={{ id: ladder.colony_id, ladderId: ladder.id }} className="text-cobalt-deep underline-offset-4 hover:underline">
+              Setup guide
+            </Link>
+          </p>
+        )}
+    </TileShell>
+  );
+}
+
+/**
+ * A tile's frame, from values handed to it: the name, the number, a fill bar for goods, and a
+ * panel that shows while the tile is open. The colony page fills it from the owner's trackers;
+ * the public colony page from what the colony makes public.
+ */
+export function TileShell({
+  metric,
+  value,
+  open,
+  onToggle,
+  waiting,
+  status,
+  children,
+}: {
+  metric: Metric;
+  value: Value;
+  open: boolean;
+  onToggle: () => void;
+  /** Shown in place of the number while there is none. */
+  waiting?: ReactNode;
+  /** A line under the number, such as when it last changed. */
+  status?: ReactNode;
+  /** The open tile's panel. */
+  children: ReactNode;
+}) {
+  const panelId = useId();
+  const suffix = valueSuffix(metric);
+  const resource = metric.kind === "resource";
   // Counters only say which side of a number the value is on.
   const approximate = value.kind === "atLeast" || value.kind === "under";
 
@@ -85,9 +173,7 @@ export function TrackerTile({
         </span>
 
         {value.kind === "waiting" ? (
-          <span className="mt-3 flex items-center gap-2 text-sm text-ink-soft">
-            <StatusDot state={undefined} live={!feed.loading} className="size-2" /> {feed.loading ? " " : "Waiting for the first counter"}
-          </span>
+          <span className="mt-3 flex items-center gap-2 text-sm text-ink-soft">{waiting}</span>
         ) : (
           <>
             <span className="mt-3 flex items-baseline gap-2">
@@ -112,57 +198,20 @@ export function TrackerTile({
                 <span className="block h-full rounded-full bg-cobalt transition-[width] duration-500" style={{ width: `${Math.max(0, Math.min(100, value.value))}%` }} />
               </span>
             )}
-            <span className="mt-3 flex items-center gap-2 text-sm text-ink-soft">
-              <StatusDot state live={live} className="size-2" />
-              {describeValue(value, suffix)} {timeAgo(value.at, now)}
-            </span>
+            {status && <span className="mt-3 flex items-center gap-2 text-sm text-ink-soft">{status}</span>}
           </>
         )}
       </button>
 
       {open && (
         <div id={panelId} className="border-t px-4 pt-4 pb-4 sm:px-5 sm:pb-5">
-          {value.kind === "waiting" ? (
-            <p className="max-w-md text-sm leading-relaxed text-ink-soft">
-              Name an adapter <span className="font-mono text-[13px]">{metric.prefix}</span> plus its counter's number, such as{" "}
-              <span className="font-mono text-[13px]">{metric.prefix}{resource ? 50 : 30}</span>. It shows up here the next time it switches on or off.
-            </p>
-          ) : history.length > 0 ? (
-            <>
-              <div className="mb-2 text-sm text-ink-soft">
-                {!gameDays ? `Last ${HISTORY_DAYS} days` : dayStarts!.length >= GAME_DAY_WINDOW ? `Last ${GAME_DAY_WINDOW} game days` : "Since the game clock started"}
-              </div>
-              <ValueChart points={history} now={now} unit={metric.unit} suffix={suffix} domain={resource ? [0, 100] : undefined} dayStarts={gameDays ? dayStarts : undefined} />
-            </>
-          ) : (
-            <div className="h-[150px] animate-pulse rounded-lg bg-mist-2/60" aria-hidden />
-          )}
-          {steps.length > 0 && value.kind !== "exact" && <CounterNote steps={steps} prefix={metric.prefix} suffix={suffix} />}
-          {onUnpin && (
-            <Button
-              variant="link"
-              size="sm"
-              className="mt-2 px-0 text-cobalt-deep"
-              onClick={async () => {
-                const error = await onUnpin();
-                if (error) toast.error(`Couldn't unpin ${metric.label}: ${error}`);
-              }}
-            >
-              <PinOff /> Unpin
-            </Button>
-          )}
-          {!auto && (
-            <p className="mt-3 text-sm">
-              <Link to="/colonies/$id/trackers/$ladderId" params={{ id: ladder.colony_id, ladderId: ladder.id }} className="text-cobalt-deep underline-offset-4 hover:underline">
-                Setup guide
-              </Link>
-            </p>
-          )}
+          {children}
         </div>
       )}
     </article>
   );
 }
+
 
 /**
  * Which counters feed this tracker, and what that leaves unknown: with every counter on, the

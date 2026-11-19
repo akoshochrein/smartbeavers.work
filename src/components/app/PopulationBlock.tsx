@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { StatusDot } from "@/components/app/StatusDot";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGameDayStarts } from "@/lib/clock";
@@ -7,7 +7,7 @@ import type { Ladder } from "@/lib/supabase";
 import { formatTime, timeAgo } from "@/lib/time";
 import { useTracker } from "@/lib/useTracker";
 import { HISTORY_DAYS, type ColonyFeed } from "@/lib/useColonyFeed";
-import { describeValue, formatValue, type HistoryPoint } from "@/shared/ladders";
+import { describeValue, formatValue, type HistoryPoint, type Value } from "@/shared/ladders";
 
 /** With a game clock, the chart shows this many game days (the same window as the tiles' charts). */
 const GAME_DAY_WINDOW = 180;
@@ -82,15 +82,73 @@ export function PopulationBlock({
   const adults = useTracker(like.Adults, feed, readings.byMetric.get("Adults"), options);
   const children = useTracker(like.Children, feed, readings.byMetric.get("Children"), options);
   const bots = useTracker(like.Bots, feed, readings.byMetric.get("Bots"), options);
+  return (
+    <PopulationChart
+      pop={pop}
+      adults={adults}
+      bots={bots}
+      young={children}
+      // Adults and children only ever come from the mod; without them the beavers are one layer.
+      split={readings.byMetric.has("Adults") && readings.byMetric.has("Children")}
+      gameDays={pop.gameDays}
+      dayStarts={dayStarts}
+      daysLoaded={!clock || dayStarts !== undefined}
+      now={now}
+      loading={feed.loading}
+      status={
+        pop.value.kind !== "waiting" && (
+          <p className="mt-2 flex items-center gap-2 text-sm text-ink-soft">
+            <StatusDot state live={pop.value.kind === "exact" ? !!readings.byMetric.get("Pop")?.reporting : now - pop.value.at < 5 * 60_000} className="size-2" />
+            {describeValue(pop.value)} {timeAgo(pop.value.at, now)}
+          </p>
+        )
+      }
+    />
+  );
+}
+
+/** One layer's number now and over time. */
+export type PopulationSeries = { value: Value; history: HistoryPoint[]; loaded: boolean };
+
+/**
+ * The population total and its stacked chart, from numbers handed to it. The colony page fills
+ * it from the owner's trackers; the public colony page from what the colony makes public.
+ */
+export function PopulationChart({
+  pop,
+  adults,
+  young,
+  bots,
+  split,
+  gameDays,
+  dayStarts,
+  daysLoaded,
+  now,
+  loading,
+  status,
+}: {
+  pop: PopulationSeries;
+  adults: PopulationSeries;
+  /** The children. Not called `children`, which React keeps for nested elements. */
+  young: PopulationSeries;
+  bots: PopulationSeries;
+  /** Adults and children are known separately, so the beavers are two layers instead of one. */
+  split: boolean;
+  /** Chart in game days: `dayStarts` are the moments each day began, oldest first. */
+  gameDays: boolean;
+  dayStarts: number[] | undefined;
+  daysLoaded: boolean;
+  now: number;
+  loading: boolean;
+  /** A line under the total, such as when it last changed. */
+  status?: ReactNode;
+}) {
   const [hidden, setHidden] = useState<ReadonlySet<LayerKey>>(new Set());
   const [hover, setHover] = useState<number>();
 
   const hasBots = bots.value.kind !== "waiting";
-  // Adults and children only ever come from the mod; without them the beavers are one layer.
-  const split = readings.byMetric.has("Adults") && readings.byMetric.has("Children");
   const layers: LayerKey[] = useMemo(() => (split ? ["Adults", "Children", ...(hasBots ? (["Bots"] as const) : [])] : hasBots ? ["Beavers", "Bots"] : ["Pop"]), [split, hasBots]);
   const shown = layers.map((k) => !hidden.has(k));
-  const gameDays = pop.gameDays;
 
   // Where the chart is sampled. Game days: a few points per day, every day equally wide, so a
   // paused or closed game takes no room. Real time: evenly from the first value to now.
@@ -116,7 +174,7 @@ export function PopulationBlock({
     const by: Record<LayerKey, (number | undefined)[]> = {
       Pop: total,
       Adults: valuesAt(adults.history, times),
-      Children: valuesAt(children.history, times),
+      Children: valuesAt(young.history, times),
       Bots: b,
       Beavers: total.map((v, i) => (v === undefined ? undefined : Math.max(0, v - (b[i] ?? 0)))),
     };
@@ -127,16 +185,16 @@ export function PopulationBlock({
       const known = values.every((v, j) => v !== undefined || layers[j] === "Bots");
       return { values: known ? values.map((v) => v ?? 0) : layers.map(() => 0), unsplit: known ? 0 : (total[i] ?? 0) };
     });
-  }, [samples, pop.history, adults.history, children.history, bots.history, layers]);
+  }, [samples, pop.history, adults.history, young.history, bots.history, layers]);
 
   const sumAt = (i: number) => series[i].values.reduce((n, v, j) => n + (shown[j] ? v : 0), 0) + series[i].unsplit;
-  const loaded = pop.loaded && adults.loaded && children.loaded && bots.loaded && (!clock || dayStarts !== undefined);
+  const loaded = pop.loaded && adults.loaded && young.loaded && bots.loaded && daysLoaded;
   const hasChart = series.length > 1 && series.some((_, i) => sumAt(i) > 0);
 
   // The numbers now. A population from counters may only be known as "at least" or "under".
   const current: Record<LayerKey, number | undefined> = {
     Adults: adults.value.kind === "waiting" ? undefined : adults.value.value,
-    Children: children.value.kind === "waiting" ? undefined : children.value.value,
+    Children: young.value.kind === "waiting" ? undefined : young.value.value,
     Bots: bots.value.kind === "waiting" ? undefined : bots.value.value,
     Pop: pop.value.kind === "waiting" ? undefined : pop.value.value,
     Beavers: undefined,
@@ -189,7 +247,7 @@ export function PopulationBlock({
     <article className="rounded-2xl border bg-paper p-5 sm:p-6">
       <div className="flex flex-wrap items-end gap-x-8 gap-y-4">
         <div>
-          {feed.loading ? (
+          {loading ? (
             <Skeleton className="h-14 w-40" />
           ) : headline === undefined ? (
             <p className="font-display text-xl font-semibold">Waiting for the first counter</p>
@@ -200,12 +258,7 @@ export function PopulationBlock({
               {approximate && <span className="rounded-md bg-resin-soft px-1.5 py-0.5 text-xs">approximate</span>}
             </div>
           )}
-          {pop.value.kind !== "waiting" && (
-            <p className="mt-2 flex items-center gap-2 text-sm text-ink-soft">
-              <StatusDot state live={pop.value.kind === "exact" ? !!readings.byMetric.get("Pop")?.reporting : now - pop.value.at < 5 * 60_000} className="size-2" />
-              {describeValue(pop.value)} {timeAgo(pop.value.at, now)}
-            </p>
-          )}
+          {status}
         </div>
         {/* One layer needs no legend: the heading already names it. */}
         {layers.length > 1 && (
