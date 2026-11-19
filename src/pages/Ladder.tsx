@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { ChevronRight } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import type { ReactNode } from "react";
 import { PublicPage } from "@/components/PublicPage";
@@ -78,7 +79,8 @@ export function Ladder() {
         <Link to={session ? "/account" : "/login"} className="text-cobalt-deep underline-offset-4 hover:underline">
           {session ? "Make your profile public" : "Sign in and make your profile public"}
         </Link>
-        . Numbers come from each colony's own counters or the companion mod, so they are as exact as the player set them up. The list refreshes by
+        . That lists your colonies here. To let people open one, also switch on "Show this colony's page publicly" in that colony's settings.
+        Numbers come from each colony's own counters or the companion mod, so they are as exact as the player set them up. The list refreshes by
         itself.
       </p>
     </PublicPage>
@@ -112,6 +114,22 @@ function Rolling({ text, className }: { text: string; className?: string }) {
   );
 }
 
+/**
+ * A public colony's strip or row is a link to its page, marked with an arrow. A colony that is
+ * only listed gets a plain box: it looks complete as it is and doesn't respond.
+ */
+function Opens({ entry, className, children }: { entry: LadderEntry; className: string; children: ReactNode }) {
+  if (!entry.slug) return <div className={className}>{children}</div>;
+  return (
+    <Link to="/live/$handle/$colony" params={{ handle: entry.handle, colony: entry.slug }} aria-label={`${entry.colonyName}, open this colony's page`} className={`group ${className} outline-offset-[-3px] focus-visible:outline-2 focus-visible:outline-cobalt`}>
+      {children}
+    </Link>
+  );
+}
+
+const Arrow = ({ entry, className }: { entry: LadderEntry; className: string }) =>
+  entry.slug ? <ChevronRight className={`${className} shrink-0 text-ink-soft transition-transform group-hover:translate-x-1`} aria-hidden /> : <span className={`${className} shrink-0`} aria-hidden />;
+
 const NotTracked = () => <span className="text-base font-normal text-ink-soft">Not tracked</span>;
 
 /** A colony being played now: its faction's panel with who it is, then date, weather and population. */
@@ -127,8 +145,9 @@ function LiveStrip({ entry, ref }: { entry: LadderEntry; ref?: React.Ref<HTMLLIE
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.98 }}
       transition={SLIDE}
-      className="overflow-hidden rounded-2xl border bg-paper lg:grid lg:grid-cols-[20rem_1fr] xl:grid-cols-[24rem_1fr]"
+      className="overflow-hidden rounded-2xl border bg-paper transition-shadow has-[a:hover]:shadow-md"
     >
+      <Opens entry={entry} className="block lg:grid lg:grid-cols-[20rem_1fr] xl:grid-cols-[24rem_1fr]">
       <div className="relative flex flex-col justify-between gap-4 p-5 pl-6" style={factionPanelStyle(entry.faction)}>
         <span className="absolute inset-y-0 left-0 w-1.5" style={{ background: look.accent }} aria-hidden />
         <div className="min-w-0">
@@ -145,7 +164,7 @@ function LiveStrip({ entry, ref }: { entry: LadderEntry; ref?: React.Ref<HTMLLIE
         </span>
       </div>
 
-      <dl className="grid grid-cols-2 items-center gap-x-8 gap-y-4 p-5 sm:grid-cols-[14rem_12rem_1fr] lg:px-8">
+      <dl className="grid grid-cols-2 items-center gap-x-8 gap-y-4 p-5 sm:grid-cols-[14rem_12rem_1fr_auto] lg:px-8">
         <div className="col-span-2 sm:col-span-1">
           <dt className="text-xs text-ink-soft">Game date</dt>
           <dd className="mt-1 font-display text-2xl leading-8 font-bold tracking-tight xl:text-3xl">
@@ -181,7 +200,9 @@ function LiveStrip({ entry, ref }: { entry: LadderEntry; ref?: React.Ref<HTMLLIE
             )}
           </dd>
         </div>
+        <Arrow entry={entry} className="hidden size-6 sm:block" />
       </dl>
+      </Opens>
     </motion.li>
   );
 }
@@ -202,7 +223,7 @@ function RecentRow({ entry, now, ref }: { entry: LadderEntry; now: number; ref?:
       className="bg-paper"
     >
       {/* The greying sits on an inner box: the row itself is animated, which sets its own opacity. */}
-      <div className="relative flex flex-wrap items-center gap-x-6 gap-y-1 py-3 pr-5 pl-6 opacity-60 grayscale transition duration-200 focus-within:opacity-100 focus-within:grayscale-0 hover:opacity-100 hover:grayscale-0">
+      <Opens entry={entry} className="relative flex flex-wrap items-center gap-x-6 gap-y-1 py-3 pr-5 pl-6 opacity-60 grayscale transition duration-200 focus-visible:opacity-100 focus-visible:grayscale-0 hover:opacity-100 hover:grayscale-0">
         <span className="absolute inset-y-0 left-0 w-1.5" style={{ background: look.panel }} aria-hidden />
         <h3 className="w-full truncate font-display text-lg font-semibold sm:w-48">{entry.colonyName}</h3>
         <span className="flex w-64 min-w-0 items-center gap-2 text-sm text-ink-soft">
@@ -220,7 +241,8 @@ function RecentRow({ entry, now, ref }: { entry: LadderEntry; now: number; ref?:
         </span>
         <span className="w-24 font-display text-lg font-bold tabular-nums">{entry.population ? formatValue(entry.population) : ""}</span>
         <span className="ml-auto text-sm text-ink-soft">{timeAgo(entry.lastSignalAt, now)}</span>
-      </div>
+        <Arrow entry={entry} className="size-4" />
+      </Opens>
     </motion.li>
   );
 }

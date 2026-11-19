@@ -19,6 +19,8 @@ export type LadderEntry = {
   /** Game days the current weather has lasted. Null without a game clock running since it started. */
   weatherDays: number | null;
   population: Exclude<Value, { kind: "waiting" }> | null;
+  /** The last part of the colony's public address, /live/<handle>/<slug>. Null for a colony that is listed but not public. */
+  slug: string | null;
 };
 
 type PopStep = { threshold: number; state: boolean; updated_at: string };
@@ -40,6 +42,8 @@ type Row = {
   pop_steps: PopStep[] | null;
   /** The companion mod's exact population, when that is the number to show. */
   pop_reading: number | null;
+  is_public: boolean;
+  slug: string | null;
 };
 
 function toEntry(r: Row): LadderEntry {
@@ -59,6 +63,7 @@ function toEntry(r: Row): LadderEntry {
     weather: r.weather,
     weatherDays: r.weather_days,
     population: pop.kind === "waiting" ? null : pop,
+    slug: r.is_public ? r.slug : null,
   };
 }
 

@@ -147,7 +147,8 @@ export function ProfileForm({ userId, email }: { userId: string; email: string }
               <Link to="/live" className="text-cobalt-deep underline-offset-4 hover:underline">
                 live colonies
               </Link>
-              , a page anyone can open without signing in.
+              , a page anyone can open without signing in. Switching it off also closes every colony page you made public, until you
+              switch it on again.
             </p>
           </div>
           <Switch

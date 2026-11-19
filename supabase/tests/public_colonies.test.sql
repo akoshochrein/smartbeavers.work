@@ -3,7 +3,7 @@
 -- Run with `pnpm test:db` against the local database. Everything happens inside one
 -- transaction that is rolled back, so local data is untouched.
 begin;
-select plan(17);
+select plan(19);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-0000000000b1', 'shows@test.local'),
@@ -113,6 +113,20 @@ update public.profiles set is_public = false where user_id = '00000000-0000-0000
 update public.profiles set is_public = true where user_id = '00000000-0000-0000-0000-0000000000b1';
 select is((select count(*)::integer from public.public_colony('shows', 'hodvar-the-1st')), 1,
   'a colony''s own switch is remembered while its player''s profile is private');
+
+-- ---------------------------------------------------------------------------
+-- The switch is the owner's: they can use it, and nobody else can
+-- ---------------------------------------------------------------------------
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000b1","role":"authenticated"}', true);
+update public.colonies set is_public = true where id = '00000000-0000-0000-0000-0000000000d2';
+select is((select is_public from public.colonies where id = '00000000-0000-0000-0000-0000000000d2'), true,
+  'a player can switch their own colony public');
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000b2","role":"authenticated"}', true);
+update public.colonies set is_public = false where id = '00000000-0000-0000-0000-0000000000d2';
+reset role;
+select is((select is_public from public.colonies where id = '00000000-0000-0000-0000-0000000000d2'), true,
+  'another player cannot switch it');
 
 select * from finish();
 rollback;

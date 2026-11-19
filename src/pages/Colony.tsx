@@ -1,6 +1,7 @@
 import { Plus } from "lucide-react";
 import { useMemo, useRef, useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams, useSearch } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CopyField } from "@/components/app/CopyField";
 import { StatusBand } from "@/components/app/StatusBand";
@@ -33,12 +34,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useColonies } from "@/lib/colonies";
 import { supabase, type Colony } from "@/lib/supabase";
 import { formatTime, timeAgo } from "@/lib/time";
 import { useColony, useLadders, useWeatherTracker } from "@/lib/useColony";
+import { useProfile } from "@/lib/profile";
+import { unwrap } from "@/lib/queries";
 import { useRecentSignals } from "@/lib/history";
 import { withModSignals } from "@/lib/modSignals";
 import { isReporting, useColonyReadings, useModStatus, usePinnedMetrics, type ModStatus } from "@/lib/readings";
@@ -98,6 +102,7 @@ function ColonyDashboard({ colony, onChange }: { colony: Colony; onChange: (c: C
   const [dateSets, setDateSets] = useState(0);
   // One tile is open at a time, across every section.
   const [openTile, setOpenTile] = useState<string>();
+  const profile = useProfile(colony.owner_id);
   const navigate = useNavigate();
   const tab = useSearch({ from: ROUTE }).tab ?? "trackers";
 
@@ -117,7 +122,13 @@ function ColonyDashboard({ colony, onChange }: { colony: Colony; onChange: (c: C
     <div>
       <header className="flex flex-wrap items-end gap-x-6 gap-y-4">
         <div className="min-w-0">
-          <h1 className="text-3xl leading-tight font-bold tracking-tight sm:text-4xl break-words">{colony.name}</h1>
+          <h1 className="text-3xl leading-tight font-bold tracking-tight sm:text-4xl break-words">
+            {colony.name}
+            {/* Public right now: its own switch is on and so is the player's public profile. */}
+            {colony.is_public && profile?.is_public && (
+              <span className="ml-3 inline-block rounded-full bg-cobalt-soft px-2.5 py-1 align-middle font-sans text-sm leading-none font-medium tracking-normal text-cobalt-deep">Public</span>
+            )}
+          </h1>
         </div>
         <Button asChild className="sm:ml-auto">
           <Link to="/colonies/$id/trackers/new" params={{ id: colony.id }}>
@@ -402,6 +413,9 @@ function SettingsTab({ colony, onChange }: { colony: Colony; onChange: (c: Colon
         <div className="space-y-2">
           <Label htmlFor="colony-name">Name</Label>
           <Input id="colony-name" value={name} maxLength={80} required onChange={(e) => setName(e.target.value)} className="bg-paper" />
+          {colony.is_public && name.trim() !== colony.name && (
+            <p className="rounded-lg bg-resin-soft/60 px-3 py-2 text-sm text-ink">Renaming this colony changes its public address. Links to the old address stop working.</p>
+          )}
           <p className="text-sm text-ink-soft">
             Keep it friendly: with a public profile, colony names show in the live colonies list. The{" "}
             <Link to="/terms" className="text-cobalt-deep underline-offset-4 hover:underline">
@@ -423,6 +437,8 @@ function SettingsTab({ colony, onChange }: { colony: Colony; onChange: (c: Colon
           Save changes
         </Button>
       </form>
+
+      <PublicColonySetting colony={colony} onChange={onChange} />
 
       <section className="space-y-6 border-t pt-10">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
@@ -454,6 +470,71 @@ function SettingsTab({ colony, onChange }: { colony: Colony; onChange: (c: Colon
         />
       </section>
     </div>
+  );
+}
+
+/** The switch that shows this colony's page to everyone, and its public address while it is on. */
+function PublicColonySetting({ colony, onChange }: { colony: Colony; onChange: (c: Colony) => void }) {
+  const profile = useProfile(colony.owner_id);
+  const [busy, setBusy] = useState(false);
+  const publicNow = colony.is_public && !!profile?.is_public;
+  // The address follows the colony's name, so it is asked for again when the name changes.
+  const { data: slug } = useQuery({
+    queryKey: ["colony-address", colony.id, colony.name],
+    enabled: publicNow,
+    queryFn: async () => unwrap(await supabase.from("colony_addresses").select("slug").eq("colony_id", colony.id).maybeSingle())?.slug ?? null,
+  });
+  const address = publicNow && slug && profile?.handle ? `/live/${profile.handle}/${slug}` : undefined;
+
+  async function toggle(next: boolean) {
+    setBusy(true);
+    const { data, error } = await supabase.from("colonies").update({ is_public: next }).eq("id", colony.id).select().single();
+    setBusy(false);
+    if (error) return toast.error(`Couldn't ${next ? "show" : "hide"} the page: ${error.message}`);
+    onChange(data);
+    toast.success(next ? "This colony's page is public" : "This colony's page is private again");
+  }
+
+  return (
+    <section className="space-y-4 border-t pt-10">
+      <div className="flex items-start gap-4">
+        <div className="min-w-0 flex-1">
+          <Label htmlFor="colony-public" className="text-xl font-semibold">
+            Show this colony's page publicly
+          </Label>
+          <p id="colony-public-help" className="mt-1 max-w-md text-sm leading-relaxed text-ink-soft">
+            Anyone can then open a read-only page of this colony from the{" "}
+            <Link to="/live" className="text-cobalt-deep underline-offset-4 hover:underline">
+              live colonies
+            </Link>
+            : its game date, weather and cycles, population over time, and how full each good's storage is. Never its adapter links, adapter names or
+            settings. The{" "}
+            <Link to="/privacy" className="text-cobalt-deep underline-offset-4 hover:underline">
+              privacy policy
+            </Link>{" "}
+            lists it all.
+          </p>
+        </div>
+        <Switch id="colony-public" aria-describedby="colony-public-help" checked={colony.is_public} disabled={busy || profile === undefined || (!profile?.is_public && !colony.is_public)} onCheckedChange={toggle} />
+      </div>
+      {profile !== undefined && !profile?.is_public && (
+        <p className="max-w-md rounded-lg bg-resin-soft/60 px-3 py-2 text-sm text-ink">
+          {colony.is_public ? "The page is closed while your profile is private. " : "This needs a public profile. "}
+          <Link to="/account" className="text-cobalt-deep underline-offset-4 hover:underline">
+            Make your profile public
+          </Link>{" "}
+          on your account page{colony.is_public ? " to open it again." : " first."}
+        </p>
+      )}
+      {address && (
+        <div className="max-w-xl space-y-2">
+          <CopyField label="This colony's public address" what="Public address" value={`${window.location.origin}${address}`} />
+          <a href={address} className="inline-block text-sm text-cobalt-deep underline-offset-4 hover:underline">
+            View public page
+          </a>
+        </div>
+      )}
+    </section>
   );
 }
 
