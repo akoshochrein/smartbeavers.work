@@ -2,7 +2,8 @@
 -- every live one (last hour) and the 20 most recently played of the rest.
 --
 -- Run with `pnpm test:db` against the local database. Everything happens inside one
--- transaction that is rolled back, so local data is untouched.
+-- transaction that is rolled back, so local data is untouched. The list also holds whatever
+-- colonies the local database has, so counts look only at this file's players.
 begin;
 select plan(7);
 
@@ -46,11 +47,11 @@ select is((select count(*)::integer from public.colony_ladder() where handle = '
 select pg_temp.colony(case when n <= 13 then '00000000-0000-0000-0000-0000000000a3' else '00000000-0000-0000-0000-0000000000a4' end::uuid, 'Recent ' || n, interval '3 hours' + n * interval '1 minute') from generate_series(1, 25) n;
 select pg_temp.colony('00000000-0000-0000-0000-0000000000a1', 'Live ' || n, n * interval '1 minute') from generate_series(1, 3) n;
 
-select is((select count(*)::integer from public.colony_ladder() where last_signal_at <= now() - interval '1 hour'), 20,
+select is((select count(*)::integer from public.colony_ladder() where handle in ('open', 'more1', 'more2') and last_signal_at <= now() - interval '1 hour'), 20,
   'recently played: capped at 20');
 select is((select count(*)::integer from public.colony_ladder() where colony_name = 'Six days'), 0,
   'recently played: the cap keeps the most recently played and drops the oldest');
-select is((select count(*)::integer from public.colony_ladder() where last_signal_at > now() - interval '1 hour'), 4,
+select is((select count(*)::integer from public.colony_ladder() where handle in ('open', 'more1', 'more2') and last_signal_at > now() - interval '1 hour'), 4,
   'live: every live colony is listed, whatever the cap on the rest');
 
 -- How long the current weather has lasted, in game days: the weather started 30 minutes ago

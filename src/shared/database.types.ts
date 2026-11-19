@@ -41,6 +41,12 @@ export type Database = {
 isOneToOne: false
       referencedRelation: "colonies"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "adapter_events_colony_id_fkey"
+      columns: ["colony_id"]
+isOneToOne: false
+      referencedRelation: "colony_addresses"
+      referencedColumns: ["colony_id"]
     }
                   ]
                 },"adapter_states": {
@@ -61,18 +67,24 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "colonies"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "adapter_states_colony_id_fkey"
+      columns: ["colony_id"]
+isOneToOne: false
+      referencedRelation: "colony_addresses"
+      referencedColumns: ["colony_id"]
     }
                   ]
                 },"colonies": {
                   Row: {
-                    "created_at": string,"faction": string | null,"id": string,"name": string,"owner_id": string,"webhook_token": string
+                    "created_at": string,"faction": string | null,"id": string,"is_public": boolean,"name": string,"owner_id": string,"webhook_token": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"faction"?: string | null,"id"?: string,"name": string,"owner_id"?: string,"webhook_token"?: string
+                    "created_at"?: string,"faction"?: string | null,"id"?: string,"is_public"?: boolean,"name": string,"owner_id"?: string,"webhook_token"?: string
                   }
                   Update: {
-                    "created_at"?: string,"faction"?: string | null,"id"?: string,"name"?: string,"owner_id"?: string,"webhook_token"?: string
+                    "created_at"?: string,"faction"?: string | null,"id"?: string,"is_public"?: boolean,"name"?: string,"owner_id"?: string,"webhook_token"?: string
                   }
                   Relationships: [
                     
@@ -95,6 +107,12 @@ isOneToOne: false
 isOneToOne: true
       referencedRelation: "colonies"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "game_clocks_colony_id_fkey"
+      columns: ["colony_id"]
+isOneToOne: true
+      referencedRelation: "colony_addresses"
+      referencedColumns: ["colony_id"]
     }
                   ]
                 },"ladders": {
@@ -115,6 +133,12 @@ isOneToOne: true
 isOneToOne: false
       referencedRelation: "colonies"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "ladders_colony_id_fkey"
+      columns: ["colony_id"]
+isOneToOne: false
+      referencedRelation: "colony_addresses"
+      referencedColumns: ["colony_id"]
     }
                   ]
                 },"mod_requests": {
@@ -135,6 +159,12 @@ isOneToOne: false
 isOneToOne: true
       referencedRelation: "colonies"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "mod_requests_colony_id_fkey"
+      columns: ["colony_id"]
+isOneToOne: true
+      referencedRelation: "colony_addresses"
+      referencedColumns: ["colony_id"]
     }
                   ]
                 },"mod_sessions": {
@@ -155,6 +185,12 @@ isOneToOne: true
 isOneToOne: false
       referencedRelation: "colonies"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "mod_sessions_colony_id_fkey"
+      columns: ["colony_id"]
+isOneToOne: false
+      referencedRelation: "colony_addresses"
+      referencedColumns: ["colony_id"]
     }
                   ]
                 },"pinned_metrics": {
@@ -175,6 +211,12 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "colonies"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "pinned_metrics_colony_id_fkey"
+      columns: ["colony_id"]
+isOneToOne: false
+      referencedRelation: "colony_addresses"
+      referencedColumns: ["colony_id"]
     }
                   ]
                 },"profiles": {
@@ -209,6 +251,12 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "colonies"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "reading_metrics_colony_id_fkey"
+      columns: ["colony_id"]
+isOneToOne: false
+      referencedRelation: "colony_addresses"
+      referencedColumns: ["colony_id"]
     }
                   ]
                 },"readings": {
@@ -229,6 +277,12 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "colonies"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "readings_colony_id_fkey"
+      columns: ["colony_id"]
+isOneToOne: false
+      referencedRelation: "colony_addresses"
+      referencedColumns: ["colony_id"]
     }
                   ]
                 },"retention_settings": {
@@ -263,6 +317,12 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "colonies"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "weather_totals_colony_id_fkey"
+      columns: ["colony_id"]
+isOneToOne: false
+      referencedRelation: "colony_addresses"
+      referencedColumns: ["colony_id"]
     }
                   ]
                 },"weather_trackers": {
@@ -283,12 +343,26 @@ isOneToOne: false
 isOneToOne: true
       referencedRelation: "colonies"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "weather_trackers_colony_id_fkey"
+      columns: ["colony_id"]
+isOneToOne: true
+      referencedRelation: "colony_addresses"
+      referencedColumns: ["colony_id"]
     }
                   ]
                 }
           }
           Views: {
-            "colony_signals": {
+            "colony_addresses": {
+                  Row: {
+                    "colony_id": string,"owner_id": string,"slug": string | null
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    
+                  ]
+                },"colony_signals": {
                   Row: {
                     "adapter_name": string | null,"colony_id": string | null,"id": number | null,"received_at": string | null,"state": boolean | null
                   }
@@ -314,6 +388,12 @@ isOneToOne: true
 isOneToOne: false
       referencedRelation: "colonies"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "reading_metrics_colony_id_fkey"
+      columns: ["colony_id"]
+isOneToOne: false
+      referencedRelation: "colony_addresses"
+      referencedColumns: ["colony_id"]
     }
                   ]
                 }
@@ -329,8 +409,11 @@ isOneToOne: false
                            },
 "colony_ladder":
 { Args: Record<PropertyKey, never>; Returns: {
-              "avatar_path": string,"colony_name": string,"cycle": number,"day": number,"faction": string,"handle": string,"key": string,"last_signal_at": string,"pop_comparison": string,"pop_reading": number,"pop_steps": Json,"profile_updated_at": string,"weather": string,"weather_days": number
+              "avatar_path": string,"colony_name": string,"cycle": number,"day": number,"faction": string,"handle": string,"is_public": boolean,"key": string,"last_signal_at": string,"pop_comparison": string,"pop_reading": number,"pop_steps": Json,"profile_updated_at": string,"slug": string,"weather": string,"weather_days": number
             }[]
+                           },
+"colony_slug":
+{ Args: { "p_name": string }; Returns: string
                            },
 "date_as_of":
 { Args: { "p_at": string,"p_colony": string }; Returns: {
@@ -345,11 +428,33 @@ isOneToOne: false
               "cycle": number,"cycles_tracked": boolean,"day": number,"days_counted": number,"first_day_at": string,"last_day_at": string,"seconds_per_day": number
             }[]
                            },
+"game_x":
+{ Args: { "p_at": string,"p_day_seconds": number,"p_starts": (string)[] }; Returns: number
+                           },
 "is_public_avatar":
 { Args: { "p_name": string }; Returns: boolean
                            },
 "mod_reporting_at":
 { Args: { "p_at": string,"p_colony": string,"p_metric": string }; Returns: boolean
+                           },
+"public_colony":
+{ Args: { "p_handle": string,"p_slug": string }; Returns: {
+              "avatar_path": string,"colony_name": string,"faction": string,"handle": string,"key": string,"last_signal_at": string,"profile_updated_at": string
+            }[]
+                           },
+"public_colony_history":
+{ Args: { "p_key": string,"p_metric": string }; Returns: {
+              "source": string,"state": boolean,"threshold": number,"value": number,"x": number
+            }[]
+                           },
+"public_colony_id":
+{ Args: { "p_key": string }; Returns: string
+                           },
+"public_colony_overview":
+{ Args: { "p_key": string }; Returns: Json
+                           },
+"recent_day_starts":
+{ Args: { "p_colony": string,"p_days": number }; Returns: (string)[]
                            },
 "record_adapter_event":
 { Args: { "p_adapter": string,"p_state": boolean,"p_token": string }; Returns: boolean
