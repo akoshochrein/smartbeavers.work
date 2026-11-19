@@ -1,0 +1,15 @@
+{
+  "KeyBindingSpec": {
+    "Id": "Smartbeavers.OpenBox",
+    "GroupId": "Smartbeavers",
+    "LocKey": "KeyBinding.Smartbeavers.OpenBox",
+    "Order": 10,
+    "AllowOtherModifiers": false,
+    "DevModeOnly": false
+  },
+  "PrimaryInputBindingSpec": {
+    "Path": "/Keyboard/b",
+    "InputModifiers": "Alt, Shift",
+    "Unchangeable": false
+  }
+}

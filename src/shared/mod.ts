@@ -9,14 +9,14 @@
 //     "readings": {
 //       "adults": 31, "kits": 6, "bots": 4, "free_beds": 3,
 //       "weather": "drought", "cycle": 5, "day": 3,
-//       "goods": { "Water": 62, "Logs": 18 }
+//       "goods": { "Water": 62, "Log": 18 }
 //     }
 //   }
 //
 // `readings` holds only what changed since the mod's last request. Without it, or with it
 // empty, the request is a heartbeat: it says the game is running and nothing else.
-// Goods are named as in src/shared/goods.ts (the label without spaces) and their value is how
-// full storage is, 0 to 100.
+// Goods are named by the game's own ids ("Log", "TreatedPlank"; see gameId in
+// src/shared/goods.ts) and their value is how full storage is, 0 to 100.
 //
 // This contract may still change freely: the mod is not yet released beyond its author.
 
@@ -43,7 +43,8 @@ export const WEATHER_METRIC = "Weather";
 export const weatherValue = (w: Weather) => WEATHERS.findIndex((x) => x.key === w);
 export const weatherFromValue = (v: number): Weather | undefined => WEATHERS[v]?.key;
 
-const GOOD_PREFIXES = new Set(GOODS.map((g) => g.prefix));
+/** The game's id for each good, and the metric its fill is stored under. */
+const GOOD_METRICS = new Map(GOODS.map((g) => [g.gameId, g.prefix]));
 const FACTION_KEYS = new Set<string>(FACTIONS.map((f) => f.key));
 
 export type Snapshot = { ok: true; readings: Record<string, number>; faction: FactionKey | null } | { ok: false; error: string };
@@ -75,9 +76,10 @@ export function parseSnapshot(body: unknown): Snapshot {
     } else if (name === "goods") {
       if (!isObject(value)) return { ok: false, error: '"goods" must be an object' };
       for (const [good, fill] of Object.entries(value)) {
-        if (!GOOD_PREFIXES.has(good)) continue;
+        const metric = GOOD_METRICS.get(good);
+        if (!metric) continue;
         if (!wholeNumber(fill, 0, 100)) return { ok: false, error: `"goods.${good}" must be a whole number from 0 to 100` };
-        byMetric[good] = fill;
+        byMetric[metric] = fill;
       }
     }
   }

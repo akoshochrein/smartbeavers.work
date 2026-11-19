@@ -14,3 +14,8 @@ wrangler.jsonc
 
 # Generated
 .tanstack
+
+# companion mod: build output, and local paths to the game
+mod/bin/
+mod/obj/
+mod/Local.props

@@ -1,0 +1,9 @@
+{
+  "Name": "smartbeavers companion",
+  "Version": "0.1.0",
+  "Id": "smartbeavers.Companion",
+  "MinimumGameVersion": "1.1.0.0",
+  "Description": "Reports your colony's population, free beds, storage, weather and game date to smartbeavers.work, so you can follow it from any device without building counters or HTTP Adapters. It sends nothing until you paste a colony's mod address into its box (Alt+Shift+B).",
+  "RequiredMods": [],
+  "OptionalMods": []
+}

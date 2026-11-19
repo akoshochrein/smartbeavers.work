@@ -41,6 +41,10 @@ Thanks for wanting to help. smartbeavers is a small hobby project, so the proces
   (`VITE_*`), `src/server/env.d.ts` for server ones.
 - **Adapter URLs can't change.** Players have `/hook/<token>/<on|off>/<name>` pasted into
   their games. See [what the hook answers](#what-the-hook-answers) for the full contract.
+- **The companion mod** lives in `mod/` and has its own [README](mod/README.md). It is C#,
+  built with `dotnet build` against your own copy of the game. CI doesn't build it, so say in
+  your pull request that you built it and loaded it in the game. What the mod sends and what
+  the site accepts (`src/shared/mod.ts`) must change together.
 - **No game artwork.** Icons are drawn for this project; Timberborn's own assets belong to
   Mechanistry.
 

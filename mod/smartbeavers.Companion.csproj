@@ -1,0 +1,90 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The smartbeavers companion mod for Timberborn.
+
+      dotnet build -c Release
+
+    builds the mod against the game's own files and installs it into the game's mods folder.
+    Both locations are guessed for a Steam install; if yours differ, create Local.props next to
+    this file (it is not committed):
+
+      <Project>
+        <PropertyGroup>
+          <GameManagedDir>/path/to/Timberborn/.../Managed</GameManagedDir>
+          <ModsDir>/path/to/Documents/Timberborn/Mods</ModsDir>
+        </PropertyGroup>
+      </Project>
+
+    The game's files are referenced, never copied: they belong to Mechanistry and must not end
+    up in this repository or in the mod's folder.
+  -->
+  <Import Project="Local.props" Condition="Exists('Local.props')" />
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>12.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Smartbeavers.Companion</RootNamespace>
+    <AssemblyName>smartbeavers.Companion</AssemblyName>
+    <Version>0.1.0</Version>
+    <DebugType>none</DebugType>
+    <GenerateDependencyFile>false</GenerateDependencyFile>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    <ModFolder>smartbeavers.Companion</ModFolder>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('OSX'))">
+    <GameManagedDir Condition="'$(GameManagedDir)' == ''">$(HOME)/Library/Application Support/Steam/steamapps/common/Timberborn/Timberborn.app/Contents/Resources/Data/Managed</GameManagedDir>
+    <ModsDir Condition="'$(ModsDir)' == ''">$(HOME)/Documents/Timberborn/Mods</ModsDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
+    <GameManagedDir Condition="'$(GameManagedDir)' == ''">C:\Program Files (x86)\Steam\steamapps\common\Timberborn\Timberborn_Data\Managed</GameManagedDir>
+    <ModsDir Condition="'$(ModsDir)' == ''">$(USERPROFILE)\Documents\Timberborn\Mods</ModsDir>
+  </PropertyGroup>
+
+  <!-- The parts of the game the mod talks to. Private=false: referenced, not copied. -->
+  <ItemGroup>
+    <GameReference Include="Bindito.Core" />
+    <GameReference Include="System.Collections.Immutable" />
+    <GameReference Include="Timberborn.BlueprintSystem" />
+    <GameReference Include="Timberborn.Common" />
+    <GameReference Include="Timberborn.CoreUI" />
+    <GameReference Include="Timberborn.FactionSystem" />
+    <GameReference Include="Timberborn.GameCycleSystem" />
+    <GameReference Include="Timberborn.GameFactionSystem" />
+    <GameReference Include="Timberborn.Goods" />
+    <GameReference Include="Timberborn.HazardousWeatherSystem" />
+    <GameReference Include="Timberborn.InputSystem" />
+    <GameReference Include="Timberborn.Persistence" />
+    <GameReference Include="Timberborn.Population" />
+    <GameReference Include="Timberborn.ResourceCountingSystem" />
+    <GameReference Include="Timberborn.SingletonSystem" />
+    <GameReference Include="Timberborn.WeatherSystem" />
+    <GameReference Include="Timberborn.WorldPersistence" />
+    <GameReference Include="UnityEngine.CoreModule" />
+    <GameReference Include="UnityEngine.UIElementsModule" />
+    <Reference Include="@(GameReference)">
+      <HintPath>$(GameManagedDir)/%(Identity).dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <!-- Everything the game loads besides the code. -->
+  <ItemGroup>
+    <ModFile Include="manifest.json;Localizations/**/*.csv;Blueprints/**/*.json" />
+  </ItemGroup>
+
+  <Target Name="CheckGameFiles" BeforeTargets="ResolveAssemblyReferences">
+    <Error Condition="!Exists('$(GameManagedDir)/Timberborn.SingletonSystem.dll')"
+           Text="Timberborn's files were not found in '$(GameManagedDir)'. Set GameManagedDir in mod/Local.props (see the top of this file)." />
+  </Target>
+
+  <Target Name="InstallMod" AfterTargets="Build">
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ModsDir)/$(ModFolder)" />
+    <Copy SourceFiles="@(ModFile)" DestinationFiles="@(ModFile->'$(ModsDir)/$(ModFolder)/%(RelativeDir)%(Filename)%(Extension)')" />
+    <Message Importance="high" Text="Installed to $(ModsDir)/$(ModFolder)" />
+  </Target>
+
+</Project>

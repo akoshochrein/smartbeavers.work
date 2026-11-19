@@ -1,0 +1,7 @@
+{
+  "KeyBindingGroupSpec": {
+    "Id": "Smartbeavers",
+    "Order": 900,
+    "LocKey": "KeyBindingGroup.Smartbeavers"
+  }
+}

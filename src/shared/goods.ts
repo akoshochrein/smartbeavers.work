@@ -8,6 +8,8 @@ export type Faction = "Folktails" | "Iron Teeth";
 export type Good = {
   /** Adapter name prefix: the label without spaces, e.g. "TreatedPlanks". Letters only, max 20. */
   prefix: string;
+  /** What the game itself calls the good, e.g. "TreatedPlank". The companion mod reports goods by this. */
+  gameId: string;
   label: string;
   group: GoodGroup;
   /** Set when only one faction has this good. */
@@ -35,8 +37,47 @@ export const goodsFor = (key: string | null | undefined): Good[] => {
 const F: Faction = "Folktails";
 const IT: Faction = "Iron Teeth";
 
+// The game's id for each good whose id isn't simply the label without spaces: mostly singulars.
+// Read from the game's own good blueprints (version 1.1.2).
+const GAME_IDS: Record<string, string> = {
+  Carrots: "Carrot",
+  CattailCrackers: "CattailCracker",
+  GrilledChestnuts: "GrilledChestnut",
+  GrilledPotatoes: "GrilledPotato",
+  MaplePastries: "MaplePastry",
+  AlgaeRations: "AlgaeRation",
+  CornRations: "CornRation",
+  EggplantRations: "EggplantRation",
+  FermentedMushrooms: "FermentedMushroom",
+  FermentedSoybeans: "FermentedSoybean",
+  Kohlrabies: "Kohlrabi",
+  MangroveFruits: "MangroveFruit",
+  CattailRoots: "CattailRoot",
+  Chestnuts: "Chestnut",
+  Potatoes: "Potato",
+  CoffeeBeans: "CoffeeBean",
+  Eggplants: "Eggplant",
+  Mushrooms: "Mushroom",
+  Soybeans: "Soybean",
+  Logs: "Log",
+  Planks: "Plank",
+  TreatedPlanks: "TreatedPlank",
+  Gears: "Gear",
+  MetalBlocks: "MetalBlock",
+  BotHeads: "BotHead",
+  BotLimbs: "BotLimb",
+  Books: "Book",
+  PunchCards: "PunchCard",
+  Dandelions: "Dandelion",
+  Antidotes: "Antidote",
+  MetalParts: "MetalPart",
+};
+
 const list = (group: GoodGroup, items: [string, Faction?][]): Good[] =>
-  items.map(([label, faction]) => ({ prefix: label.replace(/ /g, ""), label, group, faction }));
+  items.map(([label, faction]) => {
+    const prefix = label.replace(/ /g, "");
+    return { prefix, gameId: GAME_IDS[prefix] ?? prefix, label, group, faction };
+  });
 
 export const GOODS: Good[] = [
   ...list("Fluids", [["Water"], ["Badwater"]]),

@@ -21,6 +21,9 @@ smartbeavers is that code, ready-made, so ordinary players can use the building:
   population count, free beds, or how full your water storage is, with history charts.
 - **Follow the weather and the game clock.** Which weather is on, how long droughts last,
   the current cycle and day.
+- **Or skip the building.** Players who use mods can install the companion mod in
+  [`mod/`](mod/README.md), which reports the same things, and exact numbers, with nothing to
+  build in the game.
 
 The guiding rule: plain words, no jargon, and every setup step says exactly what to click in
 the game.
@@ -103,8 +106,8 @@ curl -X POST "http://localhost:5173/mod/<token>" \
   -d '{"v":1,"readings":{"adults":31,"kits":6,"bots":4}}'
 ```
 
-A "Population" card appears on the colony's page with the exact number. The companion mod
-itself doesn't exist yet; this route is the site's half of it.
+A "Population" card appears on the colony's page with the exact number. This is what the
+companion mod in [`mod/`](mod/README.md) does while a paired save is running.
 
 `pnpm build` builds the app and type-checks `src/`; `pnpm typecheck` runs the type check on
 its own. Neither covers `scripts/`. `pnpm test:db` runs the database tests in `supabase/tests`
@@ -128,6 +131,7 @@ src/
 supabase/migrations  The database: tables, row level security, functions
 supabase/tests       Database tests (pgTAP), run with pnpm test:db
 scripts/seed-dev.ts  Local demo data
+mod/                 The companion mod for Timberborn (C#), with its own README
 ```
 
 ## Host your own
