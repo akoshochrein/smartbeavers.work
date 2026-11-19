@@ -159,10 +159,13 @@ function ColonyDashboard({ colony, onChange }: { colony: Colony; onChange: (c: C
                   dayVersion={dateVersion}
                   open={openTile === l.id}
                   onToggle={() => setOpenTile(openTile === l.id ? undefined : l.id)}
+                  onUnpin={l.auto && pinned.has(l.metric) ? () => setPinned(l.metric, false) : undefined}
                 />
               );
               const trackers = [...autoTrackers.map((l) => ({ ...l, auto: true })), ...ladders.map((l) => ({ ...l, auto: false }))];
               const goods = trackers.filter((l) => metricFor(l.metric).kind === "resource");
+              // A good is a tile or a line on the storage list, never both.
+              const unpinnedGoods = modGoods.filter((g) => !pinned.has(g.prefix));
               // With a population to show, the block covers population and bots; other numbers stay tiles.
               const hasPopulation = trackers.some((l) => l.metric === "Pop");
               const numbers = trackers.filter((l) => metricFor(l.metric).kind !== "resource" && !(hasPopulation && POPULATION_BLOCK_METRICS.includes(l.metric)));
@@ -192,10 +195,10 @@ function ColonyDashboard({ colony, onChange }: { colony: Colony; onChange: (c: C
                     )
                   }
                   goods={
-                    (goods.length > 0 || modGoods.length > 0) && (
+                    (goods.length > 0 || unpinnedGoods.length > 0) && (
                       <>
                         {goods.length > 0 && <TileGrid>{goods.map(tile)}</TileGrid>}
-                        {modGoods.length > 0 && <ModGoods goods={modGoods} readings={readings.byMetric} pinned={pinned} onPin={setPinned} />}
+                        {unpinnedGoods.length > 0 && <ModGoods goods={unpinnedGoods} readings={readings.byMetric} onPin={setPinned} />}
                       </>
                     )
                   }

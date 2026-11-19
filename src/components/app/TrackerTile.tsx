@@ -1,7 +1,9 @@
 import { AnimatePresence, motion } from "motion/react";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, PinOff } from "lucide-react";
 import { useEffect, useId, useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { StatusDot } from "@/components/app/StatusDot";
 import { ValueChart } from "@/components/ValueChart";
 import { useGameDayStarts } from "@/lib/clock";
@@ -33,6 +35,7 @@ export function TrackerTile({
   dayVersion,
   open,
   onToggle,
+  onUnpin,
 }: {
   ladder: TrackerLike;
   feed: ColonyFeed;
@@ -47,6 +50,8 @@ export function TrackerTile({
   dayVersion?: number;
   open: boolean;
   onToggle: () => void;
+  /** For a pinned good: takes the tile away and puts the good back on the storage list. */
+  onUnpin?: () => Promise<string | undefined>;
 }) {
   const metric = metricFor(ladder.metric);
   const suffix = valueSuffix(metric);
@@ -133,6 +138,19 @@ export function TrackerTile({
             <div className="h-[150px] animate-pulse rounded-lg bg-mist-2/60" aria-hidden />
           )}
           {steps.length > 0 && value.kind !== "exact" && <CounterNote steps={steps} prefix={metric.prefix} suffix={suffix} />}
+          {onUnpin && (
+            <Button
+              variant="link"
+              size="sm"
+              className="mt-2 px-0 text-cobalt-deep"
+              onClick={async () => {
+                const error = await onUnpin();
+                if (error) toast.error(`Couldn't unpin ${metric.label}: ${error}`);
+              }}
+            >
+              <PinOff /> Unpin
+            </Button>
+          )}
           {!auto && (
             <p className="mt-3 text-sm">
               <Link to="/colonies/$id/trackers/$ladderId" params={{ id: ladder.colony_id, ladderId: ladder.id }} className="text-cobalt-deep underline-offset-4 hover:underline">

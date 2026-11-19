@@ -37,7 +37,7 @@ term itself in prose.
 | Reading       | One value the companion mod reported for a colony, such as a population of 34. Exact, unlike a number rebuilt from signals | `readings` |
 | Pairing       | Pasting a colony's mod address into the companion mod for one save, so that save reports to that colony | |
 | Mod address   | The address the companion mod reports to, shown on the colony's Signals tab. It carries the colony's token | `/mod/<token>` |
-| Pinned good   | A good whose storage reading the player chose to show as a card on the colony's page | `pinned_metrics` |
+| Pinned good   | A good whose storage reading the player chose to show as a tile on the colony page | `pinned_metrics` |
 | Heartbeat     | A request from the companion mod that carries no readings and only says the game is running | |
 | Reporting     | The companion mod has sent something for a colony in the last 5 minutes and hasn't said the save was closed. While it is reporting, its readings are the colony's values; after it stops, adapters take over only once they report something newer | `mod_sessions` |
 
