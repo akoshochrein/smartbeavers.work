@@ -33,7 +33,7 @@ export function ModGoods({
   }
 
   return (
-    <section className="mt-10 rounded-2xl border bg-paper p-5 sm:p-6" aria-labelledby="mod-goods">
+    <section className="mt-4 rounded-2xl first:mt-0 border bg-paper p-5 sm:p-6" aria-labelledby="mod-goods">
       <h2 id="mod-goods" className="text-xl font-semibold">
         Storage
       </h2>

@@ -1,5 +1,5 @@
 import { ChevronsUpDown, LogOut, Plus, Trophy, UserRound } from "lucide-react";
-import { Link, Outlet, useParams } from "@tanstack/react-router";
+import { Link, Outlet, useMatches, useParams } from "@tanstack/react-router";
 import { Logo } from "@/components/brand/Logo";
 import { NewColonyDialog } from "@/components/app/NewColonyDialog";
 import { Button } from "@/components/ui/button";
@@ -19,12 +19,15 @@ import { useColonies } from "@/lib/colonies";
 import { supabase } from "@/lib/supabase";
 
 export function AppShell() {
+  // The colony page is made of tiles and panes and uses the whole width. Its text and forms
+  // (Signals, Settings) keep a readable column of their own. Every other page is capped here.
+  const wide = useMatches({ select: (matches) => matches.some((m) => m.routeId === "/_app/colonies/$id/") });
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[17rem_1fr]">
       <Sidebar />
       <MobileBar />
       <main className="min-w-0">
-        <div className="mx-auto max-w-6xl px-5 py-8 sm:px-8 lg:py-12">
+        <div className={`mx-auto px-5 py-8 sm:px-8 lg:py-12 ${wide ? "" : "max-w-6xl"}`}>
           <Outlet />
         </div>
       </main>

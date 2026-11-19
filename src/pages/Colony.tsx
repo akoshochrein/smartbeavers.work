@@ -4,12 +4,13 @@ import { Link, useNavigate, useParams, useSearch } from "@tanstack/react-router"
 import { toast } from "sonner";
 import { CopyField } from "@/components/app/CopyField";
 import { StatusDot } from "@/components/app/StatusDot";
-import { TrackerCard } from "@/components/app/TrackerCard";
+import { TrackerTile } from "@/components/app/TrackerTile";
 import { ExportButton } from "@/components/app/ExportButton";
 import { exportColony } from "@/lib/export";
 import { FactionPicker } from "@/components/app/FactionPicker";
 import { ModGoods } from "@/components/app/ModGoods";
 import { goodsFor, type FactionKey } from "@/shared/goods";
+import { metricFor } from "@/shared/ladders";
 import { WeatherCard } from "@/components/app/WeatherCard";
 import { GameClockCard, useDateVersion } from "@/components/app/GameClockCard";
 import { useGameClock, useGameDate } from "@/lib/clock";
@@ -97,6 +98,8 @@ function ColonyDashboard({ colony, onChange }: { colony: Colony; onChange: (c: C
   const [weatherTracker] = useWeatherTracker(colony.id);
   const [clockSetUp] = useGameClock(colony.id);
   const [dateSets, setDateSets] = useState(0);
+  // One tile is open at a time, across every section.
+  const [openTile, setOpenTile] = useState<string>();
   const navigate = useNavigate();
   const tab = useSearch({ from: ROUTE }).tab ?? "trackers";
 
@@ -166,47 +169,57 @@ function ColonyDashboard({ colony, onChange }: { colony: Colony; onChange: (c: C
           ) : ladders.length === 0 && autoTrackers.length === 0 && !weather && !clock ? (
             <NoTrackers colonyId={colony.id} />
           ) : (
-            <TrackerColumns
-              cards={[
-                clock && {
-                  key: "clock",
-                  weight: 1,
-                  node: <GameClockCard colonyId={colony.id} feed={modFeed} auto={!clockSetUp} date={date} onDateSet={() => setDateSets((n) => n + 1)} />,
-                },
-                weather && {
-                  key: "weather",
-                  weight: 2,
-                  node: (
-                    <WeatherCard
-                      colonyId={colony.id}
-                      feed={modFeed}
-                      auto={!weatherTracker}
-                      clockFrom={date?.first_day_at ? Date.parse(date.first_day_at) : undefined}
-                      dayVersion={dateVersion}
-                    />
-                  ),
-                },
-                ...[...autoTrackers.map((l) => ({ ...l, auto: true })), ...ladders.map((l) => ({ ...l, auto: false }))].map((l) => ({
-                  key: l.id,
-                  weight: 1.4,
-                  node: (
-                    <TrackerCard
-                      ladder={l}
-                      feed={feed}
-                      reading={readings.byMetric.get(l.metric)}
-                      readingsVersion={readings.version}
-                      auto={l.auto}
-                      clock={!!clock}
-                      dayVersion={dateVersion}
-                    />
-                  ),
-                })),
-              ].filter((c) => !!c)}
-            />
+            (() => {
+              const tile = (l: (typeof trackers)[number]) => (
+                <TrackerTile
+                  key={l.id}
+                  ladder={l}
+                  feed={feed}
+                  reading={readings.byMetric.get(l.metric)}
+                  readingsVersion={readings.version}
+                  auto={l.auto}
+                  clock={!!clock}
+                  dayVersion={dateVersion}
+                  open={openTile === l.id}
+                  onToggle={() => setOpenTile(openTile === l.id ? undefined : l.id)}
+                />
+              );
+              const trackers = [...autoTrackers.map((l) => ({ ...l, auto: true })), ...ladders.map((l) => ({ ...l, auto: false }))];
+              const goods = trackers.filter((l) => metricFor(l.metric).kind === "resource");
+              const numbers = trackers.filter((l) => metricFor(l.metric).kind !== "resource");
+              return (
+                <TrackerSections
+                  time={
+                    (clock || weather) && (
+                      <div className="space-y-6">
+                        {clock && <GameClockCard colonyId={colony.id} feed={modFeed} auto={!clockSetUp} date={date} onDateSet={() => setDateSets((n) => n + 1)} />}
+                        {weather && (
+                          <WeatherCard
+                            colonyId={colony.id}
+                            feed={modFeed}
+                            auto={!weatherTracker}
+                            clockFrom={date?.first_day_at ? Date.parse(date.first_day_at) : undefined}
+                            dayVersion={dateVersion}
+                          />
+                        )}
+                      </div>
+                    )
+                  }
+                  population={numbers.length > 0 && <TileGrid>{numbers.map(tile)}</TileGrid>}
+                  goods={
+                    (goods.length > 0 || modGoods.length > 0) && (
+                      <>
+                        {goods.length > 0 && <TileGrid>{goods.map(tile)}</TileGrid>}
+                        {modGoods.length > 0 && <ModGoods goods={modGoods} readings={readings.byMetric} pinned={pinned} onPin={setPinned} />}
+                      </>
+                    )
+                  }
+                />
+              );
+            })()
           )}
-          {readings && pinned && modGoods.length > 0 && <ModGoods goods={modGoods} readings={readings.byMetric} pinned={pinned} onPin={setPinned} />}
         </TabsContent>
-        <TabsContent value="signals" className="pt-8">
+        <TabsContent value="signals" className="max-w-6xl pt-8">
           <SignalsTab colony={colony} feed={feed} mod={mod} />
         </TabsContent>
         <TabsContent value="settings" className="pt-8">
@@ -217,36 +230,39 @@ function ColonyDashboard({ colony, onChange }: { colony: Colony; onChange: (c: C
   );
 }
 
-type TrackerTile = { key: string; /** Rough relative height, used to balance the columns. */ weight: number; node: ReactNode };
-
 /**
- * Two columns on wide screens, each card going into whichever column is shorter so far, so a
- * tall card doesn't leave a hole next to it. On narrow screens the columns dissolve and the
- * cards stack in their original order.
+ * The Trackers tab's sections, always in the same order: Time and weather, Population, Goods.
+ * A section with nothing in it is left out. On wide screens Time and weather is a pane on the
+ * left and the other two fill the right; on narrower screens they stack in that order.
  */
-function TrackerColumns({ cards }: { cards: TrackerTile[] }) {
-  const columns: { height: number; items: { tile: TrackerTile; order: number }[] }[] = [
-    { height: 0, items: [] },
-    { height: 0, items: [] },
-  ];
-  cards.forEach((tile, order) => {
-    const col = columns[1].height < columns[0].height ? columns[1] : columns[0];
-    col.items.push({ tile, order });
-    col.height += tile.weight;
-  });
-  return (
-    <div className="flex flex-col gap-6 xl:flex-row xl:items-start">
-      {columns.map((col, i) => (
-        <div key={i} className="contents xl:flex xl:min-w-0 xl:flex-1 xl:flex-col xl:gap-6">
-          {col.items.map(({ tile, order }) => (
-            <div key={tile.key} style={{ order }} className="min-w-0">
-              {tile.node}
-            </div>
-          ))}
-        </div>
-      ))}
+function TrackerSections({ time, population, goods }: { time: ReactNode; population: ReactNode; goods: ReactNode }) {
+  const rest = (!!population || !!goods) && (
+    <div className="min-w-0 space-y-8">
+      {population && <Section title="Population">{population}</Section>}
+      {goods && <Section title="Goods">{goods}</Section>}
     </div>
   );
+  if (!time || !rest) return <div className={time ? "max-w-2xl" : undefined}>{time ? <Section title="Time and weather">{time}</Section> : rest}</div>;
+  return (
+    <div className="grid gap-8 xl:grid-cols-[26rem_minmax(0,1fr)] xl:items-start">
+      <Section title="Time and weather">{time}</Section>
+      {rest}
+    </div>
+  );
+}
+
+function Section({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className="min-w-0">
+      <h2 className="mb-3 text-sm font-semibold tracking-wide text-ink-soft uppercase">{title}</h2>
+      {children}
+    </section>
+  );
+}
+
+/** Tiles keep their own height, so opening one doesn't stretch the tiles beside it. */
+function TileGrid({ children }: { children: ReactNode }) {
+  return <div className="grid items-start gap-4 sm:grid-cols-2 2xl:grid-cols-3">{children}</div>;
 }
 
 function NoTrackers({ colonyId }: { colonyId: string }) {
