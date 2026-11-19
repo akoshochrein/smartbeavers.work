@@ -237,11 +237,6 @@ export function PopulationBlock({
               {!gameDays ? `Last ${HISTORY_DAYS} days` : dayStarts!.length >= GAME_DAY_WINDOW ? `Last ${GAME_DAY_WINDOW} game days` : "Since the game clock started"}
             </div>
             <div className="relative pl-10">
-              {ticks.map((v) => (
-                <span key={v} className="absolute left-0 w-8 -translate-y-1/2 text-right font-mono text-[11px] text-ink-soft tabular-nums" style={{ top: `${(1 - v / yMax) * 100}%` }} aria-hidden>
-                  {v.toLocaleString()}
-                </span>
-              ))}
               <div
                 className="relative touch-pan-y"
                 onPointerMove={(e) => {
@@ -250,6 +245,12 @@ export function PopulationBlock({
                 }}
                 onPointerLeave={() => setHover(undefined)}
               >
+                {/* Tick labels hang to the left of the plot, level with their grid lines. */}
+                {ticks.map((v) => (
+                  <span key={v} className="absolute -left-10 w-8 -translate-y-1/2 text-right font-mono text-[11px] text-ink-soft tabular-nums" style={{ top: `${(1 - v / yMax) * 100}%` }} aria-hidden>
+                    {v.toLocaleString()}
+                  </span>
+                ))}
                 <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="block h-56 w-full overflow-visible" role="img" aria-label={`Population over time, stacked by ${layers.map((k) => LAYERS[k].label.toLowerCase()).join(", ")}. Now ${headline ?? "unknown"}.`}>
                   {ticks.map((v) => (
                     <line key={v} x1={0} x2={W} y1={y(v)} y2={y(v)} className="stroke-ink/10" vectorEffect="non-scaling-stroke" />

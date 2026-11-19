@@ -28,6 +28,8 @@ const LOG_SIGNALS = 80;
 /** With a game clock, the strip shows this many game days. */
 const GAME_DAY_WINDOW = 180;
 const CYCLE_ROWS = 8;
+/** The cycles list shows this many until "show more" is pressed. */
+const CYCLES_SHOWN = 4;
 /** Enough weather signals (2 per change, 2 changes per cycle) for CYCLE_ROWS cycles plus slack. */
 const CYCLE_SIGNALS = CYCLE_ROWS * 4 + 4;
 
@@ -280,6 +282,7 @@ function CycleLog({
   const bounds = useMemo(() => (cycles.length ? cycleBounds(cycles, OPEN_END) : undefined), [cycles]);
   const counts = useDayCounts(colonyId, bounds, version);
 
+  const [all, setAll] = useState(false);
   if (!recent || clockFrom === undefined) return null;
 
   // counts[i] are the days between bounds[i] and bounds[i + 1]; walk them per cycle.
@@ -297,7 +300,7 @@ function CycleLog({
         <p className="mt-2 text-sm text-ink-soft">Cycles show up here once a new one starts with the clock running.</p>
       ) : (
         <ol className="mt-2 divide-y">
-          {[...rows].reverse().map(({ cycle, temperate, hazard }) => {
+          {[...rows].reverse().slice(0, all ? undefined : CYCLES_SHOWN).map(({ cycle, temperate, hazard }) => {
             const ongoing = cycle.end === null;
             const total = temperate !== undefined ? temperate + (hazard ?? 0) : undefined;
             return (
@@ -322,6 +325,11 @@ function CycleLog({
             );
           })}
         </ol>
+      )}
+      {rows.length > CYCLES_SHOWN && (
+        <Button variant="link" size="sm" className="mt-1 px-0 text-cobalt-deep" aria-expanded={all} onClick={() => setAll(!all)}>
+          {all ? "Show fewer" : `Show ${rows.length - CYCLES_SHOWN} more`}
+        </Button>
       )}
     </section>
   );
