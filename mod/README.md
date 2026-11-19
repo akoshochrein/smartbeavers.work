@@ -42,7 +42,12 @@ It needs Timberborn 1.1 and no other mods.
    address.
 2. In the game, load the save and press **Alt+Shift+B**. A small box opens.
 3. Paste the address and confirm.
-4. Save the game. The address is kept in the save file, so each save reports to its own colony.
+4. Save the game. The address is kept in the save file.
+
+Because it lives in the save file, every later save of that settlement keeps it: autosaves,
+quicksaves and copies made with "save as" all report to the same colony. A new game starts
+unpaired. If you copy a save to play it as a separate settlement, open the box in the copy and
+paste another colony's address, or empty the field.
 
 Open the box again at any time to see whether the mod is getting through. To stop reporting for
 a save, open the box, empty the field and confirm.

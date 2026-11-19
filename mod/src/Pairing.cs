@@ -8,7 +8,8 @@ namespace Smartbeavers.Companion;
 
 /// <summary>
 /// Which colony on the site this save reports to: the mod address the player pasted, kept in the
-/// save file. Each save has its own, or none. Without one the mod sends nothing at all.
+/// save file. Later saves of the same settlement carry it along (autosaves, "save as" copies);
+/// a new game has none. Without one the mod sends nothing at all.
 ///
 /// The address carries the colony's secret, so a shared save file shares it. The site tells
 /// players to make new links before sharing a save.
