@@ -166,7 +166,7 @@ a browser variable (`VITE_*`), also add it to `src/vite-env.d.ts`.
 - **Rate limiting.** The database caps signals per colony, but there is no network-level limit
   on `/hook/*`. A Cloudflare rate-limiting rule is worth adding on a public deployment.
 - **The game's API switches off when a save is loaded.** Players have to press "Start API" in
-  the game after every load before the site can read or switch levers.
+  the game after every load. Until they do, adapters send nothing and levers can't be reached.
 - **Password resets are manual.** No email is ever sent, so a player who forgets their password
   has to contact the operator, who resets it in the Supabase dashboard. The same goes for
   changing an email address.
