@@ -1,5 +1,5 @@
 import { CalendarClock, Plus } from "lucide-react";
-import { useRef, useState, type FormEvent, type ReactNode } from "react";
+import { useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { Link, useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { CopyField } from "@/components/app/CopyField";
@@ -38,6 +38,7 @@ import { supabase, type Colony } from "@/lib/supabase";
 import { formatTime, timeAgo } from "@/lib/time";
 import { useColony, useLadders, useWeatherTracker } from "@/lib/useColony";
 import { useRecentSignals } from "@/lib/history";
+import { withModSignals } from "@/lib/modSignals";
 import { isReporting, useColonyReadings, useModLastSeen, usePinnedMetrics } from "@/lib/readings";
 import { useColonyFeed, type ColonyFeed } from "@/lib/useColonyFeed";
 import { modUrl, webhookUrl } from "@/shared/webhook";
@@ -92,13 +93,21 @@ function ColonyDashboard({ colony, onChange }: { colony: Colony; onChange: (c: C
     metric,
     comparison: "gte",
   }));
-  const [weather] = useWeatherTracker(colony.id);
-  const [clock] = useGameClock(colony.id);
-  const dateVersion = useDateVersion(feed);
+  const [weatherTracker] = useWeatherTracker(colony.id);
+  const [clockSetUp] = useGameClock(colony.id);
   const [dateSets, setDateSets] = useState(0);
-  const date = useGameDate(colony.id, !!clock, `${dateVersion}-${dateSets}`);
   const navigate = useNavigate();
   const tab = useSearch({ from: ROUTE }).tab ?? "trackers";
+
+  // Weather and the date can come from the mod instead of Weather Stations and a Chronometer.
+  // The weather and clock cards get a feed with the mod's readings folded in; undefined = loading.
+  const modFeed = useMemo(() => withModSignals(feed, readings), [feed, readings]);
+  const modWeather = readings?.byMetric.has("Weather");
+  const modDate = readings?.byMetric.has("Cycle") && readings.byMetric.has("Day");
+  const weather = weatherTracker === undefined || readings === undefined ? undefined : weatherTracker || !!modWeather;
+  const clock = clockSetUp === undefined || readings === undefined ? undefined : !!clockSetUp || !!modDate;
+  const dateVersion = useDateVersion(modFeed);
+  const date = useGameDate(colony.id, !!clock, `${dateVersion}-${dateSets}`);
 
   const lastSignal = [...feed.states.values()].map((s) => s.updated_at).sort().at(-1);
   const live = modReporting || (!!lastSignal && Date.now() - Date.parse(lastSignal) < LIVE_MS);
@@ -161,7 +170,7 @@ function ColonyDashboard({ colony, onChange }: { colony: Colony; onChange: (c: C
                 clock && {
                   key: "clock",
                   weight: 1,
-                  node: <GameClockCard colonyId={colony.id} feed={feed} date={date} onDateSet={() => setDateSets((n) => n + 1)} />,
+                  node: <GameClockCard colonyId={colony.id} feed={modFeed} auto={!clockSetUp} date={date} onDateSet={() => setDateSets((n) => n + 1)} />,
                 },
                 weather && {
                   key: "weather",
@@ -169,7 +178,8 @@ function ColonyDashboard({ colony, onChange }: { colony: Colony; onChange: (c: C
                   node: (
                     <WeatherCard
                       colonyId={colony.id}
-                      feed={feed}
+                      feed={modFeed}
+                      auto={!weatherTracker}
                       clockFrom={date?.first_day_at ? Date.parse(date.first_day_at) : undefined}
                       dayVersion={dateVersion}
                     />

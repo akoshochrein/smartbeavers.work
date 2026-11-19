@@ -65,9 +65,19 @@ export function useRecentSignals(colonyId: string, live: AdapterEvent[], limit =
   const { data: loaded } = useQuery({
     queryKey: ["recent-signals", colonyId, key, limit],
     queryFn: async () => {
-      let query = supabase.from("adapter_events").select("*").eq("colony_id", colonyId);
-      if (key) query = query.in("adapter_name", key.split("\n"));
-      return unwrap(await query.order("id", { ascending: false }).limit(limit)) ?? [];
+      if (!key) return unwrap(await supabase.from("adapter_events").select("*").eq("colony_id", colonyId).order("id", { ascending: false }).limit(limit)) ?? [];
+      // Named adapters (weather): read the merged stream, where the companion mod's weather
+      // changes stand in for the stations' signals. Its ids aren't in time order, so sort by time.
+      const rows = unwrap(
+        await supabase
+          .from("colony_signals")
+          .select("*")
+          .eq("colony_id", colonyId)
+          .in("adapter_name", key.split("\n"))
+          .order("received_at", { ascending: false })
+          .limit(limit),
+      );
+      return (rows ?? []) as AdapterEvent[];
     },
   });
 

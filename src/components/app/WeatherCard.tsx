@@ -26,11 +26,14 @@ const GAME_DAY_WINDOW = 180;
 export function WeatherCard({
   colonyId,
   feed,
+  auto = false,
   clockFrom,
   dayVersion,
 }: {
   colonyId: string;
   feed: ColonyFeed;
+  /** Shown because the companion mod reports the weather, not because the player set stations up. */
+  auto?: boolean;
   /** When the game clock's first day signal arrived; periods after it are measured in game days. */
   clockFrom?: number;
   dayVersion?: number;
@@ -96,9 +99,11 @@ export function WeatherCard({
     <article className="rounded-2xl border bg-paper p-5 sm:p-6">
       <header className="flex items-center gap-3">
         <h2 className="text-xl font-semibold">Weather</h2>
-        <Button asChild variant="ghost" size="sm" className="ml-auto text-cobalt-deep hover:text-cobalt-deep">
-          <Link to="/colonies/$id/trackers/weather" params={{ id: colonyId }}>Setup guide</Link>
-        </Button>
+        {!auto && (
+          <Button asChild variant="ghost" size="sm" className="ml-auto text-cobalt-deep hover:text-cobalt-deep">
+            <Link to="/colonies/$id/trackers/weather" params={{ id: colonyId }}>Setup guide</Link>
+          </Button>
+        )}
       </header>
 
       <div className="mt-4 min-h-16">

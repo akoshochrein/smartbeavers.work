@@ -66,7 +66,7 @@ export function useGameDayWindowStart(colonyId: string, days: number, fallback: 
     queryFn: async () => {
       const rows = unwrap(
         await supabase
-          .from("adapter_events")
+          .from("colony_signals")
           .select("received_at")
           .eq("colony_id", colonyId)
           .eq("adapter_name", CLOCK_ADAPTER)
@@ -93,7 +93,7 @@ export function useGameDayStarts(colonyId: string, days: number, enabled: boolea
     queryFn: async () => {
       const rows = unwrap(
         await supabase
-          .from("adapter_events")
+          .from("colony_signals")
           .select("received_at")
           .eq("colony_id", colonyId)
           .eq("adapter_name", CLOCK_ADAPTER)
@@ -101,7 +101,7 @@ export function useGameDayStarts(colonyId: string, days: number, enabled: boolea
           .order("received_at", { ascending: false })
           .limit(days),
       );
-      return (rows ?? []).map((r) => Date.parse(r.received_at)).reverse();
+      return (rows ?? []).map((r) => Date.parse(r.received_at!)).reverse();
     },
   }).data;
 }

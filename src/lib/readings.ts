@@ -12,9 +12,14 @@ export type Reading = {
   reporting: boolean;
 };
 
+/** One stored reading, as Realtime delivers it. */
+export type ReadingRow = { id: number; colony_id: string; metric: string; value: number; received_at: string };
+
 export type ColonyReadings = {
   /** Latest reading per metric. Empty for a colony the mod has never reported for. */
   byMetric: Map<string, Reading>;
+  /** Readings that arrived while this page has been open, oldest first. */
+  live: ReadingRow[];
   /** Goes up each time a new reading arrives, for anything that has to load again. */
   version: number;
 };
@@ -28,7 +33,7 @@ const key = (colonyId: string) => ["latest-readings", colonyId] as const;
  */
 export function useColonyReadings(colonyId: string): ColonyReadings | undefined {
   const client = useQueryClient();
-  const [version, setVersion] = useState(0);
+  const [live, setLive] = useState<{ colonyId: string; rows: ReadingRow[] }>({ colonyId, rows: [] });
   const { data } = useQuery({
     queryKey: key(colonyId),
     refetchInterval: 60_000,
@@ -36,10 +41,12 @@ export function useColonyReadings(colonyId: string): ColonyReadings | undefined 
   });
 
   useEffect(() => {
+    setLive({ colonyId, rows: [] });
     const channel = supabase
       .channel(`colony-readings:${colonyId}`)
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "readings", filter: `colony_id=eq.${colonyId}` }, () => {
-        setVersion((v) => v + 1);
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "readings", filter: `colony_id=eq.${colonyId}` }, (payload) => {
+        const row = payload.new as ReadingRow;
+        setLive((prev) => (prev.rows.some((r) => r.id === row.id) ? prev : { colonyId, rows: [...prev.rows, row] }));
         client.invalidateQueries({ queryKey: key(colonyId) });
       })
       .subscribe();
@@ -55,8 +62,9 @@ export function useColonyReadings(colonyId: string): ColonyReadings | undefined 
       if (r.metric === null || r.value === null || r.received_at === null) continue;
       byMetric.set(r.metric, { value: r.value, at: Date.parse(r.received_at), reporting: !!r.reporting });
     }
-    return { byMetric, version };
-  }, [data, version]);
+    const rows = live.colonyId === colonyId ? live.rows : [];
+    return { byMetric, live: rows, version: rows.length };
+  }, [data, live, colonyId]);
 }
 
 const pinsKey = (colonyId: string) => ["pinned-metrics", colonyId] as const;

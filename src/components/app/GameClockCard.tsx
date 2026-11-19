@@ -31,11 +31,14 @@ const OPEN_END = Date.UTC(2100, 0, 1);
 export function GameClockCard({
   colonyId,
   feed,
+  auto = false,
   date,
   onDateSet,
 }: {
   colonyId: string;
   feed: ColonyFeed;
+  /** The date comes from the companion mod: there is no clock to set and no guide to follow. */
+  auto?: boolean;
   /** undefined while loading, null if the colony has no clock */
   date: GameDate | null | undefined;
   onDateSet: () => void;
@@ -48,7 +51,7 @@ export function GameClockCard({
     <article className="rounded-2xl border bg-paper p-5 sm:p-6">
       <header className="flex items-center gap-2">
         <h2 className="text-xl font-semibold">Game clock</h2>
-        <div className="ml-auto flex items-center gap-1">
+        <div className={auto ? "hidden" : "ml-auto flex items-center gap-1"}>
           {date && (
             <SetDateDialog colonyId={colonyId} current={{ cycle: date.cycle, day: date.day }} onSet={onDateSet}>
               <Button variant="ghost" size="sm" className="text-cobalt-deep hover:text-cobalt-deep">

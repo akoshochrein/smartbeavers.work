@@ -9,7 +9,7 @@
 --   "adapter +30 Pop30 on"        an adapter signal
 --   "... carried"                 a value already in place when that stretch began
 begin;
-select plan(27);
+select plan(34);
 
 create temp table base on commit drop as select date_trunc('minute', now()) - interval '10 days' as t;
 
@@ -19,7 +19,9 @@ insert into auth.users (id, email) values
 
 insert into public.colonies (id, owner_id, name, webhook_token) values
   ('00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-00000000000a', 'Merge', repeat('a', 48)),
-  ('00000000-0000-0000-0000-0000000000c2', '00000000-0000-0000-0000-00000000000a', 'Intake', repeat('b', 48));
+  ('00000000-0000-0000-0000-0000000000c2', '00000000-0000-0000-0000-00000000000a', 'Intake', repeat('b', 48)),
+  ('00000000-0000-0000-0000-0000000000c3', '00000000-0000-0000-0000-00000000000a', 'Weather and date', repeat('c', 48)),
+  ('00000000-0000-0000-0000-0000000000c4', '00000000-0000-0000-0000-00000000000a', 'Mod only', repeat('d', 48));
 
 create function pg_temp.at(p_minutes numeric) returns timestamptz language sql as
   $$ select t + make_interval(secs => p_minutes * 60) from base $$;
@@ -213,6 +215,100 @@ select is((select faction from public.colonies where id = '00000000-0000-0000-00
 select public.record_readings(repeat('b', 48), '{}');
 select is((select faction || ' ' || name from public.colonies where id = '00000000-0000-0000-0000-0000000000c2'), 'iron_teeth Intake',
   'a request without a faction leaves it alone, and the name is never touched');
+
+-- ---------------------------------------------------------------------------
+-- Weather and the game date: colony_signals presents both sources as one stream of signals.
+-- The mod's weather and day changes appear as the signals a Weather Station or Chronometer
+-- would have sent, and the real ones are hidden while the mod was reporting.
+-- Weather is stored as 0 temperate, 1 drought, 2 badtide.
+-- ---------------------------------------------------------------------------
+create function pg_temp.signal3(p_minutes numeric, p_name text) returns void language sql as $$
+  insert into public.adapter_events (colony_id, adapter_name, state, received_at)
+  values ('00000000-0000-0000-0000-0000000000c3', p_name, true, pg_temp.at(p_minutes));
+$$;
+create function pg_temp.reading3(p_minutes numeric, p_metric text, p_value integer) returns void language sql as $$
+  insert into public.readings (colony_id, metric, value, received_at)
+  values ('00000000-0000-0000-0000-0000000000c3', p_metric, p_value, pg_temp.at(p_minutes));
+$$;
+create function pg_temp.signals3(p_names text[]) returns setof text language sql as $$
+  select '+' || round(extract(epoch from s.received_at - (select t from base)) / 60) || ' ' || s.adapter_name
+    from public.colony_signals s
+   where s.colony_id = '00000000-0000-0000-0000-0000000000c3' and s.adapter_name = any (p_names) and s.state
+   order by s.received_at, s.id;
+$$;
+
+-- The player set the clock at the base: cycle 2, day 4.
+insert into public.game_clocks (colony_id, anchor_at, anchor_cycle, anchor_day)
+values ('00000000-0000-0000-0000-0000000000c3', (select t from base), 2, 4);
+insert into public.weather_trackers (colony_id) values ('00000000-0000-0000-0000-0000000000c3');
+
+select pg_temp.signal3(10, 'WeatherTemperate');  -- cycle 3 begins
+select pg_temp.signal3(20, 'GameDay');
+select pg_temp.signal3(40, 'GameDay');
+select pg_temp.signal3(50, 'WeatherDrought');
+select pg_temp.signal3(55, 'Pop30');
+
+select is(
+  (select cycle || ' ' || day from public.game_date('00000000-0000-0000-0000-0000000000c3')),
+  '3 3',
+  'adapters only: the date is counted from the date the player set, as before');
+
+-- The mod reports from +60 to +120. Its first readings say what is already true (drought,
+-- cycle 3, day 3); then a day passes, and a badtide... no: then the next cycle starts.
+insert into public.mod_sessions (colony_id, started_at, last_seen_at)
+values ('00000000-0000-0000-0000-0000000000c3', pg_temp.at(60), pg_temp.at(120));
+select pg_temp.reading3(60, 'Weather', 1);
+select pg_temp.reading3(60, 'Cycle', 3);
+select pg_temp.reading3(60, 'Day', 3);
+select pg_temp.reading3(80, 'Day', 4);
+select pg_temp.reading3(100, 'Weather', 0);
+select pg_temp.reading3(100, 'Cycle', 4);
+select pg_temp.reading3(100, 'Day', 1);
+-- What the stations and the chronometer sent meanwhile must not be counted twice.
+select pg_temp.signal3(81, 'GameDay');
+select pg_temp.signal3(101, 'WeatherTemperate');
+select pg_temp.signal3(90, 'Pop40');
+-- After the mod stopped, the adapters carry on.
+select pg_temp.signal3(200, 'GameDay');
+select pg_temp.signal3(300, 'WeatherDrought');
+
+select results_eq(
+  $$ select * from pg_temp.signals3(array['WeatherTemperate', 'WeatherDrought', 'WeatherBadtide']) $$,
+  $$ values ('+10 WeatherTemperate'), ('+50 WeatherDrought'), ('+100 WeatherTemperate'), ('+300 WeatherDrought') $$,
+  'weather: one signal per change, whichever source saw it, and none for what the mod merely confirmed');
+
+select results_eq(
+  $$ select * from pg_temp.signals3(array['GameDay']) $$,
+  $$ values ('+20 GameDay'), ('+40 GameDay'), ('+80 GameDay'), ('+100 GameDay'), ('+200 GameDay') $$,
+  'days: one signal per day that began, whichever source saw it');
+
+select results_eq(
+  $$ select * from pg_temp.signals3(array['Pop30', 'Pop40']) $$,
+  $$ values ('+55 Pop30'), ('+90 Pop40') $$,
+  'every other adapter''s signals pass through untouched');
+
+select is(
+  (select cycle || ' ' || day from public.game_date('00000000-0000-0000-0000-0000000000c3')),
+  '4 2',
+  'the date carries on from the mod''s last cycle and day, counting what adapters reported since');
+
+select is(
+  (select array_agg(n order by idx) from public.signal_counts('00000000-0000-0000-0000-0000000000c3', 'GameDay',
+     array[pg_temp.at(0), pg_temp.at(60), pg_temp.at(125), pg_temp.at(400)])),
+  array[2, 2, 1],
+  'game days are counted across both sources');
+
+-- A colony with only the mod has a date with no game clock set up at all.
+insert into public.mod_sessions (colony_id, started_at, last_seen_at)
+values ('00000000-0000-0000-0000-0000000000c4', pg_temp.at(0), pg_temp.at(30));
+insert into public.readings (colony_id, metric, value, received_at) values
+  ('00000000-0000-0000-0000-0000000000c4', 'Cycle', 7, pg_temp.at(0)),
+  ('00000000-0000-0000-0000-0000000000c4', 'Day', 12, pg_temp.at(0)),
+  ('00000000-0000-0000-0000-0000000000c4', 'Weather', 2, pg_temp.at(0));
+select is(
+  (select cycle || ' ' || day || ' ' || cycles_tracked from public.game_date('00000000-0000-0000-0000-0000000000c4')),
+  '7 12 true',
+  'mod only: the date is the mod''s, with no clock to set');
 
 -- ---------------------------------------------------------------------------
 -- Pinned goods: which of the mod's storage readings a player shows on the colony page.

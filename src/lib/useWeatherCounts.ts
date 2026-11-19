@@ -14,7 +14,7 @@ export function useWeatherCounts(colonyId: string, version: number) {
       const entries = await Promise.all(
         WEATHERS.map(async (w) => {
           const { count, error } = await supabase
-            .from("adapter_events")
+            .from("colony_signals")
             .select("id", { count: "exact", head: true })
             .eq("colony_id", colonyId)
             .eq("adapter_name", w.adapter)

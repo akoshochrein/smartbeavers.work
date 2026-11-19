@@ -234,7 +234,15 @@ isOneToOne: true
                 }
           }
           Views: {
-            "latest_readings": {
+            "colony_signals": {
+                  Row: {
+                    "adapter_name": string | null,"colony_id": string | null,"id": number | null,"received_at": string | null,"state": boolean | null
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    
+                  ]
+                },"latest_readings": {
                   Row: {
                     "colony_id": string,"metric": string,"received_at": string,"reporting": boolean | null,"value": number
                   }
@@ -242,6 +250,20 @@ isOneToOne: true
                   Relationships: [
                     {
       foreignKeyName: "readings_colony_id_fkey"
+      columns: ["colony_id"]
+isOneToOne: false
+      referencedRelation: "colonies"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"mod_stretches": {
+                  Row: {
+                    "colony_id": string,"from_at": string | null,"metric": string,"to_at": string | null
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    {
+      foreignKeyName: "mod_sessions_colony_id_fkey"
       columns: ["colony_id"]
 isOneToOne: false
       referencedRelation: "colonies"
@@ -269,6 +291,9 @@ isOneToOne: false
 "is_public_avatar":
 { Args: { "p_name": string }; Returns: boolean
                            },
+"mod_reporting_at":
+{ Args: { "p_at": string,"p_colony": string,"p_metric": string }; Returns: boolean
+                           },
 "record_adapter_event":
 { Args: { "p_adapter": string,"p_state": boolean,"p_token": string }; Returns: boolean
                            },
@@ -290,6 +315,9 @@ isOneToOne: false
 { Args: { "p_adapters": (string)[],"p_bucket_seconds"?: number,"p_colony": string,"p_metric": string,"p_since": string }; Returns: {
               "adapter_name": string,"at": string,"carried": boolean,"source": string,"state": boolean,"value": number
             }[]
+                           },
+"weather_adapter":
+{ Args: { "p_value": number }; Returns: string
                            },
 "weather_history":
 { Args: { "p_adapters": (string)[],"p_bucket_seconds": number,"p_colony": string,"p_since": string }; Returns: {
