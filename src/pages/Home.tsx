@@ -115,7 +115,7 @@ export function Home() {
           <h2 id="setup" className="text-2xl font-bold tracking-tight sm:text-3xl">How setup works</h2>
           <ol className="mt-10 grid gap-10 md:grid-cols-3">
             {[
-              ["Create a colony", "Sign in with your email and add a colony for your save. You'll get two links that belong to it."],
+              ["Create a colony", "Create an account and add a colony for your save. You'll get two links that belong to it."],
               ["Paste the links into your adapters", "In each HTTP Adapter, tick both boxes and paste the links. The game fills in the adapter's name."],
               ["Watch it arrive", "Signals show up in your dashboard as they happen. Add trackers or switch levers whenever you like."],
             ].map(([title, body], i) => (
