@@ -8,7 +8,8 @@ import { TrackerCard } from "@/components/app/TrackerCard";
 import { ExportButton } from "@/components/app/ExportButton";
 import { exportColony } from "@/lib/export";
 import { FactionPicker } from "@/components/app/FactionPicker";
-import type { FactionKey } from "@/shared/goods";
+import { ModGoods } from "@/components/app/ModGoods";
+import { goodsFor, type FactionKey } from "@/shared/goods";
 import { WeatherCard } from "@/components/app/WeatherCard";
 import { GameClockCard, useDateVersion } from "@/components/app/GameClockCard";
 import { useGameClock, useGameDate } from "@/lib/clock";
@@ -37,16 +38,16 @@ import { supabase, type Colony } from "@/lib/supabase";
 import { formatTime, timeAgo } from "@/lib/time";
 import { useColony, useLadders, useWeatherTracker } from "@/lib/useColony";
 import { useRecentSignals } from "@/lib/history";
-import { useColonyReadings } from "@/lib/readings";
+import { isReporting, useColonyReadings, useModLastSeen, usePinnedMetrics } from "@/lib/readings";
 import { useColonyFeed, type ColonyFeed } from "@/lib/useColonyFeed";
-import { webhookUrl } from "@/shared/webhook";
+import { modUrl, webhookUrl } from "@/shared/webhook";
 
 export const COLONY_TABS = ["trackers", "signals", "settings"] as const;
 export type ColonyTab = (typeof COLONY_TABS)[number];
 const ROUTE = "/_app/colonies/$id/";
 const LIVE_MS = 10 * 60_000;
 /** Metrics that get a card as soon as the companion mod reports them, with no tracker set up. */
-const MOD_METRICS = ["Pop"];
+const MOD_METRICS = ["Pop", "Bots", "FreeBeds"];
 
 export function ColonyPage() {
   const { id } = useParams({ from: ROUTE });
@@ -78,8 +79,14 @@ function ColonyDashboard({ colony, onChange }: { colony: Colony; onChange: (c: C
   const feed = useColonyFeed(colony.id);
   const ladders = useLadders(colony.id);
   const readings = useColonyReadings(colony.id);
-  // Trackers the mod feeds on its own: a default metric it has reported and the player hasn't set up.
-  const autoTrackers = MOD_METRICS.filter((m) => readings?.byMetric.has(m) && !ladders?.some((l) => l.metric === m)).map((metric) => ({
+  const [pinned, setPinned] = usePinnedMetrics(colony.id);
+  const modLastSeen = useModLastSeen(colony.id, readings?.version ?? 0);
+  const modReporting = isReporting(modLastSeen);
+  // Goods the mod reports storage for and the player hasn't set a tracker up for.
+  const modGoods = goodsFor(colony.faction).filter((g) => readings?.byMetric.has(g.prefix) && !ladders?.some((l) => l.metric === g.prefix));
+  // Trackers the mod feeds on its own: the default metrics and pinned goods it has reported,
+  // unless the player set a tracker up for the same thing (then that card shows the mod's value).
+  const autoTrackers = [...MOD_METRICS, ...modGoods.map((g) => g.prefix).filter((m) => pinned?.has(m))].filter((m) => readings?.byMetric.has(m) && !ladders?.some((l) => l.metric === m)).map((metric) => ({
     id: `mod-${metric}`,
     colony_id: colony.id,
     metric,
@@ -94,7 +101,7 @@ function ColonyDashboard({ colony, onChange }: { colony: Colony; onChange: (c: C
   const tab = useSearch({ from: ROUTE }).tab ?? "trackers";
 
   const lastSignal = [...feed.states.values()].map((s) => s.updated_at).sort().at(-1);
-  const live = !!lastSignal && Date.now() - Date.parse(lastSignal) < LIVE_MS;
+  const live = modReporting || (!!lastSignal && Date.now() - Date.parse(lastSignal) < LIVE_MS);
 
   return (
     <div>
@@ -111,8 +118,14 @@ function ColonyDashboard({ colony, onChange }: { colony: Colony; onChange: (c: C
               " "
             ) : (
               <span className="inline-flex items-center gap-2">
-                <StatusDot state={lastSignal ? true : undefined} live={live} />
-                {lastSignal ? `Last signal ${timeAgo(lastSignal)}` : "No signals yet. Connect an adapter to get started."}
+                <StatusDot state={lastSignal || modLastSeen ? true : undefined} live={live} />
+                {modReporting
+                  ? "The companion mod is reporting"
+                  : lastSignal
+                    ? `Last signal ${timeAgo(lastSignal)}`
+                    : modLastSeen
+                      ? `The companion mod last reported ${timeAgo(modLastSeen)}`
+                      : "No signals yet. Connect an adapter to get started."}
               </span>
             )}
           </p>
@@ -138,7 +151,7 @@ function ColonyDashboard({ colony, onChange }: { colony: Colony; onChange: (c: C
         </TabsList>
 
         <TabsContent value="trackers" className="pt-8">
-          {ladders === undefined || readings === undefined || weather === undefined || clock === undefined ? (
+          {ladders === undefined || readings === undefined || pinned === undefined || weather === undefined || clock === undefined ? (
             <Skeleton className="h-80 w-full rounded-2xl" />
           ) : ladders.length === 0 && autoTrackers.length === 0 && !weather && !clock ? (
             <NoTrackers colonyId={colony.id} />
@@ -180,9 +193,10 @@ function ColonyDashboard({ colony, onChange }: { colony: Colony; onChange: (c: C
               ].filter((c) => !!c)}
             />
           )}
+          {readings && pinned && modGoods.length > 0 && <ModGoods goods={modGoods} readings={readings.byMetric} pinned={pinned} onPin={setPinned} />}
         </TabsContent>
         <TabsContent value="signals" className="pt-8">
-          <SignalsTab colony={colony} feed={feed} />
+          <SignalsTab colony={colony} feed={feed} modLastSeen={modLastSeen} />
         </TabsContent>
         <TabsContent value="settings" className="pt-8">
           <SettingsTab colony={colony} onChange={onChange} />
@@ -244,7 +258,7 @@ function NoTrackers({ colonyId }: { colonyId: string }) {
   );
 }
 
-function SignalsTab({ colony, feed }: { colony: Colony; feed: ColonyFeed }) {
+function SignalsTab({ colony, feed, modLastSeen }: { colony: Colony; feed: ColonyFeed; modLastSeen: number | null | undefined }) {
   const origin = window.location.origin;
   const states = [...feed.states.values()].sort((a, b) => a.name.localeCompare(b.name));
   const events = useRecentSignals(colony.id, feed.live);
@@ -265,6 +279,31 @@ function SignalsTab({ colony, feed }: { colony: Colony; feed: ColonyFeed }) {
         <CopyField label="Call when switched on" what="On link" value={webhookUrl(origin, colony.webhook_token, "on")} />
         <CopyField label="Call when switched off" what="Off link" value={webhookUrl(origin, colony.webhook_token, "off")} />
         <StartApiNote />
+
+        <div className="space-y-4 border-t pt-8">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">Companion mod</h2>
+            <p className="mt-1 max-w-md text-sm leading-relaxed text-ink-soft">
+              If you play with the smartbeavers companion mod, paste this address into the mod's box once for this save.
+              The mod then reports this colony's numbers by itself, with no adapters to build.
+            </p>
+          </div>
+          <CopyField label="Address for the companion mod" what="Mod address" value={modUrl(origin, colony.webhook_token)} />
+          <p className="flex items-center gap-2 text-sm text-ink-soft">
+            <StatusDot state={modLastSeen ? true : undefined} live={isReporting(modLastSeen)} />
+            {modLastSeen === undefined
+              ? " "
+              : isReporting(modLastSeen)
+                ? "The mod is reporting right now."
+                : modLastSeen
+                  ? `The mod last reported ${timeAgo(modLastSeen)}.`
+                  : "The mod hasn't reported for this colony yet."}
+          </p>
+          <p className="max-w-md text-sm leading-relaxed text-ink-soft">
+            The address holds the same secret as the adapter links, and the mod keeps it in the save file. Before you
+            share a save with someone, make new links in Settings, or their game will report to your colony.
+          </p>
+        </div>
 
         <div className="pt-4">
           <h2 className="text-2xl font-bold tracking-tight">Adapters</h2>
@@ -409,23 +448,23 @@ function SettingsTab({ colony, onChange }: { colony: Colony; onChange: (c: Colon
           <div className="max-w-md">
             <h3 className="text-xl font-semibold">Export this colony</h3>
             <p className="mt-1 text-sm leading-relaxed text-ink-soft">
-              One JSON file with this colony's settings, trackers and full signal history. It includes the adapter
-              links, so treat the file as private.
+              One JSON file with this colony's settings, trackers, full signal history and the companion mod's
+              readings. It includes the adapter links, so treat the file as private.
             </p>
           </div>
           <ExportButton run={() => exportColony(colony)} className="sm:ml-auto" />
         </div>
         <SettingsAction
           title="Make new adapter links"
-          body="Use this if your links leaked. The old links stop working straight away, and you'll need to paste the new ones into every adapter."
+          body="Use this if your links leaked. The old links stop working straight away, and you'll need to paste the new ones into every adapter. The companion mod is cut off too, until you paste its new address into it."
           action="Make new links"
           confirmTitle="Make new adapter links?"
-          confirmBody="Every adapter in this colony stops reporting until you paste the new links into it."
+          confirmBody="Every adapter in this colony, and the companion mod if you use it, stops reporting until you paste the new links in."
           onConfirm={rotate}
         />
         <SettingsAction
           title="Delete this colony"
-          body="Removes the colony, its trackers and its signal history. Adapters in the game keep calling, but nothing is recorded."
+          body="Removes the colony, its trackers and everything it has received. Adapters and the mod keep calling, but nothing is recorded."
           action="Delete colony"
           confirmTitle={`Delete ${colony.name}?`}
           confirmBody="This removes its trackers and signal history for good."

@@ -27,7 +27,12 @@ async function record(request: Request) {
   const snapshot = parseSnapshot(body);
   if (!snapshot.ok) return json({ error: snapshot.error }, 400);
 
-  const { data: known, error } = await adminClient().rpc("record_readings", { p_token: token, p_readings: snapshot.readings });
+  const { data: known, error } = await adminClient().rpc("record_readings", {
+    p_token: token,
+    p_readings: snapshot.readings,
+    // The generated type wants a string, but the function takes null for "not sent".
+    p_faction: snapshot.faction as string,
+  });
   if (error) {
     console.error("record_readings failed", error);
     return json({ error: "failed to record readings" }, 500);

@@ -58,3 +58,44 @@ export function useColonyReadings(colonyId: string): ColonyReadings | undefined 
     return { byMetric, version };
   }, [data, version]);
 }
+
+const pinsKey = (colonyId: string) => ["pinned-metrics", colonyId] as const;
+
+/** Metrics the player pinned to the colony's page, and how to change them. undefined while loading. */
+export function usePinnedMetrics(colonyId: string) {
+  const client = useQueryClient();
+  const { data } = useQuery({
+    queryKey: pinsKey(colonyId),
+    queryFn: async () => new Set((unwrap(await supabase.from("pinned_metrics").select("metric").eq("colony_id", colonyId)) ?? []).map((r) => r.metric)),
+  });
+  /** Pins or unpins, and returns an error message if it didn't work. */
+  async function setPinned(metric: string, pinned: boolean): Promise<string | undefined> {
+    const { error } = pinned
+      ? await supabase.from("pinned_metrics").upsert({ colony_id: colonyId, metric }, { ignoreDuplicates: true })
+      : await supabase.from("pinned_metrics").delete().eq("colony_id", colonyId).eq("metric", metric);
+    await client.invalidateQueries({ queryKey: pinsKey(colonyId) });
+    return error?.message;
+  }
+  return [data, setPinned] as const;
+}
+
+/** How long after its last request the mod still counts as reporting. The database uses the same five minutes. */
+const REPORTING_MS = 5 * 60_000;
+
+/**
+ * When the companion mod was last heard from for this colony: undefined while loading, null if
+ * never. Checked every minute, because a heartbeat changes nothing a page would otherwise notice.
+ */
+export function useModLastSeen(colonyId: string, version: number): number | null | undefined {
+  return useQuery({
+    queryKey: ["mod-last-seen", colonyId, version],
+    refetchInterval: 60_000,
+    placeholderData: (prev) => prev,
+    queryFn: async () => {
+      const rows = unwrap(await supabase.from("mod_sessions").select("last_seen_at").eq("colony_id", colonyId).order("last_seen_at", { ascending: false }).limit(1));
+      return rows?.[0] ? Date.parse(rows[0].last_seen_at) : null;
+    },
+  }).data;
+}
+
+export const isReporting = (lastSeen: number | null | undefined, now = Date.now()) => !!lastSeen && now - lastSeen < REPORTING_MS;

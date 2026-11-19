@@ -33,19 +33,38 @@ async function allEvents(colonyId: string) {
   }
 }
 
+/** Every reading the companion mod reported for the colony, oldest first. */
+async function allReadings(colonyId: string) {
+  const readings: { id: number; metric: string; value: number; received_at: string }[] = [];
+  let after = 0;
+  for (;;) {
+    const page = unwrap(
+      await supabase.from("readings").select("id, metric, value, received_at").eq("colony_id", colonyId).gt("id", after).order("id").limit(PAGE_SIZE),
+    );
+    readings.push(...page);
+    if (page.length < PAGE_SIZE) return readings;
+    after = page[page.length - 1].id;
+  }
+}
+
 async function colonyData(colony: Colony) {
-  const [numberTrackers, weatherTracker, gameClock, adapterStates, signals] = await Promise.all([
+  const [numberTrackers, weatherTracker, gameClock, adapterStates, signals, readings, modSessions, pinned] = await Promise.all([
     supabase.from("ladders").select("*").eq("colony_id", colony.id).order("created_at").then(unwrap),
     supabase.from("weather_trackers").select("*").eq("colony_id", colony.id).maybeSingle().then((r) => (r.error ? unwrap(r) : r.data)),
     supabase.from("game_clocks").select("*").eq("colony_id", colony.id).maybeSingle().then((r) => (r.error ? unwrap(r) : r.data)),
     supabase.from("adapter_states").select("name, state, updated_at").eq("colony_id", colony.id).order("name").then(unwrap),
     allEvents(colony.id),
+    allReadings(colony.id),
+    supabase.from("mod_sessions").select("started_at, last_seen_at").eq("colony_id", colony.id).order("started_at").then(unwrap),
+    supabase.from("pinned_metrics").select("metric").eq("colony_id", colony.id).order("metric").then(unwrap),
   ]);
   return {
     ...colony,
     trackers: { numbers: numberTrackers, weather: weatherTracker, game_clock: gameClock },
     adapter_states: adapterStates,
     signals,
+    // From the companion mod: each value it reported, when it was reporting, and which goods are pinned.
+    companion_mod: { readings, sessions: modSessions, pinned: pinned.map((p) => p.metric) },
   };
 }
 

@@ -9,7 +9,7 @@
 --   "adapter +30 Pop30 on"        an adapter signal
 --   "... carried"                 a value already in place when that stretch began
 begin;
-select plan(19);
+select plan(27);
 
 create temp table base on commit drop as select date_trunc('minute', now()) - interval '10 days' as t;
 
@@ -201,6 +201,38 @@ select is(public.record_readings(repeat('b', 48), '{"Adults": 99}'), true, 'a re
 select is(
   (select count(*)::int from public.readings where colony_id = '00000000-0000-0000-0000-0000000000c2' and value = 99),
   0, 'and what it carried is dropped');
+
+-- The mod also says which faction the save is. It sets the colony's faction and nothing else.
+update public.mod_requests set count = 0 where colony_id = '00000000-0000-0000-0000-0000000000c2';  -- back under the limit
+select public.record_readings(repeat('b', 48), '{}', 'iron_teeth');
+select is((select faction from public.colonies where id = '00000000-0000-0000-0000-0000000000c2'), 'iron_teeth',
+  'a faction from the mod sets the colony''s faction');
+select public.record_readings(repeat('b', 48), '{}', 'squirrels');
+select is((select faction from public.colonies where id = '00000000-0000-0000-0000-0000000000c2'), 'iron_teeth',
+  'a faction the site doesn''t know is ignored');
+select public.record_readings(repeat('b', 48), '{}');
+select is((select faction || ' ' || name from public.colonies where id = '00000000-0000-0000-0000-0000000000c2'), 'iron_teeth Intake',
+  'a request without a faction leaves it alone, and the name is never touched');
+
+-- ---------------------------------------------------------------------------
+-- Pinned goods: which of the mod's storage readings a player shows on the colony page.
+-- ---------------------------------------------------------------------------
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000000a","role":"authenticated"}', true);
+select lives_ok(
+  $$ insert into public.pinned_metrics (colony_id, metric) values ('00000000-0000-0000-0000-0000000000c1', 'Water') $$,
+  'an owner can pin a metric on their colony');
+select is((select count(*)::int from public.pinned_metrics), 1, 'and sees it');
+select lives_ok(
+  $$ delete from public.pinned_metrics where colony_id = '00000000-0000-0000-0000-0000000000c1' and metric = 'Water' $$,
+  'an owner can unpin it');
+insert into public.pinned_metrics (colony_id, metric) values ('00000000-0000-0000-0000-0000000000c1', 'Logs');
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000000b","role":"authenticated"}', true);
+select is((select count(*)::int from public.pinned_metrics), 0, 'another player sees no pins');
+select throws_ok(
+  $$ insert into public.pinned_metrics (colony_id, metric) values ('00000000-0000-0000-0000-0000000000c1', 'Planks') $$,
+  '42501', null, 'and cannot pin on a colony that isn''t theirs');
+reset role;
 
 -- ---------------------------------------------------------------------------
 -- Row level security: readings are the owner's.

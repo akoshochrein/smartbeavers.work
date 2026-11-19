@@ -6,6 +6,9 @@ export const MAX_ADAPTER_NAME_LENGTH = 100;
 
 export type AdapterSignal = "on" | "off";
 
+/** The address the companion mod reports to: what a player pastes into the mod to pair a save. */
+export const modUrl = (origin: string, token: string) => `${origin}/mod/${token}`;
+
 /** URL to paste into an HTTP Adapter's "Call when switched on/off" field. */
 export function webhookUrl(origin: string, token: string, signal: AdapterSignal): string {
   // `{name}` is left literal: the game substitutes the adapter's name.

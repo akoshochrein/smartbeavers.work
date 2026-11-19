@@ -51,6 +51,13 @@ export function Privacy() {
               off, and when. Adapter names are whatever you type in the game, so don't put personal details in them.
             </li>
             <li>
+              <strong>Readings from the companion mod:</strong> only if you install the smartbeavers mod and paste a
+              colony's address into it. The mod then sends that colony's numbers of adults, kits and bots, its free
+              beds, how full storage is for each good, the weather, the cycle and day, and its faction, and we keep
+              when it was reporting. It sends nothing until you pair a save, and nothing about you or your computer
+              beyond what any request to a website carries.
+            </li>
+            <li>
               <strong>Trackers:</strong> which trackers you set up, and the game date you enter for the game clock.
             </li>
             <li>

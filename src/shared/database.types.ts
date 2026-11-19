@@ -157,6 +157,26 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"pinned_metrics": {
+                  Row: {
+                    "colony_id": string,"created_at": string,"metric": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "colony_id": string,"created_at"?: string,"metric": string
+                  }
+                  Update: {
+                    "colony_id"?: string,"created_at"?: string,"metric"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "pinned_metrics_colony_id_fkey"
+      columns: ["colony_id"]
+isOneToOne: false
+      referencedRelation: "colonies"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"profiles": {
                   Row: {
                     "avatar_path": string | null,"handle": string | null,"is_public": boolean,"updated_at": string,"user_id": string
@@ -253,7 +273,7 @@ isOneToOne: false
 { Args: { "p_adapter": string,"p_state": boolean,"p_token": string }; Returns: boolean
                            },
 "record_readings":
-{ Args: { "p_readings": Json,"p_token": string }; Returns: boolean
+{ Args: { "p_faction"?: string,"p_readings": Json,"p_token": string }; Returns: boolean
                            },
 "rotate_webhook_token":
 { Args: { "p_colony": string }; Returns: string
