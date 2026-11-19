@@ -9,6 +9,12 @@ term itself in prose.
 | Term         | Meaning                                                                              | In code / avoid |
 | ------------ | ------------------------------------------------------------------------------------ | --------------- |
 | Colony       | One Timberborn save connected to the site                                            | `colonies` |
+| Colony page  | The page for one colony, with its Trackers, Signals and Settings tabs                | `ColonyPage`. Avoid "colony dashboard" |
+| Dashboard    | The "Your colonies" list a player lands on after signing in                          | `/dashboard` |
+| Status band  | The strip at the top of the colony page with the game date, the current weather and whether the game is sending right now | |
+| Tile         | A compact view of one tracker on the colony page: its name, value and a small trend line. It opens to show the full chart | Avoid "card" for this |
+| Population block | The part of the colony page with the population total and a chart stacked by adults, children and bots | |
+| Children     | Young beavers, as the game's counters name them                                      | `kits` in the mod's contract. Avoid "kits" in prose |
 | Faction      | Folktails or Iron Teeth. Narrows the goods offered for a colony                      | `folktails`, `iron_teeth` |
 | Start API    | The in-game action needed after every save load. Until then adapters send nothing | |
 | Operator     | Whoever runs a deployment of the site                                                | `VITE_OPERATOR_*` |
@@ -69,4 +75,4 @@ term itself in prose.
 | Picture        | A player's profile image                                                           | `avatar`, `avatars` bucket |
 | Public profile | A profile the player has chosen to show. Needed to appear among the live colonies            | `is_public` |
 | Live colonies  | The public list of recently played colonies whose players have a public profile | `colony_ladder()`. The page is at `/live`. Avoid "ladder" and "leaderboard" in prose |
-| Live           | A colony that sent a signal recently. The window differs by place today: 5 minutes on a tracker card, 10 minutes on the colony header and dashboard, 1 hour for the live colonies list | |
+| Live           | A colony that sent a signal recently. The window differs by place today: 5 minutes on a tracker card, 10 minutes on the colony page's header and on the dashboard, 1 hour for the live colonies list | |
